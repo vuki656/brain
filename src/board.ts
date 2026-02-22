@@ -469,14 +469,14 @@ function showPriorityMenu(
     const menu = new Menu();
 
     menu.addItem((item) =>
-        item.setTitle("None").onClick(() => {
+        item.setIcon("circle").setTitle("None").onClick(() => {
             const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { priority: null });
             onMutation({ ...board, columns: newColumns });
         }),
     );
 
     menu.addItem((item) =>
-        item.setTitle("Important").onClick(() => {
+        item.setIcon("alert-circle").setTitle("Important").onClick(() => {
             const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { priority: "important" });
             onMutation({ ...board, columns: newColumns });
         }),
@@ -499,14 +499,14 @@ function showCardContextMenu(
 
     if (card.today) {
         menu.addItem((item) =>
-            item.setTitle("Remove from today").onClick(() => {
+            item.setIcon("sun-dim").setTitle("Remove from today").onClick(() => {
                 const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { today: false });
                 onMutation({ ...board, columns: newColumns });
             }),
         );
     } else {
         menu.addItem((item) =>
-            item.setTitle("Add to today").onClick(() => {
+            item.setIcon("sun").setTitle("Add to today").onClick(() => {
                 const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { today: true });
                 onMutation({ ...board, columns: newColumns });
             }),
@@ -516,13 +516,13 @@ function showCardContextMenu(
     menu.addSeparator();
 
     menu.addItem((item) =>
-        item.setTitle("Priority: None").onClick(() => {
+        item.setIcon("circle").setTitle("Priority: None").onClick(() => {
             const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { priority: null });
             onMutation({ ...board, columns: newColumns });
         }),
     );
     menu.addItem((item) =>
-        item.setTitle("Priority: Important").onClick(() => {
+        item.setIcon("alert-circle").setTitle("Priority: Important").onClick(() => {
             const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { priority: "important" });
             onMutation({ ...board, columns: newColumns });
         }),
@@ -536,32 +536,32 @@ function showCardContextMenu(
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     menu.addItem((item) =>
-        item.setTitle("Date: Today").onClick(() => {
+        item.setIcon("calendar").setTitle("Date: Today").onClick(() => {
             const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: toDateString(today) });
             onMutation({ ...board, columns: newColumns });
         }),
     );
     menu.addItem((item) =>
-        item.setTitle("Date: Tomorrow").onClick(() => {
+        item.setIcon("calendar-plus").setTitle("Date: Tomorrow").onClick(() => {
             const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: toDateString(tomorrow) });
             onMutation({ ...board, columns: newColumns });
         }),
     );
     menu.addItem((item) =>
-        item.setTitle("Date: Next Monday").onClick(() => {
+        item.setIcon("calendar-range").setTitle("Date: Next Monday").onClick(() => {
             const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: toDateString(getNextMonday()) });
             onMutation({ ...board, columns: newColumns });
         }),
     );
     menu.addItem((item) =>
-        item.setTitle("Date: Pick...").onClick(() => {
+        item.setIcon("calendar-search").setTitle("Date: Pick...").onClick(() => {
             showDatePicker(card, columnIndex, cardIndex, board, onMutation);
         }),
     );
 
     if (card.date) {
         menu.addItem((item) =>
-            item.setTitle("Date: Remove").onClick(() => {
+            item.setIcon("calendar-x").setTitle("Date: Remove").onClick(() => {
                 const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: null });
                 onMutation({ ...board, columns: newColumns });
             }),
@@ -572,7 +572,7 @@ function showCardContextMenu(
 
     if (!card.linkedNote) {
         menu.addItem((item) =>
-            item.setTitle("Create linked note").onClick(async () => {
+            item.setIcon("file-plus").setTitle("Create linked note").onClick(async () => {
                 const columnTitle = board.columns[columnIndex].title;
                 const cardTitle = card.title;
                 const notePath = `${pluginSettings.notePathPrefix}/${columnTitle}/Tasks/${cardTitle}.md`;
@@ -604,6 +604,7 @@ function showCardContextMenu(
 
     menu.addItem((item) =>
         item
+            .setIcon("trash-2")
             .setTitle("Delete card")
             .setWarning(true)
             .onClick(() => {
@@ -807,6 +808,7 @@ function createColumnElement(
 
         menu.addItem((item) =>
             item
+                .setIcon("trash-2")
                 .setTitle("Delete column")
                 .setWarning(true)
                 .onClick(() => {
