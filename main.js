@@ -3053,6 +3053,25 @@ function showCardContextMenu(event, card, columnIndex, cardIndex, board, onMutat
         }
       })
     );
+  } else {
+    menu.addItem(
+      (item) => item.setIcon("file-x").setTitle("Delete linked note").setWarning(true).onClick(async () => {
+        const notePath = `${card.linkedNote}.md`;
+        const file = vault.getAbstractFileByPath(notePath);
+        if (file && file instanceof import_obsidian3.TFile) {
+          try {
+            await vault.trash(file, true);
+            const newColumns = immutableSpliceCard(board.columns, columnIndex, cardIndex, 1);
+            onMutation({ ...board, columns: newColumns });
+            new import_obsidian3.Notice(`Deleted note: ${notePath}`);
+          } catch (error) {
+            new import_obsidian3.Notice(`Failed to delete note: ${error}`);
+          }
+        } else {
+          new import_obsidian3.Notice(`Note not found: ${notePath}`);
+        }
+      })
+    );
   }
   menu.addSeparator();
   menu.addItem(

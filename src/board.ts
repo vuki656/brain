@@ -611,6 +611,32 @@ function showCardContextMenu(
                 }
             }),
         );
+    } else {
+        menu.addItem((item) =>
+            item
+                .setIcon("file-x")
+                .setTitle("Delete linked note")
+                .setWarning(true)
+                .onClick(async () => {
+                    const notePath = `${card.linkedNote}.md`;
+                    const file = vault.getAbstractFileByPath(notePath);
+
+                    if (file && file instanceof TFile) {
+                        try {
+                            await vault.trash(file, true);
+
+                            const newColumns = immutableSpliceCard(board.columns, columnIndex, cardIndex, 1);
+                            onMutation({ ...board, columns: newColumns });
+
+                            new Notice(`Deleted note: ${notePath}`);
+                        } catch (error) {
+                            new Notice(`Failed to delete note: ${error}`);
+                        }
+                    } else {
+                        new Notice(`Note not found: ${notePath}`);
+                    }
+                }),
+        );
     }
 
     menu.addSeparator();
