@@ -306,15 +306,17 @@
 .kanban-card__checkbox {
     flex-shrink: 0;
     cursor: pointer;
+    width: 16px;
+    height: 16px;
 }
 
 .kanban-card__title {
     flex: 1;
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 20px;
     color: var(--text-normal);
     word-break: break-word;
-    padding-bottom: 1px;
+    min-height: 20px;
 }
 
 .kanban-card__title .internal-link {
