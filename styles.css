@@ -46,6 +46,8 @@
 .kanban-toolbar__button--active {
     color: var(--interactive-accent);
     font-weight: 600;
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: -2px;
 }
 
 .kanban-toolbar__button--active:hover {
