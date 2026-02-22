@@ -1,9 +1,32 @@
 import Sortable, { SortableEvent } from "sortablejs";
 import { Menu, Notice, TFile, Vault } from "obsidian";
 
+import { generateId } from "./parser";
 import { Board, Card, Column, Priority, ViewState, PluginSettings } from "./types";
 
 type MutationHandler = (board: Board) => void;
+
+type TodayCard = {
+    card: Card;
+    columnIndex: number;
+    cardIndex: number;
+    columnTitle: string;
+};
+
+const COLUMN_COLORS = [
+    "var(--color-blue)",
+    "var(--color-purple)",
+    "var(--color-green)",
+    "var(--color-orange)",
+    "var(--color-red)",
+    "var(--color-yellow)",
+    "var(--color-cyan)",
+    "var(--color-pink)",
+];
+
+function getColumnColor(columnIndex: number): string {
+    return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length];
+}
 
 function immutableSpliceCard(
     columns: Column[],
@@ -72,6 +95,42 @@ function formatDate(dateString: string): string {
     return dateString;
 }
 
+function collectTodayCards(board: Board): TodayCard[] {
+    const todayCards: TodayCard[] = [];
+
+    for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
+        const column = board.columns[columnIndex];
+
+        for (let cardIndex = 0; cardIndex < column.cards.length; cardIndex++) {
+            const card = column.cards[cardIndex];
+
+            if (isCardVisibleInTodayFilter(card)) {
+                todayCards.push({
+                    card,
+                    columnIndex,
+                    cardIndex,
+                    columnTitle: column.title,
+                });
+            }
+        }
+    }
+
+    const savedOrder = board.settings.todayOrder;
+
+    if (savedOrder.length > 0) {
+        todayCards.sort((first, second) => {
+            const indexOfFirst = savedOrder.indexOf(first.card.id);
+            const indexOfSecond = savedOrder.indexOf(second.card.id);
+            const effectiveFirst = indexOfFirst === -1 ? savedOrder.length : indexOfFirst;
+            const effectiveSecond = indexOfSecond === -1 ? savedOrder.length : indexOfSecond;
+
+            return effectiveFirst - effectiveSecond;
+        });
+    }
+
+    return todayCards;
+}
+
 function createCardElement(
     card: Card,
     columnIndex: number,
@@ -80,12 +139,14 @@ function createCardElement(
     onMutation: MutationHandler,
     vault: Vault,
     pluginSettings: PluginSettings,
+    projectPill: { title: string; color: string } | null,
 ): HTMLElement {
     const cardElement = document.createElement("div");
 
     cardElement.className = "kanban-card";
     cardElement.dataset.columnIndex = String(columnIndex);
     cardElement.dataset.cardIndex = String(cardIndex);
+    cardElement.dataset.cardId = card.id;
 
     if (card.completed) cardElement.classList.add("kanban-card--completed");
     if (card.priority) cardElement.dataset.priority = card.priority;
@@ -156,6 +217,15 @@ function createCardElement(
     const metaRow = document.createElement("div");
 
     metaRow.className = "kanban-card__meta";
+
+    if (projectPill) {
+        const pillElement = document.createElement("span");
+
+        pillElement.className = "kanban-card__project-pill";
+        pillElement.textContent = projectPill.title;
+        pillElement.style.background = projectPill.color;
+        metaRow.appendChild(pillElement);
+    }
 
     if (card.today) {
         const todayBadge = document.createElement("span");
@@ -383,6 +453,7 @@ function createAddCardForm(columnIndex: number, board: Board, onMutation: Mutati
                     priority: null,
                     date: null,
                     linkedNote: null,
+                    id: generateId(),
                 };
                 const newColumns = immutableSpliceCard(board.columns, columnIndex, board.columns[columnIndex].cards.length, 0, newCard);
                 onMutation({ ...board, columns: newColumns });
@@ -453,11 +524,9 @@ function createColumnElement(
         });
     });
 
-    const visibleCardCount = viewState.todayFilterActive
-        ? column.cards.filter(isCardVisibleInTodayFilter).length
-        : viewState.hideCompletedActive
-          ? column.cards.filter((card) => !card.completed).length
-          : column.cards.length;
+    const visibleCardCount = viewState.hideCompletedActive
+        ? column.cards.filter((card) => !card.completed).length
+        : column.cards.length;
 
     const countBadge = document.createElement("span");
 
@@ -524,20 +593,14 @@ function createColumnElement(
         cardList.className = "kanban-column__cards";
         cardList.dataset.columnIndex = String(columnIndex);
 
-        const cardsToRender = viewState.todayFilterActive ? column.cards.filter(isCardVisibleInTodayFilter) : column.cards;
+        for (let cardIndex = 0; cardIndex < column.cards.length; cardIndex++) {
+            const card = column.cards[cardIndex];
 
-        for (let cardIndex = 0; cardIndex < cardsToRender.length; cardIndex++) {
-            const card = cardsToRender[cardIndex];
-            const realCardIndex = viewState.todayFilterActive ? column.cards.indexOf(card) : cardIndex;
-
-            cardList.appendChild(createCardElement(card, columnIndex, realCardIndex, board, onMutation, vault, pluginSettings));
+            cardList.appendChild(createCardElement(card, columnIndex, cardIndex, board, onMutation, vault, pluginSettings, null));
         }
 
         columnElement.appendChild(cardList);
-
-        if (!viewState.todayFilterActive) {
-            columnElement.appendChild(createAddCardForm(columnIndex, board, onMutation));
-        }
+        columnElement.appendChild(createAddCardForm(columnIndex, board, onMutation));
     }
 
     return columnElement;
@@ -590,27 +653,103 @@ function createAddColumnButton(board: Board, onMutation: MutationHandler): HTMLE
     return button;
 }
 
-export function renderBoard(
+function renderTodayView(
+    container: HTMLElement,
+    board: Board,
+    onMutation: MutationHandler,
+    vault: Vault,
+    pluginSettings: PluginSettings,
+): Sortable[] {
+    const todayCards = collectTodayCards(board);
+    const todayList = document.createElement("div");
+
+    todayList.className = "kanban-today";
+
+    const todayHeader = document.createElement("div");
+
+    todayHeader.className = "kanban-today__header";
+
+    const todayTitle = document.createElement("h3");
+
+    todayTitle.className = "kanban-today__title";
+    todayTitle.textContent = "Today";
+
+    const todayCount = document.createElement("span");
+
+    todayCount.className = "kanban-column__count";
+    todayCount.textContent = String(todayCards.length);
+
+    todayHeader.appendChild(todayTitle);
+    todayHeader.appendChild(todayCount);
+    todayList.appendChild(todayHeader);
+
+    const cardListElement = document.createElement("div");
+
+    cardListElement.className = "kanban-today__cards";
+
+    for (const todayCard of todayCards) {
+        const pill = {
+            title: todayCard.columnTitle,
+            color: getColumnColor(todayCard.columnIndex),
+        };
+
+        const cardElement = createCardElement(
+            todayCard.card,
+            todayCard.columnIndex,
+            todayCard.cardIndex,
+            board,
+            onMutation,
+            vault,
+            pluginSettings,
+            pill,
+        );
+
+        cardListElement.appendChild(cardElement);
+    }
+
+    todayList.appendChild(cardListElement);
+    container.appendChild(todayList);
+
+    const sortableInstances: Sortable[] = [];
+
+    const instance = Sortable.create(cardListElement, {
+        animation: 150,
+        forceFallback: true,
+        fallbackClass: "kanban-card--dragging",
+        ghostClass: "kanban-card--ghost",
+        dragClass: "kanban-card--drag",
+        onEnd: () => {
+            const cardElements = cardListElement.querySelectorAll<HTMLElement>(".kanban-card");
+            const newTodayOrder: string[] = [];
+
+            cardElements.forEach((element) => {
+                const cardId = element.dataset.cardId;
+
+                if (cardId) {
+                    newTodayOrder.push(cardId);
+                }
+            });
+
+            onMutation({
+                ...board,
+                settings: { ...board.settings, todayOrder: newTodayOrder },
+            });
+        },
+    });
+
+    sortableInstances.push(instance);
+
+    return sortableInstances;
+}
+
+function renderBoardColumns(
     container: HTMLElement,
     board: Board,
     viewState: ViewState,
     onMutation: MutationHandler,
-    onViewStateChange: (viewState: ViewState) => void,
     vault: Vault,
     pluginSettings: PluginSettings,
 ): Sortable[] {
-    container.empty();
-
-    if (viewState.hideCompletedActive) {
-        container.dataset.hideCompleted = "true";
-    } else {
-        delete container.dataset.hideCompleted;
-    }
-
-    const toolbar = createToolbar(viewState, onViewStateChange);
-
-    container.appendChild(toolbar);
-
     const boardElement = document.createElement("div");
 
     boardElement.className = "kanban-board";
@@ -658,4 +797,32 @@ export function renderBoard(
     });
 
     return sortableInstances;
+}
+
+export function renderBoard(
+    container: HTMLElement,
+    board: Board,
+    viewState: ViewState,
+    onMutation: MutationHandler,
+    onViewStateChange: (viewState: ViewState) => void,
+    vault: Vault,
+    pluginSettings: PluginSettings,
+): Sortable[] {
+    container.empty();
+
+    if (viewState.hideCompletedActive) {
+        container.dataset.hideCompleted = "true";
+    } else {
+        delete container.dataset.hideCompleted;
+    }
+
+    const toolbar = createToolbar(viewState, onViewStateChange);
+
+    container.appendChild(toolbar);
+
+    if (viewState.todayFilterActive) {
+        return renderTodayView(container, board, onMutation, vault, pluginSettings);
+    }
+
+    return renderBoardColumns(container, board, viewState, onMutation, vault, pluginSettings);
 }

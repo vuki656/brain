@@ -319,6 +319,46 @@
     background: var(--background-secondary);
 }
 
+/* Today view */
+.kanban-today {
+    padding: 12px;
+    max-width: 600px;
+    margin: 0 auto;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.kanban-today__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.kanban-today__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.kanban-today__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 40px;
+}
+
+/* Project pill */
+.kanban-card__project-pill {
+    font-size: 10px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    color: var(--text-on-accent);
+    white-space: nowrap;
+}
+
 /* Inline edit */
 .kanban-inline-edit {
     width: 100%;

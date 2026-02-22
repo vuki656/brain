@@ -5,12 +5,24 @@ const DATE_REGEX = /\s@\{(\d{4}-\d{2}-\d{2})\}/g;
 const PRIORITY_IMPORTANT_REGEX = /\s!important/g;
 const PRIORITY_URGENT_REGEX = /\s!urgent/g;
 const LINKED_NOTE_REGEX = /(?:^|\s)\[\[(.+?)\]\]/g;
+const ID_REGEX = /\s@id:([a-z0-9]+)/g;
 const CHECKBOX_UNCHECKED_REGEX = /^- \[ \] /;
 const CHECKBOX_CHECKED_REGEX = /^- \[x\] /;
 const COLUMN_HEADING_REGEX = /^## (.+)$/;
 const SETTINGS_START = "%% kanban:settings";
 const SETTINGS_END = "%%";
 const ARCHIVE_SEPARATOR = "***";
+
+export function generateId(): string {
+    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+
+    for (let index = 0; index < 6; index++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    return result;
+}
 
 function parseCard(line: string): Card | null {
     const isChecked = CHECKBOX_CHECKED_REGEX.test(line);
@@ -26,6 +38,14 @@ function parseCard(line: string): Card | null {
     let priority: Priority = null;
     let date: string | null = null;
     let linkedNote: string | null = null;
+    let id: string | null = null;
+
+    const idMatch = ID_REGEX.exec(text);
+    if (idMatch) {
+        id = idMatch[1];
+        text = text.replace(ID_REGEX, "");
+    }
+    ID_REGEX.lastIndex = 0;
 
     const todayMatch = TODAY_REGEX.exec(text);
     if (todayMatch) {
@@ -69,6 +89,7 @@ function parseCard(line: string): Card | null {
         priority,
         date,
         linkedNote,
+        id: id ?? generateId(),
     };
 }
 
@@ -76,7 +97,7 @@ function parseSettings(lines: string[]): KanbanSettings {
     const settingsStartIndex = lines.findIndex((line) => line.trim() === SETTINGS_START);
 
     if (settingsStartIndex === -1) {
-        return { collapsedColumns: [] };
+        return { collapsedColumns: [], todayOrder: [] };
     }
 
     const jsonLines: string[] = [];
@@ -105,7 +126,7 @@ function parseSettings(lines: string[]): KanbanSettings {
     const jsonString = jsonLines.join("\n");
 
     if (!jsonString) {
-        return { collapsedColumns: [] };
+        return { collapsedColumns: [], todayOrder: [] };
     }
 
     try {
@@ -113,9 +134,10 @@ function parseSettings(lines: string[]): KanbanSettings {
 
         return {
             collapsedColumns: parsed["collapsed-columns"] ?? [],
+            todayOrder: parsed["today-order"] ?? [],
         };
     } catch {
-        return { collapsedColumns: [] };
+        return { collapsedColumns: [], todayOrder: [] };
     }
 }
 
@@ -192,6 +214,8 @@ function serializeCard(card: Card): string {
         line += ` @{${card.date}}`;
     }
 
+    line += ` @id:${card.id}`;
+
     return line;
 }
 
@@ -221,6 +245,10 @@ export function serializeBoard(board: Board): string {
 
     if (board.settings.collapsedColumns.length > 0) {
         settingsObject["collapsed-columns"] = board.settings.collapsedColumns;
+    }
+
+    if (board.settings.todayOrder.length > 0) {
+        settingsObject["today-order"] = board.settings.todayOrder;
     }
 
     lines.push("%% kanban:settings");

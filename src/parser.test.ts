@@ -10,20 +10,37 @@ kanban-plugin: vuki-kanban
 
 ## General
 
-- [ ] Review payments in bank app
-- [ ] Call grandma @today
-- [ ] Style guide !important @{2026-02-25}
-- [x] Send AG Invoice
+- [ ] Review payments in bank app @id:aaa111
+- [ ] Call grandma @today @id:bbb222
+- [ ] Style guide !important @{2026-02-25} @id:ccc333
+- [x] Send AG Invoice @id:ddd444
 
 ## Ancient
 
-- [ ] Review ognjens PRs @today !urgent
-- [x] Review marc comments @{2026-02-18}
+- [ ] Review ognjens PRs @today !urgent @id:eee555
+- [x] Review marc comments @{2026-02-18} @id:fff666
 
 
 %% kanban:settings
 \`\`\`json
 {"collapsed-columns":["Medforall"]}
+\`\`\`
+%%`;
+
+const SAMPLE_BOARD_NO_IDS = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## General
+
+- [ ] Review payments in bank app
+- [ ] Call grandma @today
+
+%% kanban:settings
+\`\`\`json
+{}
 \`\`\`
 %%`;
 
@@ -147,10 +164,48 @@ describe("parseBoard", () => {
         expect(board.columns[1].cards[1].date).toBe("2026-02-18");
     });
 
+    it("should parse @id token", () => {
+        const board = parseBoard(SAMPLE_BOARD);
+
+        expect(board.columns[0].cards[0].id).toBe("aaa111");
+        expect(board.columns[0].cards[1].id).toBe("bbb222");
+        expect(board.columns[1].cards[0].id).toBe("eee555");
+    });
+
+    it("should generate id when missing", () => {
+        const board = parseBoard(SAMPLE_BOARD_NO_IDS);
+
+        expect(board.columns[0].cards[0].id).toMatch(/^[a-z0-9]{6}$/);
+        expect(board.columns[0].cards[1].id).toMatch(/^[a-z0-9]{6}$/);
+        expect(board.columns[0].cards[0].id).not.toBe(board.columns[0].cards[1].id);
+    });
+
     it("should parse collapsed columns from settings", () => {
         const board = parseBoard(SAMPLE_BOARD);
 
         expect(board.settings.collapsedColumns).toEqual(["Medforall"]);
+    });
+
+    it("should parse today order from settings", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## General
+
+- [ ] Task one @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{"today-order":["abc123","def456"]}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.settings.todayOrder).toEqual(["abc123", "def456"]);
     });
 
     it("should stop parsing at archive separator", () => {
@@ -202,13 +257,13 @@ describe("serializeBoard", () => {
         expect(serialized.startsWith("---\n")).toBe(true);
     });
 
-    it("should serialize cards with tokens in canonical order", () => {
+    it("should serialize cards with tokens in canonical order including id", () => {
         const board = parseBoard(SAMPLE_BOARD);
         const serialized = serializeBoard(board);
 
-        expect(serialized).toContain("- [ ] Call grandma @today");
-        expect(serialized).toContain("- [ ] Style guide !important @{2026-02-25}");
-        expect(serialized).toContain("- [ ] Review ognjens PRs @today !urgent");
+        expect(serialized).toContain("- [ ] Call grandma @today @id:bbb222");
+        expect(serialized).toContain("- [ ] Style guide !important @{2026-02-25} @id:ccc333");
+        expect(serialized).toContain("- [ ] Review ognjens PRs @today !urgent @id:eee555");
     });
 
     it("should serialize settings block", () => {
@@ -218,6 +273,16 @@ describe("serializeBoard", () => {
         expect(serialized).toContain("%% kanban:settings");
         expect(serialized).toContain('"collapsed-columns":["Medforall"]');
         expect(serialized).toContain("%%");
+    });
+
+    it("should serialize today order in settings", () => {
+        const board = parseBoard(SAMPLE_BOARD);
+
+        board.settings.todayOrder = ["eee555", "bbb222"];
+
+        const serialized = serializeBoard(board);
+
+        expect(serialized).toContain('"today-order":["eee555","bbb222"]');
     });
 });
 
@@ -246,6 +311,7 @@ describe("round-trip", () => {
                 expect(reparsedCard.priority).toBe(originalCard.priority);
                 expect(reparsedCard.date).toBe(originalCard.date);
                 expect(reparsedCard.linkedNote).toBe(originalCard.linkedNote);
+                expect(reparsedCard.id).toBe(originalCard.id);
             }
         }
 

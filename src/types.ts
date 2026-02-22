@@ -7,6 +7,7 @@ export type Card = {
     priority: Priority;
     date: string | null;
     linkedNote: string | null;
+    id: string;
 };
 
 export type Column = {
@@ -16,6 +17,7 @@ export type Column = {
 
 export type KanbanSettings = {
     collapsedColumns: string[];
+    todayOrder: string[];
 };
 
 export type Board = {
