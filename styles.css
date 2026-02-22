@@ -120,10 +120,6 @@
     writing-mode: horizontal-tb;
 }
 
-.kanban-column--collapsed .kanban-column__collapse-btn {
-    writing-mode: horizontal-tb;
-}
-
 .kanban-column--collapsed .kanban-column__cards,
 .kanban-column--collapsed .kanban-add-card {
     display: none;
@@ -213,26 +209,15 @@
     box-sizing: border-box;
 }
 
-.kanban-column__collapse-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    background: var(--background-modifier-border);
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 13px;
-    line-height: 1;
+/* Menu color dot */
+.kanban-menu__color-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
     flex-shrink: 0;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.kanban-column__collapse-btn:hover {
-    color: var(--text-normal);
-    background: var(--background-modifier-hover);
 }
 
 /* Card list */

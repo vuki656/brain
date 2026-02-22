@@ -803,25 +803,6 @@ function createColumnElement(
     countBadge.className = "kanban-column__count";
     countBadge.textContent = String(visibleCardCount);
 
-    const collapseButton = document.createElement("span");
-
-    collapseButton.className = "kanban-column__collapse-btn";
-    collapseButton.textContent = isCollapsed ? "+" : "−";
-    collapseButton.addEventListener("click", () => {
-        let newCollapsed: string[];
-
-        if (isCollapsed) {
-            newCollapsed = board.settings.collapsedColumns.filter((name) => name !== column.title);
-        } else {
-            newCollapsed = [...board.settings.collapsedColumns, column.title];
-        }
-
-        onMutation({
-            ...board,
-            settings: { ...board.settings, collapsedColumns: newCollapsed },
-        });
-    });
-
     const dragHandle = document.createElement("span");
 
     dragHandle.className = "kanban-column__drag-handle";
@@ -836,39 +817,74 @@ function createColumnElement(
     header.appendChild(colorDot);
     header.appendChild(titleElement);
     header.appendChild(countBadge);
-    header.appendChild(collapseButton);
 
     header.addEventListener("contextmenu", (event) => {
         event.preventDefault();
 
         const menu = new Menu();
 
-        for (const color of COLUMN_COLORS) {
-            const label = COLUMN_COLOR_LABELS[color] ?? color;
-            const isActive = board.settings.columnColors[column.title] === color;
-
-            menu.addItem((item) => {
-                item.setIcon(isActive ? "check" : "palette").setTitle(label).onClick(() => {
-                    const newColumnColors = { ...board.settings.columnColors, [column.title]: color };
-
-                    onMutation({
-                        ...board,
-                        settings: { ...board.settings, columnColors: newColumnColors },
-                    });
-                });
-            });
-        }
-
         menu.addItem((item) =>
-            item.setIcon("rotate-ccw").setTitle("Reset color").onClick(() => {
-                const newColumnColors = { ...board.settings.columnColors };
-
-                delete newColumnColors[column.title];
+            item.setIcon("eye-off").setTitle("Hide column").onClick(() => {
+                const newCollapsed = [...board.settings.collapsedColumns, column.title];
 
                 onMutation({
                     ...board,
-                    settings: { ...board.settings, columnColors: newColumnColors },
+                    settings: { ...board.settings, collapsedColumns: newCollapsed },
                 });
+            }),
+        );
+
+        menu.addItem((item) =>
+            item.setIcon("palette").setTitle("Color").onClick((event) => {
+                const colorMenu = new Menu();
+
+                for (const color of COLUMN_COLORS) {
+                    const label = COLUMN_COLOR_LABELS[color] ?? color;
+                    const isActive = board.settings.columnColors[column.title] === color;
+
+                    colorMenu.addItem((colorItem) => {
+                        const fragment = document.createDocumentFragment();
+                        const dot = document.createElement("span");
+
+                        dot.className = "kanban-menu__color-dot";
+                        dot.style.background = color;
+
+                        const text = document.createElement("span");
+
+                        text.textContent = label;
+
+                        fragment.appendChild(dot);
+                        fragment.appendChild(text);
+
+                        colorItem.setTitle(fragment);
+                        if (isActive) colorItem.setChecked(true);
+                        colorItem.onClick(() => {
+                            const newColumnColors = { ...board.settings.columnColors, [column.title]: color };
+
+                            onMutation({
+                                ...board,
+                                settings: { ...board.settings, columnColors: newColumnColors },
+                            });
+                        });
+                    });
+                }
+
+                colorMenu.addSeparator();
+
+                colorMenu.addItem((colorItem) =>
+                    colorItem.setIcon("rotate-ccw").setTitle("Reset color").onClick(() => {
+                        const newColumnColors = { ...board.settings.columnColors };
+
+                        delete newColumnColors[column.title];
+
+                        onMutation({
+                            ...board,
+                            settings: { ...board.settings, columnColors: newColumnColors },
+                        });
+                    }),
+                );
+
+                colorMenu.showAtMouseEvent(event as MouseEvent);
             }),
         );
 
