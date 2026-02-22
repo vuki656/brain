@@ -432,7 +432,12 @@
 .kanban-today-layout__columns .kanban-column {
     width: auto;
     min-width: 0;
+    max-height: none;
     flex-shrink: 0;
+}
+
+.kanban-today-layout__columns .kanban-column__cards {
+    min-height: 20px;
 }
 
 .kanban-today {
