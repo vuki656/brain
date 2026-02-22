@@ -1092,7 +1092,11 @@ function renderTodayView(
                 const card = board.columns[movedColumnIndex].cards[movedCardIndex];
 
                 if (targetDate) {
-                    const newColumns = immutableUpdateCard(board.columns, movedColumnIndex, movedCardIndex, { date: targetDate });
+                    const movingToToday = targetDateKey === "today";
+                    const newColumns = immutableUpdateCard(board.columns, movedColumnIndex, movedCardIndex, {
+                        date: targetDate,
+                        today: movingToToday,
+                    });
 
                     const newTodayOrder = { ...board.settings.todayOrder };
 

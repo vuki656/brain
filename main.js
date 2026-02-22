@@ -3394,7 +3394,11 @@ function renderTodayView(container, board, viewState, onMutation, vault, pluginS
         const targetDate = getDateForSection(targetDateKey);
         const card = board.columns[movedColumnIndex].cards[movedCardIndex];
         if (targetDate) {
-          const newColumns = immutableUpdateCard(board.columns, movedColumnIndex, movedCardIndex, { date: targetDate });
+          const movingToToday = targetDateKey === "today";
+          const newColumns = immutableUpdateCard(board.columns, movedColumnIndex, movedCardIndex, {
+            date: targetDate,
+            today: movingToToday
+          });
           const newTodayOrder2 = { ...board.settings.todayOrder };
           for (const listItem of sectionCardLists) {
             const cardElements = listItem.element.querySelectorAll(".kanban-card");
