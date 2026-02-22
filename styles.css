@@ -488,3 +488,19 @@
     font-size: inherit;
     font-family: inherit;
 }
+
+/* Date picker */
+.kanban-date-picker-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+}
+
+.kanban-date-picker {
+    z-index: 1000;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    border: none;
+    padding: 0;
+}

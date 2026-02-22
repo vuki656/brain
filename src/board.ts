@@ -100,6 +100,71 @@ function immutableUpdateCard(columns: Column[], columnIndex: number, cardIndex: 
     });
 }
 
+function toDateString(date: Date): string {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    return `${year}-${month < 10 ? "0" : ""}${month}-${day < 10 ? "0" : ""}${day}`;
+}
+
+function getNextMonday(): Date {
+    const date = new Date();
+    const daysUntilMonday = ((8 - date.getDay()) % 7) || 7;
+
+    date.setDate(date.getDate() + daysUntilMonday);
+
+    return date;
+}
+
+function showDatePicker(
+    anchorEvent: MouseEvent,
+    card: Card,
+    columnIndex: number,
+    cardIndex: number,
+    board: Board,
+    onMutation: MutationHandler,
+): void {
+    const overlay = document.createElement("div");
+
+    overlay.className = "kanban-date-picker-overlay";
+
+    const picker = document.createElement("input");
+
+    picker.type = "date";
+    picker.className = "kanban-date-picker";
+    if (card.date) picker.value = card.date;
+
+    picker.style.position = "fixed";
+    picker.style.left = `${anchorEvent.clientX}px`;
+    picker.style.top = `${anchorEvent.clientY}px`;
+
+    const cleanup = () => {
+        overlay.remove();
+        picker.remove();
+    };
+
+    overlay.addEventListener("click", cleanup);
+
+    picker.addEventListener("change", () => {
+        if (picker.value) {
+            const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: picker.value });
+
+            onMutation({ ...board, columns: newColumns });
+        }
+
+        cleanup();
+    });
+
+    picker.addEventListener("keydown", (keyboardEvent) => {
+        if (keyboardEvent.key === "Escape") cleanup();
+    });
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(picker);
+    picker.showPicker();
+}
+
 function isCardVisibleInTodayFilter(card: Card): boolean {
     if (card.completed) return false;
     if (card.today) return true;
@@ -366,6 +431,46 @@ function showCardContextMenu(
             onMutation({ ...board, columns: newColumns });
         }),
     );
+
+    menu.addSeparator();
+
+    const today = new Date();
+    const tomorrow = new Date();
+
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    menu.addItem((item) =>
+        item.setTitle("Date: Today").onClick(() => {
+            const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: toDateString(today) });
+            onMutation({ ...board, columns: newColumns });
+        }),
+    );
+    menu.addItem((item) =>
+        item.setTitle("Date: Tomorrow").onClick(() => {
+            const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: toDateString(tomorrow) });
+            onMutation({ ...board, columns: newColumns });
+        }),
+    );
+    menu.addItem((item) =>
+        item.setTitle("Date: Next Monday").onClick(() => {
+            const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: toDateString(getNextMonday()) });
+            onMutation({ ...board, columns: newColumns });
+        }),
+    );
+    menu.addItem((item) =>
+        item.setTitle("Date: Pick...").onClick(() => {
+            showDatePicker(event, card, columnIndex, cardIndex, board, onMutation);
+        }),
+    );
+
+    if (card.date) {
+        menu.addItem((item) =>
+            item.setTitle("Date: Remove").onClick(() => {
+                const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: null });
+                onMutation({ ...board, columns: newColumns });
+            }),
+        );
+    }
 
     menu.addSeparator();
 
