@@ -22,6 +22,7 @@ export type KanbanSettings = {
 
 export type Board = {
     columns: Column[];
+    archivedCards: Card[];
     settings: KanbanSettings;
 };
 

@@ -1,6 +1,7 @@
 import Sortable, { SortableEvent } from "sortablejs";
 import { App, Menu, Notice, requestUrl, setIcon, TFile, Vault } from "obsidian";
 
+import { immutableSpliceCard, immutableUpdateCard, toDateString, getNextMonday, formatDate } from "./board-utils";
 import { generateId } from "./parser";
 import { Board, Card, Column, Priority, ViewState, PluginSettings } from "./types";
 
@@ -68,54 +69,6 @@ function getColumnColor(columnIndex: number): string {
     return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length];
 }
 
-function immutableSpliceCard(
-    columns: Column[],
-    columnIndex: number,
-    cardIndex: number,
-    deleteCount: number,
-    ...insertCards: Card[]
-): Column[] {
-    return columns.map((column, index) => {
-        if (index !== columnIndex) return column;
-
-        const newCards = [...column.cards];
-        newCards.splice(cardIndex, deleteCount, ...insertCards);
-
-        return { ...column, cards: newCards };
-    });
-}
-
-function immutableUpdateCard(columns: Column[], columnIndex: number, cardIndex: number, update: Partial<Card>): Column[] {
-    return columns.map((column, colIndex) => {
-        if (colIndex !== columnIndex) return column;
-
-        return {
-            ...column,
-            cards: column.cards.map((card, cIndex) => {
-                if (cIndex !== cardIndex) return card;
-
-                return { ...card, ...update };
-            }),
-        };
-    });
-}
-
-function toDateString(date: Date): string {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-
-    return `${year}-${month < 10 ? "0" : ""}${month}-${day < 10 ? "0" : ""}${day}`;
-}
-
-function getNextMonday(): Date {
-    const date = new Date();
-    const daysUntilMonday = ((8 - date.getDay()) % 7) || 7;
-
-    date.setDate(date.getDate() + daysUntilMonday);
-
-    return date;
-}
 
 function showDatePicker(
     card: Card,
@@ -268,23 +221,6 @@ function isCardVisibleInTodayFilter(card: Card): boolean {
     return false;
 }
 
-function formatDate(dateString: string): string {
-    const cardDate = new Date(dateString);
-    const today = new Date();
-
-    today.setHours(0, 0, 0, 0);
-    cardDate.setHours(0, 0, 0, 0);
-
-    const differenceInDays = Math.round((cardDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (differenceInDays === 0) return "Today";
-    if (differenceInDays === 1) return "Tomorrow";
-    if (differenceInDays === -1) return "Yesterday";
-    if (differenceInDays < -1) return `${Math.abs(differenceInDays)} days ago`;
-    if (differenceInDays <= 7) return `In ${differenceInDays} days`;
-
-    return dateString;
-}
 
 function collectTodayCards(board: Board): TodayCard[] {
     const todayCards: TodayCard[] = [];
@@ -623,12 +559,23 @@ function startInlineEdit(element: HTMLElement, currentValue: string, onConfirm: 
     input.className = "kanban-inline-edit";
     input.value = currentValue;
 
-    const originalContent = element.innerHTML;
+    const originalChildren: Node[] = [];
 
-    element.textContent = "";
+    while (element.firstChild) {
+        originalChildren.push(element.removeChild(element.firstChild));
+    }
+
     element.appendChild(input);
     input.focus();
     input.select();
+
+    const restoreOriginal = () => {
+        input.remove();
+
+        for (const child of originalChildren) {
+            element.appendChild(child);
+        }
+    };
 
     const commit = () => {
         const newValue = input.value.trim();
@@ -636,7 +583,7 @@ function startInlineEdit(element: HTMLElement, currentValue: string, onConfirm: 
         if (newValue && newValue !== currentValue) {
             onConfirm(newValue);
         } else {
-            element.innerHTML = originalContent;
+            restoreOriginal();
         }
     };
 
@@ -647,7 +594,8 @@ function startInlineEdit(element: HTMLElement, currentValue: string, onConfirm: 
             input.blur();
         }
         if (event.key === "Escape") {
-            element.innerHTML = originalContent;
+            input.removeEventListener("blur", commit);
+            restoreOriginal();
         }
     });
 }
@@ -933,6 +881,39 @@ function createAddColumnButton(board: Board, onMutation: MutationHandler): HTMLE
     return button;
 }
 
+function createCardSortableOptions(onEnd: (event: SortableEvent) => void, group?: string): Sortable.Options {
+    return {
+        group: group ?? "kanban-cards",
+        handle: ".kanban-card__drag-handle",
+        animation: 150,
+        forceFallback: true,
+        fallbackOnBody: true,
+        fallbackClass: "kanban-card--dragging",
+        ghostClass: "kanban-card--ghost",
+        dragClass: "kanban-card--drag",
+        onEnd,
+    };
+}
+
+function createColumnCardMoveHandler(board: Board, onMutation: MutationHandler): (event: SortableEvent) => void {
+    return (event: SortableEvent) => {
+        const fromColumnIndex = Number(event.from.dataset.columnIndex);
+        const toColumnIndex = Number(event.to.dataset.columnIndex);
+        const oldIndex = event.oldIndex;
+        const newIndex = event.newIndex;
+
+        if (oldIndex === undefined || newIndex === undefined) return;
+
+        const card = board.columns[fromColumnIndex].cards[oldIndex];
+        let newColumns = immutableSpliceCard(board.columns, fromColumnIndex, oldIndex, 1);
+
+        const adjustedToIndex = fromColumnIndex === toColumnIndex && newIndex > oldIndex ? newIndex - 1 : newIndex;
+        newColumns = immutableSpliceCard(newColumns, toColumnIndex, adjustedToIndex, 0, card);
+
+        onMutation({ ...board, columns: newColumns });
+    };
+}
+
 function renderTodayView(
     container: HTMLElement,
     board: Board,
@@ -1011,64 +992,30 @@ function renderTodayView(
 
     const sortableInstances: Sortable[] = [];
 
-    const todaySortable = Sortable.create(cardListElement, {
-        handle: ".kanban-card__drag-handle",
-        animation: 150,
-        forceFallback: true,
-        fallbackOnBody: true,
-        fallbackClass: "kanban-card--dragging",
-        ghostClass: "kanban-card--ghost",
-        dragClass: "kanban-card--drag",
-        onEnd: () => {
-            const cardElements = cardListElement.querySelectorAll<HTMLElement>(".kanban-card");
-            const newTodayOrder: string[] = [];
+    const todaySortable = Sortable.create(cardListElement, createCardSortableOptions(() => {
+        const cardElements = cardListElement.querySelectorAll<HTMLElement>(".kanban-card");
+        const newTodayOrder: string[] = [];
 
-            cardElements.forEach((element) => {
-                const cardId = element.dataset.cardId;
+        cardElements.forEach((element) => {
+            const cardId = element.dataset.cardId;
 
-                if (cardId) {
-                    newTodayOrder.push(cardId);
-                }
-            });
+            if (cardId) {
+                newTodayOrder.push(cardId);
+            }
+        });
 
-            onMutation({
-                ...board,
-                settings: { ...board.settings, todayOrder: newTodayOrder },
-            });
-        },
-    });
+        onMutation({
+            ...board,
+            settings: { ...board.settings, todayOrder: newTodayOrder },
+        });
+    }));
 
     sortableInstances.push(todaySortable);
 
     const cardLists = columnsPanel.querySelectorAll<HTMLElement>(".kanban-column__cards");
 
     cardLists.forEach((cardList) => {
-        const instance = Sortable.create(cardList, {
-            group: "kanban-cards",
-            handle: ".kanban-card__drag-handle",
-            animation: 150,
-            forceFallback: true,
-            fallbackOnBody: true,
-            fallbackClass: "kanban-card--dragging",
-            ghostClass: "kanban-card--ghost",
-            dragClass: "kanban-card--drag",
-            onEnd: (event: SortableEvent) => {
-                const fromColumnIndex = Number(event.from.dataset.columnIndex);
-                const toColumnIndex = Number(event.to.dataset.columnIndex);
-                const oldIndex = event.oldIndex;
-                const newIndex = event.newIndex;
-
-                if (oldIndex === undefined || newIndex === undefined) return;
-
-                const card = board.columns[fromColumnIndex].cards[oldIndex];
-                let newColumns = immutableSpliceCard(board.columns, fromColumnIndex, oldIndex, 1);
-
-                const adjustedToIndex = fromColumnIndex === toColumnIndex && newIndex > oldIndex ? newIndex - 1 : newIndex;
-                newColumns = immutableSpliceCard(newColumns, toColumnIndex, adjustedToIndex, 0, card);
-
-                onMutation({ ...board, columns: newColumns });
-            },
-        });
+        const instance = Sortable.create(cardList, createCardSortableOptions(createColumnCardMoveHandler(board, onMutation)));
 
         sortableInstances.push(instance);
     });
@@ -1127,32 +1074,7 @@ function renderBoardColumns(
     const cardLists = boardElement.querySelectorAll<HTMLElement>(".kanban-column__cards");
 
     cardLists.forEach((cardList) => {
-        const instance = Sortable.create(cardList, {
-            group: "kanban-cards",
-            handle: ".kanban-card__drag-handle",
-            animation: 150,
-            forceFallback: true,
-            fallbackOnBody: true,
-            fallbackClass: "kanban-card--dragging",
-            ghostClass: "kanban-card--ghost",
-            dragClass: "kanban-card--drag",
-            onEnd: (event: SortableEvent) => {
-                const fromColumnIndex = Number(event.from.dataset.columnIndex);
-                const toColumnIndex = Number(event.to.dataset.columnIndex);
-                const oldIndex = event.oldIndex;
-                const newIndex = event.newIndex;
-
-                if (oldIndex === undefined || newIndex === undefined) return;
-
-                const card = board.columns[fromColumnIndex].cards[oldIndex];
-                let newColumns = immutableSpliceCard(board.columns, fromColumnIndex, oldIndex, 1);
-
-                const adjustedToIndex = fromColumnIndex === toColumnIndex && newIndex > oldIndex ? newIndex - 1 : newIndex;
-                newColumns = immutableSpliceCard(newColumns, toColumnIndex, adjustedToIndex, 0, card);
-
-                onMutation({ ...board, columns: newColumns });
-            },
-        });
+        const instance = Sortable.create(cardList, createCardSortableOptions(createColumnCardMoveHandler(board, onMutation)));
 
         sortableInstances.push(instance);
     });

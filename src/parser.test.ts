@@ -246,6 +246,114 @@ kanban-plugin: vuki-kanban
         expect(discordCard.title).toContain("@all");
         expect(discordCard.today).toBe(false);
     });
+
+    it("should parse archived cards after *** separator", () => {
+        const board = parseBoard(DASHBOARD_ORIGINAL);
+
+        expect(board.archivedCards).toHaveLength(1);
+        expect(board.archivedCards[0].title).toBe("test");
+        expect(board.archivedCards[0].completed).toBe(true);
+    });
+
+    it("should return empty archivedCards when no archive section exists", () => {
+        const board = parseBoard(SAMPLE_BOARD);
+
+        expect(board.archivedCards).toEqual([]);
+    });
+
+    it("should handle empty columns", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Empty Column
+
+## Another Empty
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns).toHaveLength(2);
+        expect(board.columns[0].cards).toEqual([]);
+        expect(board.columns[1].cards).toEqual([]);
+    });
+
+    it("should parse a card with all tokens combined", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] [[MyNote]] @today !important @{2026-03-01} @id:xyz789
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+        const card = board.columns[0].cards[0];
+
+        expect(card.linkedNote).toBe("MyNote");
+        expect(card.today).toBe(true);
+        expect(card.priority).toBe("important");
+        expect(card.date).toBe("2026-03-01");
+        expect(card.id).toBe("xyz789");
+    });
+
+    it("should handle malformed settings gracefully", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{not valid json}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns).toHaveLength(1);
+        expect(board.settings.collapsedColumns).toEqual([]);
+        expect(board.settings.todayOrder).toEqual([]);
+    });
+
+    it("should handle markdown with no columns", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns).toEqual([]);
+        expect(board.archivedCards).toEqual([]);
+    });
 });
 
 describe("serializeBoard", () => {
@@ -273,6 +381,21 @@ describe("serializeBoard", () => {
         expect(serialized).toContain("%% kanban:settings");
         expect(serialized).toContain('"collapsed-columns":["Medforall"]');
         expect(serialized).toContain("%%");
+    });
+
+    it("should serialize archived cards after *** separator", () => {
+        const board = parseBoard(DASHBOARD_ORIGINAL);
+        const serialized = serializeBoard(board);
+
+        expect(serialized).toContain("***");
+        expect(serialized).toContain("- [x] test");
+    });
+
+    it("should not include *** when there are no archived cards", () => {
+        const board = parseBoard(SAMPLE_BOARD);
+        const serialized = serializeBoard(board);
+
+        expect(serialized).not.toContain("***");
     });
 
     it("should serialize today order in settings", () => {
@@ -316,6 +439,20 @@ describe("round-trip", () => {
         }
 
         expect(reparsed.settings.collapsedColumns).toEqual(board.settings.collapsedColumns);
+    });
+
+    it("should preserve archived cards through round-trip", () => {
+        const board = parseBoard(DASHBOARD_ORIGINAL);
+        const serialized = serializeBoard(board);
+        const reparsed = parseBoard(serialized);
+
+        expect(reparsed.archivedCards).toHaveLength(board.archivedCards.length);
+
+        for (let index = 0; index < board.archivedCards.length; index++) {
+            expect(reparsed.archivedCards[index].title).toBe(board.archivedCards[index].title);
+            expect(reparsed.archivedCards[index].completed).toBe(board.archivedCards[index].completed);
+            expect(reparsed.archivedCards[index].id).toBe(board.archivedCards[index].id);
+        }
     });
 
     it("should be idempotent on second serialize", () => {

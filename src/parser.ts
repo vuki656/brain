@@ -137,9 +137,11 @@ function parseSettings(lines: string[]): KanbanSettings {
 export function parseBoard(markdown: string): Board {
     const lines = markdown.split("\n");
     const columns: Column[] = [];
+    const archivedCards: Card[] = [];
     let currentColumn: Column | null = null;
     let pastFrontmatter = false;
     let inFrontmatter = false;
+    let inArchive = false;
 
     for (const line of lines) {
         const trimmed = line.trim();
@@ -156,12 +158,25 @@ export function parseBoard(markdown: string): Board {
             continue;
         }
 
-        if (trimmed === ARCHIVE_SEPARATOR) {
+        if (trimmed === SETTINGS_START) {
             break;
         }
 
-        if (trimmed === SETTINGS_START) {
-            break;
+        if (trimmed === ARCHIVE_SEPARATOR) {
+            inArchive = true;
+            continue;
+        }
+
+        if (inArchive) {
+            if (CHECKBOX_UNCHECKED_REGEX.test(trimmed) || CHECKBOX_CHECKED_REGEX.test(trimmed)) {
+                const card = parseCard(trimmed);
+
+                if (card) {
+                    archivedCards.push(card);
+                }
+            }
+
+            continue;
         }
 
         const headingMatch = COLUMN_HEADING_REGEX.exec(trimmed);
@@ -182,7 +197,7 @@ export function parseBoard(markdown: string): Board {
 
     const settings = parseSettings(lines);
 
-    return { columns, settings };
+    return { columns, archivedCards, settings };
 }
 
 function serializeCard(card: Card): string {
@@ -231,6 +246,17 @@ export function serializeBoard(board: Board): string {
         }
 
         lines.push("");
+        lines.push("");
+    }
+
+    if (board.archivedCards.length > 0) {
+        lines.push("***");
+        lines.push("");
+
+        for (const card of board.archivedCards) {
+            lines.push(serializeCard(card));
+        }
+
         lines.push("");
     }
 
