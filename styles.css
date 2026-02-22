@@ -492,13 +492,96 @@
     position: fixed;
     inset: 0;
     z-index: 999;
+    background: rgba(0, 0, 0, 0.5);
 }
 
-.kanban-date-picker {
+.kanban-date-picker-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 1000;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    border: none;
-    padding: 0;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 16px;
+    width: 280px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.kanban-date-picker__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.kanban-date-picker__nav {
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    padding: 4px 10px;
+    border-radius: 4px;
+    color: var(--text-muted);
+    user-select: none;
+}
+
+.kanban-date-picker__nav:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.kanban-date-picker__month-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-normal);
+}
+
+.kanban-date-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+}
+
+.kanban-date-picker__day-label {
+    font-size: 11px;
+    color: var(--text-faint);
+    padding: 4px 0;
+    font-weight: 600;
+}
+
+.kanban-date-picker__cell {
+    font-size: 13px;
+    padding: 6px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-normal);
+}
+
+.kanban-date-picker__cell:hover {
+    background: var(--background-modifier-hover);
+}
+
+.kanban-date-picker__cell--empty {
+    cursor: default;
+}
+
+.kanban-date-picker__cell--empty:hover {
+    background: none;
+}
+
+.kanban-date-picker__cell--today {
+    color: var(--interactive-accent);
+    font-weight: 600;
+}
+
+.kanban-date-picker__cell--selected {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.kanban-date-picker__cell--selected:hover {
+    background: var(--interactive-accent-hover);
+    color: var(--text-on-accent);
 }

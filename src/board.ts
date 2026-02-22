@@ -118,51 +118,137 @@ function getNextMonday(): Date {
 }
 
 function showDatePicker(
-    anchorEvent: MouseEvent,
     card: Card,
     columnIndex: number,
     cardIndex: number,
     board: Board,
     onMutation: MutationHandler,
 ): void {
+    const selectedDate = card.date ? new Date(card.date + "T00:00:00") : new Date();
+    let viewYear = selectedDate.getFullYear();
+    let viewMonth = selectedDate.getMonth();
+
     const overlay = document.createElement("div");
 
     overlay.className = "kanban-date-picker-overlay";
 
-    const picker = document.createElement("input");
+    const modal = document.createElement("div");
 
-    picker.type = "date";
-    picker.className = "kanban-date-picker";
-    if (card.date) picker.value = card.date;
-
-    picker.style.position = "fixed";
-    picker.style.left = `${anchorEvent.clientX}px`;
-    picker.style.top = `${anchorEvent.clientY}px`;
+    modal.className = "kanban-date-picker-modal";
 
     const cleanup = () => {
         overlay.remove();
-        picker.remove();
+        modal.remove();
     };
 
     overlay.addEventListener("click", cleanup);
 
-    picker.addEventListener("change", () => {
-        if (picker.value) {
-            const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: picker.value });
+    const onSelect = (dateString: string) => {
+        const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: dateString });
 
-            onMutation({ ...board, columns: newColumns });
+        onMutation({ ...board, columns: newColumns });
+        cleanup();
+    };
+
+    const renderCalendar = () => {
+        modal.empty();
+
+        const header = document.createElement("div");
+
+        header.className = "kanban-date-picker__header";
+
+        const prevButton = document.createElement("span");
+
+        prevButton.className = "kanban-date-picker__nav";
+        prevButton.textContent = "\u2039";
+        prevButton.addEventListener("click", () => {
+            viewMonth--;
+            if (viewMonth < 0) {
+                viewMonth = 11;
+                viewYear--;
+            }
+            renderCalendar();
+        });
+
+        const nextButton = document.createElement("span");
+
+        nextButton.className = "kanban-date-picker__nav";
+        nextButton.textContent = "\u203A";
+        nextButton.addEventListener("click", () => {
+            viewMonth++;
+            if (viewMonth > 11) {
+                viewMonth = 0;
+                viewYear++;
+            }
+            renderCalendar();
+        });
+
+        const monthLabel = document.createElement("span");
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+        monthLabel.className = "kanban-date-picker__month-label";
+        monthLabel.textContent = `${monthNames[viewMonth]} ${viewYear}`;
+
+        header.appendChild(prevButton);
+        header.appendChild(monthLabel);
+        header.appendChild(nextButton);
+        modal.appendChild(header);
+
+        const grid = document.createElement("div");
+
+        grid.className = "kanban-date-picker__grid";
+
+        const dayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+
+        for (const dayLabel of dayLabels) {
+            const cell = document.createElement("div");
+
+            cell.className = "kanban-date-picker__day-label";
+            cell.textContent = dayLabel;
+            grid.appendChild(cell);
         }
 
-        cleanup();
-    });
+        const firstDay = new Date(viewYear, viewMonth, 1);
+        const lastDay = new Date(viewYear, viewMonth + 1, 0);
+        const startDayOfWeek = (firstDay.getDay() + 6) % 7;
+        const todayString = toDateString(new Date());
 
-    picker.addEventListener("keydown", (keyboardEvent) => {
-        if (keyboardEvent.key === "Escape") cleanup();
-    });
+        for (let padding = 0; padding < startDayOfWeek; padding++) {
+            const empty = document.createElement("div");
 
+            empty.className = "kanban-date-picker__cell kanban-date-picker__cell--empty";
+            grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const cell = document.createElement("div");
+            const cellDate = new Date(viewYear, viewMonth, day);
+            const cellDateString = toDateString(cellDate);
+
+            cell.className = "kanban-date-picker__cell";
+            cell.textContent = String(day);
+
+            if (cellDateString === todayString) {
+                cell.classList.add("kanban-date-picker__cell--today");
+            }
+
+            if (card.date && cellDateString === card.date) {
+                cell.classList.add("kanban-date-picker__cell--selected");
+            }
+
+            cell.addEventListener("click", () => {
+                onSelect(cellDateString);
+            });
+
+            grid.appendChild(cell);
+        }
+
+        modal.appendChild(grid);
+    };
+
+    renderCalendar();
     document.body.appendChild(overlay);
-    document.body.appendChild(picker);
-    picker.showPicker();
+    document.body.appendChild(modal);
 }
 
 function isCardVisibleInTodayFilter(card: Card): boolean {
@@ -459,7 +545,7 @@ function showCardContextMenu(
     );
     menu.addItem((item) =>
         item.setTitle("Date: Pick...").onClick(() => {
-            showDatePicker(event, card, columnIndex, cardIndex, board, onMutation);
+            showDatePicker(card, columnIndex, cardIndex, board, onMutation);
         }),
     );
 
