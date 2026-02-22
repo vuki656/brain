@@ -18,6 +18,7 @@ export type Column = {
 export type KanbanSettings = {
     collapsedColumns: string[];
     todayOrder: Record<string, string[]>;
+    columnColors: Record<string, string>;
 };
 
 export type Board = {

@@ -2459,10 +2459,10 @@ function parseCard(line) {
   };
 }
 function parseSettings(lines) {
-  var _a;
+  var _a, _b;
   const settingsStartIndex = lines.findIndex((line) => line.trim() === SETTINGS_START);
   if (settingsStartIndex === -1) {
-    return { collapsedColumns: [], todayOrder: {} };
+    return { collapsedColumns: [], todayOrder: {}, columnColors: {} };
   }
   const jsonLines = [];
   let capturing = false;
@@ -2484,7 +2484,7 @@ function parseSettings(lines) {
   }
   const jsonString = jsonLines.join("\n");
   if (!jsonString) {
-    return { collapsedColumns: [], todayOrder: {} };
+    return { collapsedColumns: [], todayOrder: {}, columnColors: {} };
   }
   try {
     const parsed = JSON.parse(jsonString);
@@ -2497,10 +2497,11 @@ function parseSettings(lines) {
     }
     return {
       collapsedColumns: (_a = parsed["collapsed-columns"]) != null ? _a : [],
-      todayOrder
+      todayOrder,
+      columnColors: (_b = parsed["column-colors"]) != null ? _b : {}
     };
   } catch (e) {
-    return { collapsedColumns: [], todayOrder: {} };
+    return { collapsedColumns: [], todayOrder: {}, columnColors: {} };
   }
 }
 function parseBoard(markdown) {
@@ -2608,6 +2609,9 @@ function serializeBoard(board) {
   if (Object.keys(board.settings.todayOrder).length > 0) {
     settingsObject["today-order"] = board.settings.todayOrder;
   }
+  if (Object.keys(board.settings.columnColors).length > 0) {
+    settingsObject["column-colors"] = board.settings.columnColors;
+  }
   lines.push("%% kanban:settings");
   lines.push("```json");
   lines.push(JSON.stringify(settingsObject));
@@ -2656,7 +2660,19 @@ var COLUMN_COLORS = [
   "var(--color-cyan)",
   "var(--color-pink)"
 ];
-function getColumnColor(columnIndex) {
+var COLUMN_COLOR_LABELS = {
+  "var(--color-blue)": "Blue",
+  "var(--color-purple)": "Purple",
+  "var(--color-green)": "Green",
+  "var(--color-orange)": "Orange",
+  "var(--color-red)": "Red",
+  "var(--color-yellow)": "Yellow",
+  "var(--color-cyan)": "Cyan",
+  "var(--color-pink)": "Pink"
+};
+function getColumnColor(columnTitle, columnIndex, board) {
+  const customColor = board.settings.columnColors[columnTitle];
+  if (customColor) return customColor;
   return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length];
 }
 function showDatePicker(card, columnIndex, cardIndex, board, onMutation) {
@@ -3196,13 +3212,42 @@ function createColumnElement(column, columnIndex, board, viewState, onMutation, 
   const dragHandle = document.createElement("span");
   dragHandle.className = "kanban-column__drag-handle";
   (0, import_obsidian3.setIcon)(dragHandle, "grip-vertical");
+  const colorDot = document.createElement("span");
+  colorDot.className = "kanban-column__color-dot";
+  colorDot.style.background = getColumnColor(column.title, columnIndex, board);
   header.appendChild(dragHandle);
+  header.appendChild(colorDot);
   header.appendChild(titleElement);
   header.appendChild(countBadge);
   header.appendChild(collapseButton);
   header.addEventListener("contextmenu", (event) => {
+    var _a;
     event.preventDefault();
     const menu = new import_obsidian3.Menu();
+    for (const color of COLUMN_COLORS) {
+      const label = (_a = COLUMN_COLOR_LABELS[color]) != null ? _a : color;
+      const isActive = board.settings.columnColors[column.title] === color;
+      menu.addItem((item) => {
+        item.setIcon(isActive ? "check" : "palette").setTitle(label).onClick(() => {
+          const newColumnColors = { ...board.settings.columnColors, [column.title]: color };
+          onMutation({
+            ...board,
+            settings: { ...board.settings, columnColors: newColumnColors }
+          });
+        });
+      });
+    }
+    menu.addItem(
+      (item) => item.setIcon("rotate-ccw").setTitle("Reset color").onClick(() => {
+        const newColumnColors = { ...board.settings.columnColors };
+        delete newColumnColors[column.title];
+        onMutation({
+          ...board,
+          settings: { ...board.settings, columnColors: newColumnColors }
+        });
+      })
+    );
+    menu.addSeparator();
     menu.addItem(
       (item) => item.setIcon("trash-2").setTitle("Delete column").setWarning(true).onClick(() => {
         if (column.cards.length > 0) {
@@ -3353,7 +3398,7 @@ function renderTodayView(container, board, viewState, onMutation, vault, pluginS
     for (const todayCard of group.cards) {
       const pill = {
         title: todayCard.columnTitle,
-        color: getColumnColor(todayCard.columnIndex)
+        color: getColumnColor(todayCard.columnTitle, todayCard.columnIndex, board)
       };
       const cardElement = createCardElement(
         todayCard.card,
@@ -3520,7 +3565,7 @@ function renderBoard(container, board, viewState, onMutation, onViewStateChange,
 var KanbanView = class extends import_obsidian4.TextFileView {
   constructor(leaf, plugin) {
     super(leaf);
-    this.board = { columns: [], archivedCards: [], settings: { collapsedColumns: [], todayOrder: {} } };
+    this.board = { columns: [], archivedCards: [], settings: { collapsedColumns: [], todayOrder: {}, columnColors: {} } };
     this.viewState = { todayFilterActive: true, hideCompletedActive: true };
     this.sortableInstances = [];
     this.plugin = plugin;
@@ -3544,7 +3589,7 @@ var KanbanView = class extends import_obsidian4.TextFileView {
     this.render();
   }
   clear() {
-    this.board = { columns: [], archivedCards: [], settings: { collapsedColumns: [], todayOrder: {} } };
+    this.board = { columns: [], archivedCards: [], settings: { collapsedColumns: [], todayOrder: {}, columnColors: {} } };
     this.boardContainer.empty();
   }
   onClose() {

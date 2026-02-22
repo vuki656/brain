@@ -176,6 +176,18 @@
     opacity: 0.9;
 }
 
+.kanban-column__color-dot {
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.kanban-column--collapsed .kanban-column__color-dot {
+    writing-mode: horizontal-tb;
+}
+
 .kanban-column__title {
     font-size: 16px;
     font-weight: 600;

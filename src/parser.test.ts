@@ -233,6 +233,31 @@ kanban-plugin: vuki-kanban
         expect(board.settings.todayOrder).toEqual({ today: ["abc123", "def456"] });
     });
 
+    it("should parse column colors from settings", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## General
+
+- [ ] Task one @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{"column-colors":{"General":"var(--color-red)","Ancient":"var(--color-green)"}}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.settings.columnColors).toEqual({
+            General: "var(--color-red)",
+            Ancient: "var(--color-green)",
+        });
+    });
+
     it("should stop parsing at archive separator", () => {
         const board = parseBoard(DASHBOARD_ORIGINAL);
 
@@ -359,6 +384,7 @@ kanban-plugin: vuki-kanban
         expect(board.columns).toHaveLength(1);
         expect(board.settings.collapsedColumns).toEqual([]);
         expect(board.settings.todayOrder).toEqual({});
+        expect(board.settings.columnColors).toEqual({});
     });
 
     it("should handle markdown with no columns", () => {
@@ -431,6 +457,26 @@ describe("serializeBoard", () => {
         const serialized = serializeBoard(board);
 
         expect(serialized).toContain('"today-order":{"today":["eee555","bbb222"],"overdue":["aaa111"]}');
+    });
+
+    it("should serialize column colors in settings", () => {
+        const board = parseBoard(SAMPLE_BOARD);
+
+        board.settings.columnColors = { General: "var(--color-red)" };
+
+        const serialized = serializeBoard(board);
+
+        expect(serialized).toContain('"column-colors":{"General":"var(--color-red)"}');
+    });
+
+    it("should not include column-colors key when columnColors is empty", () => {
+        const board = parseBoard(SAMPLE_BOARD);
+
+        board.settings.columnColors = {};
+
+        const serialized = serializeBoard(board);
+
+        expect(serialized).not.toContain("column-colors");
     });
 
     it("should not include today-order key when todayOrder is empty", () => {

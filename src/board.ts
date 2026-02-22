@@ -71,7 +71,22 @@ const COLUMN_COLORS = [
     "var(--color-pink)",
 ];
 
-function getColumnColor(columnIndex: number): string {
+const COLUMN_COLOR_LABELS: Record<string, string> = {
+    "var(--color-blue)": "Blue",
+    "var(--color-purple)": "Purple",
+    "var(--color-green)": "Green",
+    "var(--color-orange)": "Orange",
+    "var(--color-red)": "Red",
+    "var(--color-yellow)": "Yellow",
+    "var(--color-cyan)": "Cyan",
+    "var(--color-pink)": "Pink",
+};
+
+function getColumnColor(columnTitle: string, columnIndex: number, board: Board): string {
+    const customColor = board.settings.columnColors[columnTitle];
+
+    if (customColor) return customColor;
+
     return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length];
 }
 
@@ -812,7 +827,13 @@ function createColumnElement(
     dragHandle.className = "kanban-column__drag-handle";
     setIcon(dragHandle, "grip-vertical");
 
+    const colorDot = document.createElement("span");
+
+    colorDot.className = "kanban-column__color-dot";
+    colorDot.style.background = getColumnColor(column.title, columnIndex, board);
+
     header.appendChild(dragHandle);
+    header.appendChild(colorDot);
     header.appendChild(titleElement);
     header.appendChild(countBadge);
     header.appendChild(collapseButton);
@@ -821,6 +842,37 @@ function createColumnElement(
         event.preventDefault();
 
         const menu = new Menu();
+
+        for (const color of COLUMN_COLORS) {
+            const label = COLUMN_COLOR_LABELS[color] ?? color;
+            const isActive = board.settings.columnColors[column.title] === color;
+
+            menu.addItem((item) => {
+                item.setIcon(isActive ? "check" : "palette").setTitle(label).onClick(() => {
+                    const newColumnColors = { ...board.settings.columnColors, [column.title]: color };
+
+                    onMutation({
+                        ...board,
+                        settings: { ...board.settings, columnColors: newColumnColors },
+                    });
+                });
+            });
+        }
+
+        menu.addItem((item) =>
+            item.setIcon("rotate-ccw").setTitle("Reset color").onClick(() => {
+                const newColumnColors = { ...board.settings.columnColors };
+
+                delete newColumnColors[column.title];
+
+                onMutation({
+                    ...board,
+                    settings: { ...board.settings, columnColors: newColumnColors },
+                });
+            }),
+        );
+
+        menu.addSeparator();
 
         menu.addItem((item) =>
             item
@@ -1038,7 +1090,7 @@ function renderTodayView(
         for (const todayCard of group.cards) {
             const pill = {
                 title: todayCard.columnTitle,
-                color: getColumnColor(todayCard.columnIndex),
+                color: getColumnColor(todayCard.columnTitle, todayCard.columnIndex, board),
             };
 
             const cardElement = createCardElement(

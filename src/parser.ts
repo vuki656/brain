@@ -90,7 +90,7 @@ function parseSettings(lines: string[]): KanbanSettings {
     const settingsStartIndex = lines.findIndex((line) => line.trim() === SETTINGS_START);
 
     if (settingsStartIndex === -1) {
-        return { collapsedColumns: [], todayOrder: {} };
+        return { collapsedColumns: [], todayOrder: {}, columnColors: {} };
     }
 
     const jsonLines: string[] = [];
@@ -119,7 +119,7 @@ function parseSettings(lines: string[]): KanbanSettings {
     const jsonString = jsonLines.join("\n");
 
     if (!jsonString) {
-        return { collapsedColumns: [], todayOrder: {} };
+        return { collapsedColumns: [], todayOrder: {}, columnColors: {} };
     }
 
     try {
@@ -137,9 +137,10 @@ function parseSettings(lines: string[]): KanbanSettings {
         return {
             collapsedColumns: parsed["collapsed-columns"] ?? [],
             todayOrder,
+            columnColors: parsed["column-colors"] ?? {},
         };
     } catch {
-        return { collapsedColumns: [], todayOrder: {} };
+        return { collapsedColumns: [], todayOrder: {}, columnColors: {} };
     }
 }
 
@@ -277,6 +278,10 @@ export function serializeBoard(board: Board): string {
 
     if (Object.keys(board.settings.todayOrder).length > 0) {
         settingsObject["today-order"] = board.settings.todayOrder;
+    }
+
+    if (Object.keys(board.settings.columnColors).length > 0) {
+        settingsObject["column-colors"] = board.settings.columnColors;
     }
 
     lines.push("%% kanban:settings");
