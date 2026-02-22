@@ -924,6 +924,7 @@ function createAddColumnButton(board: Board, onMutation: MutationHandler): HTMLE
 function renderTodayView(
     container: HTMLElement,
     board: Board,
+    viewState: ViewState,
     onMutation: MutationHandler,
     vault: Vault,
     pluginSettings: PluginSettings,
@@ -976,11 +977,29 @@ function renderTodayView(
     }
 
     todayList.appendChild(cardListElement);
-    container.appendChild(todayList);
+
+    const layout = document.createElement("div");
+
+    layout.className = "kanban-today-layout";
+    layout.appendChild(todayList);
+
+    const columnsPanel = document.createElement("div");
+
+    columnsPanel.className = "kanban-today-layout__columns";
+
+    for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
+        const column = board.columns[columnIndex];
+        const columnElement = createColumnElement(column, columnIndex, board, viewState, onMutation, vault, pluginSettings);
+
+        columnsPanel.appendChild(columnElement);
+    }
+
+    layout.appendChild(columnsPanel);
+    container.appendChild(layout);
 
     const sortableInstances: Sortable[] = [];
 
-    const instance = Sortable.create(cardListElement, {
+    const todaySortable = Sortable.create(cardListElement, {
         animation: 150,
         forceFallback: true,
         fallbackOnBody: true,
@@ -1006,7 +1025,39 @@ function renderTodayView(
         },
     });
 
-    sortableInstances.push(instance);
+    sortableInstances.push(todaySortable);
+
+    const cardLists = columnsPanel.querySelectorAll<HTMLElement>(".kanban-column__cards");
+
+    cardLists.forEach((cardList) => {
+        const instance = Sortable.create(cardList, {
+            group: "kanban-cards",
+            animation: 150,
+            forceFallback: true,
+            fallbackOnBody: true,
+            fallbackClass: "kanban-card--dragging",
+            ghostClass: "kanban-card--ghost",
+            dragClass: "kanban-card--drag",
+            onEnd: (event: SortableEvent) => {
+                const fromColumnIndex = Number(event.from.dataset.columnIndex);
+                const toColumnIndex = Number(event.to.dataset.columnIndex);
+                const oldIndex = event.oldIndex;
+                const newIndex = event.newIndex;
+
+                if (oldIndex === undefined || newIndex === undefined) return;
+
+                const card = board.columns[fromColumnIndex].cards[oldIndex];
+                let newColumns = immutableSpliceCard(board.columns, fromColumnIndex, oldIndex, 1);
+
+                const adjustedToIndex = fromColumnIndex === toColumnIndex && newIndex > oldIndex ? newIndex - 1 : newIndex;
+                newColumns = immutableSpliceCard(newColumns, toColumnIndex, adjustedToIndex, 0, card);
+
+                onMutation({ ...board, columns: newColumns });
+            },
+        });
+
+        sortableInstances.push(instance);
+    });
 
     return sortableInstances;
 }
@@ -1120,7 +1171,7 @@ export function renderBoard(
     container.appendChild(toolbar);
 
     if (viewState.todayFilterActive) {
-        return renderTodayView(container, board, onMutation, vault, pluginSettings);
+        return renderTodayView(container, board, viewState, onMutation, vault, pluginSettings);
     }
 
     const sortableInstances = renderBoardColumns(container, board, viewState, onMutation, vault, pluginSettings);
