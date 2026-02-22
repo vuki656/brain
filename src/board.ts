@@ -444,7 +444,7 @@ function createCardElement(
         metaRow.appendChild(pillElement);
     }
 
-    if (card.date) {
+    if (card.date && !projectPill) {
         const dateBadge = document.createElement("span");
         const isToday = card.date === toDateString(new Date());
         const isOverdue = new Date(card.date) < new Date(new Date().toDateString()) && !card.completed;
@@ -453,7 +453,7 @@ function createCardElement(
             ? "kanban-card__badge kanban-card__badge--today"
             : "kanban-card__badge kanban-card__badge--date";
         if (isOverdue) dateBadge.classList.add("kanban-card__badge--overdue");
-        dateBadge.textContent = isToday ? "today" : formatDate(card.date);
+        dateBadge.textContent = isToday ? "Today" : formatDate(card.date);
         metaRow.appendChild(dateBadge);
     }
 

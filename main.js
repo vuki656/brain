@@ -2928,13 +2928,13 @@ function createCardElement(card, columnIndex, cardIndex, board, onMutation, vaul
     pillElement.style.background = projectPill.color;
     metaRow.appendChild(pillElement);
   }
-  if (card.date) {
+  if (card.date && !projectPill) {
     const dateBadge = document.createElement("span");
     const isToday = card.date === toDateString(/* @__PURE__ */ new Date());
     const isOverdue = new Date(card.date) < new Date((/* @__PURE__ */ new Date()).toDateString()) && !card.completed;
     dateBadge.className = isToday ? "kanban-card__badge kanban-card__badge--today" : "kanban-card__badge kanban-card__badge--date";
     if (isOverdue) dateBadge.classList.add("kanban-card__badge--overdue");
-    dateBadge.textContent = isToday ? "today" : formatDate(card.date);
+    dateBadge.textContent = isToday ? "Today" : formatDate(card.date);
     metaRow.appendChild(dateBadge);
   }
   if (metaRow.children.length > 0) {
