@@ -1,5 +1,5 @@
 import Sortable, { SortableEvent } from "sortablejs";
-import { App, Menu, Notice, requestUrl, TFile, Vault } from "obsidian";
+import { App, Menu, Notice, requestUrl, setIcon, TFile, Vault } from "obsidian";
 
 import { generateId } from "./parser";
 import { Board, Card, Column, Priority, ViewState, PluginSettings } from "./types";
@@ -643,6 +643,16 @@ function createColumnElement(
     return columnElement;
 }
 
+function setButtonContent(button: HTMLElement, iconName: string, label: string): void {
+    button.empty();
+
+    const iconSpan = button.createSpan({ cls: "kanban-toolbar__button-icon" });
+
+    setIcon(iconSpan, iconName);
+
+    button.createSpan({ text: label });
+}
+
 function createToolbar(viewState: ViewState, onViewStateChange: (viewState: ViewState) => void, app: App): HTMLElement {
     const toolbar = document.createElement("div");
 
@@ -652,7 +662,7 @@ function createToolbar(viewState: ViewState, onViewStateChange: (viewState: View
 
     todayButton.className = "kanban-toolbar__button";
     if (viewState.todayFilterActive) todayButton.classList.add("kanban-toolbar__button--active");
-    todayButton.textContent = "Today";
+    setButtonContent(todayButton, "sun", "Today");
     todayButton.addEventListener("click", () => {
         onViewStateChange({ ...viewState, todayFilterActive: !viewState.todayFilterActive });
     });
@@ -661,7 +671,7 @@ function createToolbar(viewState: ViewState, onViewStateChange: (viewState: View
 
     hideCompletedButton.className = "kanban-toolbar__button";
     if (viewState.hideCompletedActive) hideCompletedButton.classList.add("kanban-toolbar__button--active");
-    hideCompletedButton.textContent = "Hide completed";
+    setButtonContent(hideCompletedButton, viewState.hideCompletedActive ? "eye-off" : "eye", "Hide completed");
     hideCompletedButton.addEventListener("click", () => {
         onViewStateChange({ ...viewState, hideCompletedActive: !viewState.hideCompletedActive });
     });
@@ -673,9 +683,9 @@ function createToolbar(viewState: ViewState, onViewStateChange: (viewState: View
     const updateButton = document.createElement("button");
 
     updateButton.className = "kanban-toolbar__button kanban-toolbar__button--update";
-    updateButton.textContent = "Update";
+    setButtonContent(updateButton, "download", "Update");
     updateButton.addEventListener("click", async () => {
-        updateButton.textContent = "Updating...";
+        setButtonContent(updateButton, "loader-2", "Updating...");
         updateButton.disabled = true;
 
         try {
@@ -684,7 +694,7 @@ function createToolbar(viewState: ViewState, onViewStateChange: (viewState: View
             new Notice(`Update failed: ${error}`);
         }
 
-        updateButton.textContent = "Update";
+        setButtonContent(updateButton, "download", "Update");
         updateButton.disabled = false;
     });
 

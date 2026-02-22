@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repo-Specific Overrides
+
+- Claude is allowed to commit and release in this repo (overrides the global "never commit" rule)
+
 ## Overview
 
 Custom Obsidian Kanban plugin (`obsidian-vuki-kanban`) that reads/writes standard markdown files. Triggered by `kanban-plugin: vuki-kanban` in frontmatter. Distributed via GitHub releases with a built-in self-update mechanism.
