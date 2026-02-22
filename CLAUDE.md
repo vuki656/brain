@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repo-Specific Overrides
 
 - Claude is allowed to commit and release in this repo (overrides the global "never commit" rule)
+- When the user says "release": commit all changes, push to remote, then create a GitHub release tagging that commit (bump version, build, commit, push, `gh release create`)
 
 ## Overview
 

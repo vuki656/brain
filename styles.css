@@ -45,15 +45,15 @@
 }
 
 .kanban-toolbar__button--active {
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
-    border-color: var(--interactive-accent);
+    background: var(--interactive-accent) !important;
+    color: var(--text-on-accent) !important;
+    border-color: var(--interactive-accent) !important;
     font-weight: 600;
 }
 
 .kanban-toolbar__button--active:hover {
-    background: var(--interactive-accent-hover);
-    color: var(--text-on-accent);
+    background: var(--interactive-accent-hover) !important;
+    color: var(--text-on-accent) !important;
 }
 
 .kanban-toolbar__button--active svg {
