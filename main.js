@@ -3056,12 +3056,17 @@ function showCardContextMenu(event, card, columnIndex, cardIndex, board, onMutat
   } else {
     menu.addItem(
       (item) => item.setIcon("file-x").setTitle("Delete linked note").setWarning(true).onClick(async () => {
+        var _a;
         const notePath = `${card.linkedNote}.md`;
         const file = vault.getAbstractFileByPath(notePath);
         if (file && file instanceof import_obsidian3.TFile) {
           try {
             await vault.trash(file, true);
-            const newColumns = immutableSpliceCard(board.columns, columnIndex, cardIndex, 1);
+            const noteName = (_a = card.linkedNote.split("/").pop()) != null ? _a : card.linkedNote;
+            const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, {
+              linkedNote: null,
+              title: noteName
+            });
             onMutation({ ...board, columns: newColumns });
             new import_obsidian3.Notice(`Deleted note: ${notePath}`);
           } catch (error) {

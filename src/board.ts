@@ -625,7 +625,11 @@ function showCardContextMenu(
                         try {
                             await vault.trash(file, true);
 
-                            const newColumns = immutableSpliceCard(board.columns, columnIndex, cardIndex, 1);
+                            const noteName = card.linkedNote!.split("/").pop() ?? card.linkedNote!;
+                            const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, {
+                                linkedNote: null,
+                                title: noteName,
+                            });
                             onMutation({ ...board, columns: newColumns });
 
                             new Notice(`Deleted note: ${notePath}`);
