@@ -365,7 +365,7 @@ function createCardElement(
 
         link.className = "internal-link";
         link.href = card.linkedNote;
-        link.textContent = card.linkedNote;
+        link.textContent = card.linkedNote.split("/").pop() ?? card.linkedNote;
         link.dataset.href = card.linkedNote;
         link.addEventListener("click", (event) => {
             event.preventDefault();
