@@ -969,10 +969,347 @@ function setButtonContent(button: HTMLElement, iconName: string, label: string):
     button.createSpan({ text: label });
 }
 
-function createToolbar(viewState: ViewState, onViewStateChange: (viewState: ViewState) => void, app: App): HTMLElement {
+function showQuickAddDatePicker(onSelect: (dateString: string) => void): void {
+    const now = new Date();
+    let viewYear = now.getFullYear();
+    let viewMonth = now.getMonth();
+
+    const overlay = document.createElement("div");
+
+    overlay.className = "kanban-date-picker-overlay";
+
+    const modal = document.createElement("div");
+
+    modal.className = "kanban-date-picker-modal";
+
+    const cleanup = () => {
+        overlay.remove();
+        modal.remove();
+    };
+
+    overlay.addEventListener("click", cleanup);
+
+    const renderCalendar = () => {
+        modal.empty();
+
+        const header = document.createElement("div");
+
+        header.className = "kanban-date-picker__header";
+
+        const prevButton = document.createElement("span");
+
+        prevButton.className = "kanban-date-picker__nav";
+        prevButton.textContent = "\u2039";
+        prevButton.addEventListener("click", () => {
+            viewMonth--;
+            if (viewMonth < 0) {
+                viewMonth = 11;
+                viewYear--;
+            }
+            renderCalendar();
+        });
+
+        const nextButton = document.createElement("span");
+
+        nextButton.className = "kanban-date-picker__nav";
+        nextButton.textContent = "\u203A";
+        nextButton.addEventListener("click", () => {
+            viewMonth++;
+            if (viewMonth > 11) {
+                viewMonth = 0;
+                viewYear++;
+            }
+            renderCalendar();
+        });
+
+        const monthLabel = document.createElement("span");
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+        monthLabel.className = "kanban-date-picker__month-label";
+        monthLabel.textContent = `${monthNames[viewMonth]} ${viewYear}`;
+
+        header.appendChild(prevButton);
+        header.appendChild(monthLabel);
+        header.appendChild(nextButton);
+        modal.appendChild(header);
+
+        const grid = document.createElement("div");
+
+        grid.className = "kanban-date-picker__grid";
+
+        const dayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+
+        for (const dayLabel of dayLabels) {
+            const cell = document.createElement("div");
+
+            cell.className = "kanban-date-picker__day-label";
+            cell.textContent = dayLabel;
+            grid.appendChild(cell);
+        }
+
+        const firstDay = new Date(viewYear, viewMonth, 1);
+        const lastDay = new Date(viewYear, viewMonth + 1, 0);
+        const startDayOfWeek = (firstDay.getDay() + 6) % 7;
+        const todayString = toDateString(new Date());
+
+        for (let padding = 0; padding < startDayOfWeek; padding++) {
+            const empty = document.createElement("div");
+
+            empty.className = "kanban-date-picker__cell kanban-date-picker__cell--empty";
+            grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const cell = document.createElement("div");
+            const cellDate = new Date(viewYear, viewMonth, day);
+            const cellDateString = toDateString(cellDate);
+
+            cell.className = "kanban-date-picker__cell";
+            cell.textContent = String(day);
+
+            if (cellDateString === todayString) {
+                cell.classList.add("kanban-date-picker__cell--today");
+            }
+
+            cell.addEventListener("click", () => {
+                onSelect(cellDateString);
+                cleanup();
+            });
+
+            grid.appendChild(cell);
+        }
+
+        modal.appendChild(grid);
+    };
+
+    renderCalendar();
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+}
+
+function openQuickAddDialog(board: Board, onMutation: MutationHandler): void {
+    let selectedDate: string | null = null;
+    let selectedPriority: Priority = null;
+
+    const overlay = document.createElement("div");
+
+    overlay.className = "kanban-quick-add-overlay";
+    overlay.addEventListener("click", () => cleanup());
+
+    const dialog = document.createElement("div");
+
+    dialog.className = "kanban-quick-add-dialog";
+    dialog.addEventListener("click", (event) => event.stopPropagation());
+
+    const titleInput = document.createElement("input");
+
+    titleInput.className = "kanban-quick-add__input";
+    titleInput.type = "text";
+    titleInput.placeholder = "Task title...";
+    dialog.appendChild(titleInput);
+
+    const columnRow = document.createElement("div");
+
+    columnRow.className = "kanban-quick-add__row";
+
+    const columnLabel = document.createElement("span");
+
+    columnLabel.className = "kanban-quick-add__label";
+    columnLabel.textContent = "Column";
+    columnRow.appendChild(columnLabel);
+
+    const columnSelect = document.createElement("select");
+
+    columnSelect.className = "kanban-quick-add__select";
+
+    const placeholderOption = document.createElement("option");
+
+    placeholderOption.value = "";
+    placeholderOption.textContent = "Select column...";
+    placeholderOption.disabled = true;
+    placeholderOption.selected = true;
+    columnSelect.appendChild(placeholderOption);
+
+    for (const [columnIndex, column] of board.columns.entries()) {
+        const option = document.createElement("option");
+
+        option.value = String(columnIndex);
+        option.textContent = column.title;
+        columnSelect.appendChild(option);
+    }
+
+    columnRow.appendChild(columnSelect);
+    dialog.appendChild(columnRow);
+
+    const dateRow = document.createElement("div");
+
+    dateRow.className = "kanban-quick-add__row";
+
+    const dateLabel = document.createElement("span");
+
+    dateLabel.className = "kanban-quick-add__label";
+    dateLabel.textContent = "Date";
+    dateRow.appendChild(dateLabel);
+
+    const dateButtons = document.createElement("div");
+
+    dateButtons.className = "kanban-quick-add__dates";
+
+    const today = new Date();
+    const tomorrow = new Date();
+
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const dateOptions: Array<{ label: string; value: string | null; pickDate?: boolean }> = [
+        { label: "Today", value: toDateString(today) },
+        { label: "Tomorrow", value: toDateString(tomorrow) },
+        { label: "Next Monday", value: toDateString(getNextMonday()) },
+        { label: "Pick date", value: null, pickDate: true },
+    ];
+
+    const updateDateButtonStates = () => {
+        for (const button of Array.from(dateButtons.querySelectorAll(".kanban-quick-add__date-button"))) {
+            const buttonValue = (button as HTMLElement).dataset.dateValue ?? null;
+            const isPickDate = (button as HTMLElement).dataset.pickDate === "true";
+
+            if (isPickDate) {
+                button.classList.toggle("kanban-quick-add__date-button--active", selectedDate !== null && !dateOptions.some((option) => !option.pickDate && option.value === selectedDate));
+            } else {
+                button.classList.toggle("kanban-quick-add__date-button--active", selectedDate === buttonValue);
+            }
+        }
+    };
+
+    for (const dateOption of dateOptions) {
+        const dateButton = document.createElement("span");
+
+        dateButton.className = "kanban-quick-add__date-button";
+        dateButton.textContent = dateOption.label;
+
+        if (dateOption.pickDate) {
+            dateButton.dataset.pickDate = "true";
+            dateButton.addEventListener("click", () => {
+                showQuickAddDatePicker((dateString) => {
+                    selectedDate = dateString;
+                    updateDateButtonStates();
+                });
+            });
+        } else {
+            dateButton.dataset.dateValue = dateOption.value ?? "";
+            dateButton.addEventListener("click", () => {
+                selectedDate = selectedDate === dateOption.value ? null : dateOption.value;
+                updateDateButtonStates();
+            });
+        }
+
+        dateButtons.appendChild(dateButton);
+    }
+
+    dateRow.appendChild(dateButtons);
+    dialog.appendChild(dateRow);
+
+    const priorityRow = document.createElement("div");
+
+    priorityRow.className = "kanban-quick-add__row";
+
+    const priorityLabel = document.createElement("span");
+
+    priorityLabel.className = "kanban-quick-add__label";
+    priorityLabel.textContent = "Priority";
+    priorityRow.appendChild(priorityLabel);
+
+    const priorityButton = document.createElement("span");
+
+    priorityButton.className = "kanban-quick-add__priority";
+
+    const priorityIcon = document.createElement("span");
+
+    priorityIcon.className = "kanban-quick-add__priority-icon";
+    setIcon(priorityIcon, "alert-circle");
+    priorityButton.appendChild(priorityIcon);
+    priorityButton.appendChild(document.createTextNode("Important"));
+
+    priorityButton.addEventListener("click", () => {
+        selectedPriority = selectedPriority === "important" ? null : "important";
+        priorityButton.classList.toggle("kanban-quick-add__priority--active", selectedPriority === "important");
+    });
+
+    priorityRow.appendChild(priorityButton);
+    dialog.appendChild(priorityRow);
+
+    const submitButton = document.createElement("span");
+
+    submitButton.className = "kanban-quick-add__submit";
+    submitButton.textContent = "Add task";
+
+    const cleanup = () => {
+        overlay.remove();
+    };
+
+    const submit = () => {
+        const title = titleInput.value.trim();
+
+        if (!title) {
+            titleInput.focus();
+            return;
+        }
+
+        if (!columnSelect.value) {
+            columnSelect.focus();
+            return;
+        }
+
+        const columnIndex = Number(columnSelect.value);
+        const newCard: Card = {
+            title,
+            completed: false,
+            priority: selectedPriority,
+            date: selectedDate,
+            linkedNote: null,
+            id: generateId(),
+        };
+        const newColumns = immutableSpliceCard(board.columns, columnIndex, board.columns[columnIndex].cards.length, 0, newCard);
+
+        onMutation({ ...board, columns: newColumns });
+        cleanup();
+    };
+
+    submitButton.addEventListener("click", submit);
+    dialog.appendChild(submitButton);
+
+    titleInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            submit();
+        }
+        if (event.key === "Escape") {
+            cleanup();
+        }
+    });
+
+    dialog.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            cleanup();
+        }
+    });
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    titleInput.focus();
+}
+
+function createToolbar(viewState: ViewState, onViewStateChange: (viewState: ViewState) => void, board: Board, onMutation: MutationHandler, app: App): HTMLElement {
     const toolbar = document.createElement("div");
 
     toolbar.className = "kanban-toolbar";
+
+    const addTaskButton = document.createElement("button");
+
+    addTaskButton.className = "kanban-toolbar__button";
+    setButtonContent(addTaskButton, "plus", "Add task");
+    addTaskButton.addEventListener("click", () => {
+        openQuickAddDialog(board, onMutation);
+    });
 
     const todayButton = document.createElement("button");
 
@@ -1014,6 +1351,7 @@ function createToolbar(viewState: ViewState, onViewStateChange: (viewState: View
         updateButton.disabled = false;
     });
 
+    toolbar.appendChild(addTaskButton);
     toolbar.appendChild(todayButton);
     toolbar.appendChild(hideCompletedButton);
     toolbar.appendChild(toolbarSpacer);
@@ -1343,7 +1681,7 @@ export function renderBoard(
         delete container.dataset.hideCompleted;
     }
 
-    const toolbar = createToolbar(viewState, onViewStateChange, app);
+    const toolbar = createToolbar(viewState, onViewStateChange, board, onMutation, app);
 
     container.appendChild(toolbar);
 

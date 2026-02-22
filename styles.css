@@ -654,3 +654,160 @@
     background: var(--interactive-accent-hover);
     color: var(--text-on-accent);
 }
+
+/* Quick add dialog */
+.kanban-quick-add-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kanban-quick-add-dialog {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    padding: 20px;
+    width: 380px;
+    max-width: 90vw;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.kanban-quick-add__input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.kanban-quick-add__input:focus {
+    border-color: var(--interactive-accent);
+}
+
+.kanban-quick-add__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.kanban-quick-add__label {
+    font-size: 13px;
+    color: var(--text-muted);
+    min-width: 56px;
+    flex-shrink: 0;
+}
+
+.kanban-quick-add__select {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.kanban-quick-add__dates {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.kanban-quick-add__date-button {
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 12px;
+    cursor: pointer;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.kanban-quick-add__date-button:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.kanban-quick-add__date-button--active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.kanban-quick-add__date-button--active:hover {
+    background: var(--interactive-accent-hover);
+    color: var(--text-on-accent);
+}
+
+.kanban-quick-add__priority {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 12px;
+    cursor: pointer;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.kanban-quick-add__priority:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.kanban-quick-add__priority--active {
+    background: var(--color-red);
+    color: var(--text-on-accent);
+}
+
+.kanban-quick-add__priority--active:hover {
+    background: var(--color-red);
+    color: var(--text-on-accent);
+    opacity: 0.9;
+}
+
+.kanban-quick-add__priority-icon {
+    display: inline-flex;
+    align-items: center;
+}
+
+.kanban-quick-add__priority-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.kanban-quick-add__submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    user-select: none;
+}
+
+.kanban-quick-add__submit:hover {
+    background: var(--interactive-accent-hover);
+}
