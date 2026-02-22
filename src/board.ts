@@ -1018,6 +1018,9 @@ export function renderBoard(
     pluginSettings: PluginSettings,
     app: App,
 ): Sortable[] {
+    const previousBoard = container.querySelector(".kanban-board");
+    const savedScrollLeft = previousBoard ? previousBoard.scrollLeft : 0;
+
     container.empty();
 
     if (viewState.hideCompletedActive) {
@@ -1034,5 +1037,10 @@ export function renderBoard(
         return renderTodayView(container, board, onMutation, vault, pluginSettings);
     }
 
-    return renderBoardColumns(container, board, viewState, onMutation, vault, pluginSettings);
+    const sortableInstances = renderBoardColumns(container, board, viewState, onMutation, vault, pluginSettings);
+    const newBoard = container.querySelector(".kanban-board");
+
+    if (newBoard) newBoard.scrollLeft = savedScrollLeft;
+
+    return sortableInstances;
 }
