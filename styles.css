@@ -16,18 +16,30 @@
 }
 
 .kanban-toolbar__button {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
     border-radius: 4px;
-    border: 2px solid transparent;
-    border-bottom: 3px solid transparent;
+    border: none;
     background: none;
     color: var(--text-muted);
     cursor: pointer;
     font-size: 13px;
-    transition: all 0.15s ease;
+    transition: color 0.15s ease;
+}
+
+.kanban-toolbar__button::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 4px;
+    right: 4px;
+    height: 3px;
+    border-radius: 3px;
+    background: transparent;
+    transition: background 0.15s ease;
 }
 
 .kanban-toolbar__button-icon {
@@ -46,8 +58,11 @@
 
 .kanban-toolbar__button--active {
     color: var(--interactive-accent);
-    border-bottom-color: var(--interactive-accent);
     font-weight: 600;
+}
+
+.kanban-toolbar__button--active::after {
+    background: var(--interactive-accent);
 }
 
 .kanban-toolbar__button--active:hover {
