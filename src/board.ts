@@ -773,7 +773,7 @@ function createToolbar(viewState: ViewState, onViewStateChange: (viewState: View
 
     todayButton.className = "kanban-toolbar__button";
     if (viewState.todayFilterActive) todayButton.classList.add("kanban-toolbar__button--active");
-    setButtonContent(todayButton, "sun", "Today");
+    setButtonContent(todayButton, viewState.todayFilterActive ? "calendar-check" : "sun", "Today");
     todayButton.addEventListener("click", () => {
         onViewStateChange({ ...viewState, todayFilterActive: !viewState.todayFilterActive });
     });
