@@ -544,6 +544,7 @@
     font-weight: 600;
     color: var(--text-on-accent);
     white-space: nowrap;
+    line-height: 16px;
 }
 
 /* Inline edit */
