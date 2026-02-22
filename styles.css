@@ -467,6 +467,14 @@
     overflow-y: visible;
 }
 
+.is-mobile:not(.is-tablet) .kanban-today-layout__columns {
+    display: none;
+}
+
+.is-mobile:not(.is-tablet) .kanban-today {
+    max-width: none;
+}
+
 .kanban-today {
     padding: 12px;
     max-width: 500px;
