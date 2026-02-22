@@ -589,6 +589,12 @@ function createColumnElement(
         });
     });
 
+    const dragHandle = document.createElement("span");
+
+    dragHandle.className = "kanban-column__drag-handle";
+    setIcon(dragHandle, "grip-vertical");
+
+    header.appendChild(dragHandle);
     header.appendChild(titleElement);
     header.appendChild(countBadge);
     header.appendChild(collapseButton);
@@ -837,6 +843,31 @@ function renderBoardColumns(
     boardElement.appendChild(createAddColumnButton(board, onMutation));
 
     const sortableInstances: Sortable[] = [];
+
+    const columnSortable = Sortable.create(boardElement, {
+        animation: 150,
+        handle: ".kanban-column__drag-handle",
+        draggable: ".kanban-column",
+        forceFallback: true,
+        fallbackOnBody: true,
+        fallbackClass: "kanban-column--dragging",
+        ghostClass: "kanban-column--ghost",
+        onEnd: (event: SortableEvent) => {
+            const oldIndex = event.oldIndex;
+            const newIndex = event.newIndex;
+
+            if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return;
+
+            const newColumns = [...board.columns];
+            const [moved] = newColumns.splice(oldIndex, 1);
+
+            newColumns.splice(newIndex, 0, moved);
+            onMutation({ ...board, columns: newColumns });
+        },
+    });
+
+    sortableInstances.push(columnSortable);
+
     const cardLists = boardElement.querySelectorAll<HTMLElement>(".kanban-column__cards");
 
     cardLists.forEach((cardList) => {

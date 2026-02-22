@@ -109,6 +109,10 @@
     border-bottom: none;
 }
 
+.kanban-column--collapsed .kanban-column__drag-handle {
+    display: none;
+}
+
 .kanban-column--collapsed .kanban-column__title {
     flex: 0;
     white-space: nowrap;
@@ -142,6 +146,36 @@
 .kanban-column__header * {
     margin: 0;
     padding: 0;
+}
+
+.kanban-column__drag-handle {
+    display: inline-flex;
+    align-items: center;
+    cursor: grab;
+    color: var(--text-faint);
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
+}
+
+.kanban-column__drag-handle:hover {
+    opacity: 1;
+}
+
+.kanban-column__drag-handle:active {
+    cursor: grabbing;
+}
+
+.kanban-column__drag-handle svg {
+    width: 14px;
+    height: 14px;
+}
+
+.kanban-column--ghost {
+    opacity: 0.3;
+}
+
+.kanban-column--dragging {
+    opacity: 0.9;
 }
 
 .kanban-column__title {
