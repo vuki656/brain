@@ -54,6 +54,12 @@ type TodayCard = {
     columnTitle: string;
 };
 
+type DateGroup = {
+    label: string;
+    dateKey: string;
+    cards: TodayCard[];
+};
+
 const COLUMN_COLORS = [
     "var(--color-blue)",
     "var(--color-purple)",
@@ -207,23 +213,49 @@ function showDatePicker(
 function isCardVisibleInTodayFilter(card: Card): boolean {
     if (card.completed) return false;
     if (card.today) return true;
-
-    if (card.date) {
-        const cardDate = new Date(card.date);
-        const today = new Date();
-
-        today.setHours(0, 0, 0, 0);
-        cardDate.setHours(0, 0, 0, 0);
-
-        return cardDate.getTime() <= today.getTime();
-    }
+    if (card.date) return true;
 
     return false;
 }
 
 
-function collectTodayCards(board: Board): TodayCard[] {
+function sortCardsByOrder(cards: TodayCard[], savedOrder: string[]): TodayCard[] {
+    if (savedOrder.length === 0) return cards;
+
+    const sorted = [...cards];
+
+    sorted.sort((first, second) => {
+        const indexOfFirst = savedOrder.indexOf(first.card.id);
+        const indexOfSecond = savedOrder.indexOf(second.card.id);
+        const effectiveFirst = indexOfFirst === -1 ? savedOrder.length : indexOfFirst;
+        const effectiveSecond = indexOfSecond === -1 ? savedOrder.length : indexOfSecond;
+
+        return effectiveFirst - effectiveSecond;
+    });
+
+    return sorted;
+}
+
+function formatDateGroupLabel(dateString: string): string {
+    const cardDate = new Date(dateString + "T00:00:00");
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+    cardDate.setHours(0, 0, 0, 0);
+
+    const differenceInDays = Math.round((cardDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (differenceInDays === 1) return "Tomorrow";
+    if (differenceInDays <= 7) return `In ${differenceInDays} days`;
+
+    return dateString;
+}
+
+function collectCardsByDateGroup(board: Board): DateGroup[] {
+    const todayString = toDateString(new Date());
+    const overdueCards: TodayCard[] = [];
     const todayCards: TodayCard[] = [];
+    const futureBuckets = new Map<string, TodayCard[]>();
 
     for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
         const column = board.columns[columnIndex];
@@ -231,31 +263,67 @@ function collectTodayCards(board: Board): TodayCard[] {
         for (let cardIndex = 0; cardIndex < column.cards.length; cardIndex++) {
             const card = column.cards[cardIndex];
 
-            if (isCardVisibleInTodayFilter(card)) {
-                todayCards.push({
-                    card,
-                    columnIndex,
-                    cardIndex,
-                    columnTitle: column.title,
-                });
+            if (!isCardVisibleInTodayFilter(card)) continue;
+
+            const todayCard: TodayCard = {
+                card,
+                columnIndex,
+                cardIndex,
+                columnTitle: column.title,
+            };
+
+            if (card.today && !card.date) {
+                todayCards.push(todayCard);
+            } else if (card.date) {
+                if (card.date < todayString) {
+                    overdueCards.push(todayCard);
+                } else if (card.date === todayString || card.today) {
+                    todayCards.push(todayCard);
+                } else {
+                    const existing = futureBuckets.get(card.date);
+
+                    if (existing) {
+                        existing.push(todayCard);
+                    } else {
+                        futureBuckets.set(card.date, [todayCard]);
+                    }
+                }
             }
         }
     }
 
     const savedOrder = board.settings.todayOrder;
+    const groups: DateGroup[] = [];
 
-    if (savedOrder.length > 0) {
-        todayCards.sort((first, second) => {
-            const indexOfFirst = savedOrder.indexOf(first.card.id);
-            const indexOfSecond = savedOrder.indexOf(second.card.id);
-            const effectiveFirst = indexOfFirst === -1 ? savedOrder.length : indexOfFirst;
-            const effectiveSecond = indexOfSecond === -1 ? savedOrder.length : indexOfSecond;
-
-            return effectiveFirst - effectiveSecond;
+    if (overdueCards.length > 0) {
+        groups.push({
+            label: "Overdue",
+            dateKey: "overdue",
+            cards: sortCardsByOrder(overdueCards, savedOrder["overdue"] ?? []),
         });
     }
 
-    return todayCards;
+    if (todayCards.length > 0) {
+        groups.push({
+            label: "Today",
+            dateKey: "today",
+            cards: sortCardsByOrder(todayCards, savedOrder["today"] ?? []),
+        });
+    }
+
+    const sortedFutureDates = [...futureBuckets.keys()].sort();
+
+    for (const dateKey of sortedFutureDates) {
+        const cards = futureBuckets.get(dateKey)!;
+
+        groups.push({
+            label: formatDateGroupLabel(dateKey),
+            dateKey,
+            cards: sortCardsByOrder(cards, savedOrder[dateKey] ?? []),
+        });
+    }
+
+    return groups;
 }
 
 function createCardElement(
@@ -914,6 +982,13 @@ function createColumnCardMoveHandler(board: Board, onMutation: MutationHandler):
     };
 }
 
+function getDateForSection(dateKey: string): string | null {
+    if (dateKey === "today") return toDateString(new Date());
+    if (dateKey === "overdue") return null;
+
+    return dateKey;
+}
+
 function renderTodayView(
     container: HTMLElement,
     board: Board,
@@ -922,59 +997,73 @@ function renderTodayView(
     vault: Vault,
     pluginSettings: PluginSettings,
 ): Sortable[] {
-    const todayCards = collectTodayCards(board);
-    const todayList = document.createElement("div");
+    const dateGroups = collectCardsByDateGroup(board);
+    const todayPanel = document.createElement("div");
 
-    todayList.className = "kanban-today";
+    todayPanel.className = "kanban-today";
 
-    const todayHeader = document.createElement("div");
+    const sortableInstances: Sortable[] = [];
+    const sectionCardLists: { dateKey: string; element: HTMLElement }[] = [];
 
-    todayHeader.className = "kanban-today__header";
+    for (const group of dateGroups) {
+        const section = document.createElement("div");
 
-    const todayTitle = document.createElement("div");
+        section.className = "kanban-today__section";
+        if (group.dateKey === "overdue") section.classList.add("kanban-today__section--overdue");
 
-    todayTitle.className = "kanban-today__title";
-    todayTitle.textContent = "Today";
+        const header = document.createElement("div");
 
-    const todayCount = document.createElement("span");
+        header.className = "kanban-today__header";
 
-    todayCount.className = "kanban-today__count";
-    todayCount.textContent = String(todayCards.length);
+        const title = document.createElement("div");
 
-    todayHeader.appendChild(todayTitle);
-    todayHeader.appendChild(todayCount);
-    todayList.appendChild(todayHeader);
+        title.className = "kanban-today__title";
+        if (group.dateKey === "overdue") title.classList.add("kanban-today__title--overdue");
+        title.textContent = group.label;
 
-    const cardListElement = document.createElement("div");
+        const count = document.createElement("span");
 
-    cardListElement.className = "kanban-today__cards";
+        count.className = "kanban-today__count";
+        count.textContent = String(group.cards.length);
 
-    for (const todayCard of todayCards) {
-        const pill = {
-            title: todayCard.columnTitle,
-            color: getColumnColor(todayCard.columnIndex),
-        };
+        header.appendChild(title);
+        header.appendChild(count);
+        section.appendChild(header);
 
-        const cardElement = createCardElement(
-            todayCard.card,
-            todayCard.columnIndex,
-            todayCard.cardIndex,
-            board,
-            onMutation,
-            vault,
-            pluginSettings,
-            pill,
-        );
+        const cardListElement = document.createElement("div");
 
-        cardListElement.appendChild(cardElement);
+        cardListElement.className = "kanban-today__cards";
+        cardListElement.dataset.dateKey = group.dateKey;
+
+        for (const todayCard of group.cards) {
+            const pill = {
+                title: todayCard.columnTitle,
+                color: getColumnColor(todayCard.columnIndex),
+            };
+
+            const cardElement = createCardElement(
+                todayCard.card,
+                todayCard.columnIndex,
+                todayCard.cardIndex,
+                board,
+                onMutation,
+                vault,
+                pluginSettings,
+                pill,
+            );
+
+            cardListElement.appendChild(cardElement);
+        }
+
+        section.appendChild(cardListElement);
+        todayPanel.appendChild(section);
+        sectionCardLists.push({ dateKey: group.dateKey, element: cardListElement });
     }
-
-    todayList.appendChild(cardListElement);
 
     const layout = document.createElement("div");
 
     layout.className = "kanban-today-layout";
-    layout.appendChild(todayList);
+    layout.appendChild(todayPanel);
 
     const columnsPanel = document.createElement("div");
 
@@ -990,27 +1079,79 @@ function renderTodayView(
     layout.appendChild(columnsPanel);
     container.appendChild(layout);
 
-    const sortableInstances: Sortable[] = [];
+    for (const { dateKey, element: cardListElement } of sectionCardLists) {
+        const sectionSortable = Sortable.create(cardListElement, createCardSortableOptions((event: SortableEvent) => {
+            const targetDateKey = (event.to as HTMLElement).dataset.dateKey;
+            const sourceDateKey = (event.from as HTMLElement).dataset.dateKey;
+            const cardId = (event.item as HTMLElement).dataset.cardId;
+            const movedCardIndex = Number((event.item as HTMLElement).dataset.cardIndex);
+            const movedColumnIndex = Number((event.item as HTMLElement).dataset.columnIndex);
 
-    const todaySortable = Sortable.create(cardListElement, createCardSortableOptions(() => {
-        const cardElements = cardListElement.querySelectorAll<HTMLElement>(".kanban-card");
-        const newTodayOrder: string[] = [];
+            if (cardId && targetDateKey && sourceDateKey !== targetDateKey) {
+                const targetDate = getDateForSection(targetDateKey);
+                const card = board.columns[movedColumnIndex].cards[movedCardIndex];
 
-        cardElements.forEach((element) => {
-            const cardId = element.dataset.cardId;
+                if (targetDate) {
+                    const newColumns = immutableUpdateCard(board.columns, movedColumnIndex, movedCardIndex, { date: targetDate });
 
-            if (cardId) {
-                newTodayOrder.push(cardId);
+                    const newTodayOrder = { ...board.settings.todayOrder };
+
+                    for (const listItem of sectionCardLists) {
+                        const cardElements = listItem.element.querySelectorAll<HTMLElement>(".kanban-card");
+                        const orderIds: string[] = [];
+
+                        cardElements.forEach((element) => {
+                            const elementCardId = element.dataset.cardId;
+
+                            if (elementCardId) orderIds.push(elementCardId);
+                        });
+
+                        if (orderIds.length > 0) {
+                            newTodayOrder[listItem.dateKey] = orderIds;
+                        } else {
+                            delete newTodayOrder[listItem.dateKey];
+                        }
+                    }
+
+                    onMutation({
+                        ...board,
+                        columns: newColumns,
+                        settings: { ...board.settings, todayOrder: newTodayOrder },
+                    });
+
+                    return;
+                } else if (targetDateKey === "overdue" && card.date) {
+                    // already has an overdue date; keep it
+                }
             }
-        });
 
-        onMutation({
-            ...board,
-            settings: { ...board.settings, todayOrder: newTodayOrder },
-        });
-    }));
+            const newTodayOrder = { ...board.settings.todayOrder };
 
-    sortableInstances.push(todaySortable);
+            for (const listItem of sectionCardLists) {
+                const cardElements = listItem.element.querySelectorAll<HTMLElement>(".kanban-card");
+                const orderIds: string[] = [];
+
+                cardElements.forEach((element) => {
+                    const elementCardId = element.dataset.cardId;
+
+                    if (elementCardId) orderIds.push(elementCardId);
+                });
+
+                if (orderIds.length > 0) {
+                    newTodayOrder[listItem.dateKey] = orderIds;
+                } else {
+                    delete newTodayOrder[listItem.dateKey];
+                }
+            }
+
+            onMutation({
+                ...board,
+                settings: { ...board.settings, todayOrder: newTodayOrder },
+            });
+        }, "kanban-today-cards"));
+
+        sortableInstances.push(sectionSortable);
+    }
 
     const cardLists = columnsPanel.querySelectorAll<HTMLElement>(".kanban-column__cards");
 

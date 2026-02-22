@@ -17,7 +17,7 @@ export type Column = {
 
 export type KanbanSettings = {
     collapsedColumns: string[];
-    todayOrder: string[];
+    todayOrder: Record<string, string[]>;
 };
 
 export type Board = {

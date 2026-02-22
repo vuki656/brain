@@ -186,7 +186,32 @@ describe("parseBoard", () => {
         expect(board.settings.collapsedColumns).toEqual(["Medforall"]);
     });
 
-    it("should parse today order from settings", () => {
+    it("should parse today order record from settings", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## General
+
+- [ ] Task one @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{"today-order":{"today":["abc123","def456"],"overdue":["ghi789"]}}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.settings.todayOrder).toEqual({
+            today: ["abc123", "def456"],
+            overdue: ["ghi789"],
+        });
+    });
+
+    it("should migrate old array today order to record format", () => {
         const markdown = `---
 
 kanban-plugin: vuki-kanban
@@ -205,7 +230,7 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown);
 
-        expect(board.settings.todayOrder).toEqual(["abc123", "def456"]);
+        expect(board.settings.todayOrder).toEqual({ today: ["abc123", "def456"] });
     });
 
     it("should stop parsing at archive separator", () => {
@@ -333,7 +358,7 @@ kanban-plugin: vuki-kanban
 
         expect(board.columns).toHaveLength(1);
         expect(board.settings.collapsedColumns).toEqual([]);
-        expect(board.settings.todayOrder).toEqual([]);
+        expect(board.settings.todayOrder).toEqual({});
     });
 
     it("should handle markdown with no columns", () => {
@@ -398,14 +423,24 @@ describe("serializeBoard", () => {
         expect(serialized).not.toContain("***");
     });
 
-    it("should serialize today order in settings", () => {
+    it("should serialize today order record in settings", () => {
         const board = parseBoard(SAMPLE_BOARD);
 
-        board.settings.todayOrder = ["eee555", "bbb222"];
+        board.settings.todayOrder = { today: ["eee555", "bbb222"], overdue: ["aaa111"] };
 
         const serialized = serializeBoard(board);
 
-        expect(serialized).toContain('"today-order":["eee555","bbb222"]');
+        expect(serialized).toContain('"today-order":{"today":["eee555","bbb222"],"overdue":["aaa111"]}');
+    });
+
+    it("should not include today-order key when todayOrder is empty", () => {
+        const board = parseBoard(SAMPLE_BOARD);
+
+        board.settings.todayOrder = {};
+
+        const serialized = serializeBoard(board);
+
+        expect(serialized).not.toContain("today-order");
     });
 });
 

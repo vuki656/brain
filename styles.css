@@ -514,6 +514,14 @@
     box-sizing: border-box;
 }
 
+.kanban-today__section + .kanban-today__section {
+    margin-top: 16px;
+}
+
+.kanban-today__title--overdue {
+    color: var(--color-red);
+}
+
 .kanban-today__cards {
     display: flex;
     flex-direction: column;

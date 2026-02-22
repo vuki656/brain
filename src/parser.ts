@@ -90,7 +90,7 @@ function parseSettings(lines: string[]): KanbanSettings {
     const settingsStartIndex = lines.findIndex((line) => line.trim() === SETTINGS_START);
 
     if (settingsStartIndex === -1) {
-        return { collapsedColumns: [], todayOrder: [] };
+        return { collapsedColumns: [], todayOrder: {} };
     }
 
     const jsonLines: string[] = [];
@@ -119,18 +119,27 @@ function parseSettings(lines: string[]): KanbanSettings {
     const jsonString = jsonLines.join("\n");
 
     if (!jsonString) {
-        return { collapsedColumns: [], todayOrder: [] };
+        return { collapsedColumns: [], todayOrder: {} };
     }
 
     try {
         const parsed = JSON.parse(jsonString);
 
+        const rawTodayOrder = parsed["today-order"];
+        let todayOrder: Record<string, string[]> = {};
+
+        if (Array.isArray(rawTodayOrder)) {
+            todayOrder = { today: rawTodayOrder };
+        } else if (rawTodayOrder && typeof rawTodayOrder === "object") {
+            todayOrder = rawTodayOrder;
+        }
+
         return {
             collapsedColumns: parsed["collapsed-columns"] ?? [],
-            todayOrder: parsed["today-order"] ?? [],
+            todayOrder,
         };
     } catch {
-        return { collapsedColumns: [], todayOrder: [] };
+        return { collapsedColumns: [], todayOrder: {} };
     }
 }
 
@@ -266,7 +275,7 @@ export function serializeBoard(board: Board): string {
         settingsObject["collapsed-columns"] = board.settings.collapsedColumns;
     }
 
-    if (board.settings.todayOrder.length > 0) {
+    if (Object.keys(board.settings.todayOrder).length > 0) {
         settingsObject["today-order"] = board.settings.todayOrder;
     }
 
