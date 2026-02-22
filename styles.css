@@ -274,8 +274,9 @@
 
 .kanban-card__content {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 6px;
+    overflow: visible;
 }
 
 .kanban-card__drag-handle {
@@ -286,7 +287,6 @@
     opacity: 0.4;
     transition: opacity 0.15s ease;
     flex-shrink: 0;
-    margin-top: 1px;
     touch-action: none;
 }
 
@@ -304,7 +304,6 @@
 }
 
 .kanban-card__checkbox {
-    margin-top: 2px;
     flex-shrink: 0;
     cursor: pointer;
 }
