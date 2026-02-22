@@ -17,7 +17,7 @@ kanban-plugin: vuki-kanban
 
 ## Ancient
 
-- [ ] Review ognjens PRs @today !urgent @id:eee555
+- [ ] Review ognjens PRs @today !important @id:eee555
 - [x] Review marc comments @{2026-02-18} @id:fff666
 
 
@@ -154,7 +154,7 @@ describe("parseBoard", () => {
 
         expect(board.columns[0].cards[2].priority).toBe("important");
         expect(board.columns[0].cards[2].title).toBe("Style guide");
-        expect(board.columns[1].cards[0].priority).toBe("urgent");
+        expect(board.columns[1].cards[0].priority).toBe("important");
     });
 
     it("should parse date tokens", () => {
@@ -263,7 +263,7 @@ describe("serializeBoard", () => {
 
         expect(serialized).toContain("- [ ] Call grandma @today @id:bbb222");
         expect(serialized).toContain("- [ ] Style guide !important @{2026-02-25} @id:ccc333");
-        expect(serialized).toContain("- [ ] Review ognjens PRs @today !urgent @id:eee555");
+        expect(serialized).toContain("- [ ] Review ognjens PRs @today !important @id:eee555");
     });
 
     it("should serialize settings block", () => {

@@ -1,4 +1,4 @@
-export type Priority = "important" | "urgent" | null;
+export type Priority = "important" | null;
 
 export type Card = {
     title: string;

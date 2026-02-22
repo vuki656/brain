@@ -9,7 +9,7 @@ import type VukiKanbanPlugin from "./main";
 
 export class KanbanView extends TextFileView {
     private board: Board = { columns: [], settings: { collapsedColumns: [], todayOrder: [] } };
-    private viewState: ViewState = { todayFilterActive: false, hideCompletedActive: false };
+    private viewState: ViewState = { todayFilterActive: false, hideCompletedActive: true };
     private sortableInstances: Sortable[] = [];
     private plugin: VukiKanbanPlugin;
     private boardContainer: HTMLElement;
@@ -36,7 +36,7 @@ export class KanbanView extends TextFileView {
         this.board = parseBoard(data);
 
         if (clear) {
-            this.viewState = { todayFilterActive: false, hideCompletedActive: false };
+            this.viewState = { todayFilterActive: false, hideCompletedActive: true };
         }
 
         this.render();
@@ -79,6 +79,7 @@ export class KanbanView extends TextFileView {
             },
             this.app.vault,
             this.plugin.settings,
+            this.app,
         );
     }
 }

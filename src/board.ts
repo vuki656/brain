@@ -1,8 +1,48 @@
 import Sortable, { SortableEvent } from "sortablejs";
-import { Menu, Notice, TFile, Vault } from "obsidian";
+import { App, Menu, Notice, requestUrl, TFile, Vault } from "obsidian";
 
 import { generateId } from "./parser";
 import { Board, Card, Column, Priority, ViewState, PluginSettings } from "./types";
+
+const BRAT_REPO = "vuki656/brain";
+const PLUGIN_ID = "obsidian-vuki-kanban";
+
+async function selfUpdate(app: App): Promise<void> {
+    const pluginDir = `${app.vault.configDir}/plugins/${PLUGIN_ID}`;
+    const files = ["main.js", "manifest.json", "styles.css"];
+
+    const currentManifestResponse = await app.vault.adapter.read(`${pluginDir}/manifest.json`);
+    const currentVersion = JSON.parse(currentManifestResponse).version;
+
+    const manifestResponse = await requestUrl({
+        url: `https://github.com/${BRAT_REPO}/releases/latest/download/manifest.json?cb=${Date.now()}`,
+    });
+    const latestVersion = JSON.parse(manifestResponse.text).version;
+
+    if (currentVersion === latestVersion) {
+        new Notice(`Already on latest version (${currentVersion}).`);
+        return;
+    }
+
+    const downloadBase = `https://github.com/${BRAT_REPO}/releases/download/${latestVersion}`;
+
+    const downloads = await Promise.all(
+        files.map(async (fileName) => {
+            const response = await requestUrl({ url: `${downloadBase}/${fileName}` });
+
+            return { fileName, content: response.text };
+        }),
+    );
+
+    for (const download of downloads) {
+        await app.vault.adapter.write(`${pluginDir}/${download.fileName}`, download.content);
+    }
+
+    await (app as any).plugins.disablePlugin(PLUGIN_ID);
+    await (app as any).plugins.enablePlugin(PLUGIN_ID);
+
+    new Notice(`Updated to ${latestVersion}. Plugin reloaded.`);
+}
 
 type MutationHandler = (board: Board) => void;
 
@@ -202,7 +242,7 @@ function createCardElement(
     cardContent.appendChild(checkbox);
     cardContent.appendChild(titleElement);
 
-    const priorityButton = document.createElement("button");
+    const priorityButton = document.createElement("span");
 
     priorityButton.className = "kanban-card__priority-dot";
     priorityButton.dataset.priority = card.priority ?? "none";
@@ -281,13 +321,6 @@ function showPriorityMenu(
         }),
     );
 
-    menu.addItem((item) =>
-        item.setTitle("Urgent").onClick(() => {
-            const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { priority: "urgent" });
-            onMutation({ ...board, columns: newColumns });
-        }),
-    );
-
     menu.showAtMouseEvent(event);
 }
 
@@ -330,12 +363,6 @@ function showCardContextMenu(
     menu.addItem((item) =>
         item.setTitle("Priority: Important").onClick(() => {
             const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { priority: "important" });
-            onMutation({ ...board, columns: newColumns });
-        }),
-    );
-    menu.addItem((item) =>
-        item.setTitle("Priority: Urgent").onClick(() => {
-            const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { priority: "urgent" });
             onMutation({ ...board, columns: newColumns });
         }),
     );
@@ -495,13 +522,23 @@ function createColumnElement(
 
     columnElement.className = "kanban-column";
     columnElement.dataset.columnIndex = String(columnIndex);
-    if (isCollapsed) columnElement.classList.add("kanban-column--collapsed");
+    if (isCollapsed) {
+        columnElement.classList.add("kanban-column--collapsed");
+        columnElement.addEventListener("click", () => {
+            const newCollapsed = board.settings.collapsedColumns.filter((name) => name !== column.title);
+
+            onMutation({
+                ...board,
+                settings: { ...board.settings, collapsedColumns: newCollapsed },
+            });
+        });
+    }
 
     const header = document.createElement("div");
 
     header.className = "kanban-column__header";
 
-    const titleElement = document.createElement("h3");
+    const titleElement = document.createElement("div");
 
     titleElement.className = "kanban-column__title";
     titleElement.textContent = column.title;
@@ -533,7 +570,7 @@ function createColumnElement(
     countBadge.className = "kanban-column__count";
     countBadge.textContent = String(visibleCardCount);
 
-    const collapseButton = document.createElement("button");
+    const collapseButton = document.createElement("span");
 
     collapseButton.className = "kanban-column__collapse-btn";
     collapseButton.textContent = isCollapsed ? "+" : "−";
@@ -606,7 +643,7 @@ function createColumnElement(
     return columnElement;
 }
 
-function createToolbar(viewState: ViewState, onViewStateChange: (viewState: ViewState) => void): HTMLElement {
+function createToolbar(viewState: ViewState, onViewStateChange: (viewState: ViewState) => void, app: App): HTMLElement {
     const toolbar = document.createElement("div");
 
     toolbar.className = "kanban-toolbar";
@@ -629,8 +666,32 @@ function createToolbar(viewState: ViewState, onViewStateChange: (viewState: View
         onViewStateChange({ ...viewState, hideCompletedActive: !viewState.hideCompletedActive });
     });
 
+    const toolbarSpacer = document.createElement("div");
+
+    toolbarSpacer.className = "kanban-toolbar__spacer";
+
+    const updateButton = document.createElement("button");
+
+    updateButton.className = "kanban-toolbar__button kanban-toolbar__button--update";
+    updateButton.textContent = "Update";
+    updateButton.addEventListener("click", async () => {
+        updateButton.textContent = "Updating...";
+        updateButton.disabled = true;
+
+        try {
+            await selfUpdate(app);
+        } catch (error) {
+            new Notice(`Update failed: ${error}`);
+        }
+
+        updateButton.textContent = "Update";
+        updateButton.disabled = false;
+    });
+
     toolbar.appendChild(todayButton);
     toolbar.appendChild(hideCompletedButton);
+    toolbar.appendChild(toolbarSpacer);
+    toolbar.appendChild(updateButton);
 
     return toolbar;
 }
@@ -669,14 +730,14 @@ function renderTodayView(
 
     todayHeader.className = "kanban-today__header";
 
-    const todayTitle = document.createElement("h3");
+    const todayTitle = document.createElement("div");
 
     todayTitle.className = "kanban-today__title";
     todayTitle.textContent = "Today";
 
     const todayCount = document.createElement("span");
 
-    todayCount.className = "kanban-column__count";
+    todayCount.className = "kanban-today__count";
     todayCount.textContent = String(todayCards.length);
 
     todayHeader.appendChild(todayTitle);
@@ -807,6 +868,7 @@ export function renderBoard(
     onViewStateChange: (viewState: ViewState) => void,
     vault: Vault,
     pluginSettings: PluginSettings,
+    app: App,
 ): Sortable[] {
     container.empty();
 
@@ -816,7 +878,7 @@ export function renderBoard(
         delete container.dataset.hideCompleted;
     }
 
-    const toolbar = createToolbar(viewState, onViewStateChange);
+    const toolbar = createToolbar(viewState, onViewStateChange, app);
 
     container.appendChild(toolbar);
 

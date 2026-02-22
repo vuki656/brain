@@ -3,7 +3,7 @@ import { Board, Card, Column, KanbanSettings, Priority, FRONTMATTER_KEY } from "
 const TODAY_REGEX = /\s@today/g;
 const DATE_REGEX = /\s@\{(\d{4}-\d{2}-\d{2})\}/g;
 const PRIORITY_IMPORTANT_REGEX = /\s!important/g;
-const PRIORITY_URGENT_REGEX = /\s!urgent/g;
+
 const LINKED_NOTE_REGEX = /(?:^|\s)\[\[(.+?)\]\]/g;
 const ID_REGEX = /\s@id:([a-z0-9]+)/g;
 const CHECKBOX_UNCHECKED_REGEX = /^- \[ \] /;
@@ -67,13 +67,6 @@ function parseCard(line: string): Card | null {
         text = text.replace(PRIORITY_IMPORTANT_REGEX, "");
     }
     PRIORITY_IMPORTANT_REGEX.lastIndex = 0;
-
-    const urgentMatch = PRIORITY_URGENT_REGEX.exec(text);
-    if (urgentMatch) {
-        priority = "urgent";
-        text = text.replace(PRIORITY_URGENT_REGEX, "");
-    }
-    PRIORITY_URGENT_REGEX.lastIndex = 0;
 
     const linkedNoteMatch = LINKED_NOTE_REGEX.exec(text);
     if (linkedNoteMatch) {
