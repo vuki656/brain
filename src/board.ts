@@ -390,6 +390,16 @@ function createCardElement(
         });
     });
 
+    const dragHandle = document.createElement("span");
+
+    dragHandle.className = "kanban-card__drag-handle";
+    setIcon(dragHandle, "grip-vertical");
+    dragHandle.addEventListener("contextmenu", (handleEvent) => {
+        handleEvent.stopPropagation();
+        handleEvent.preventDefault();
+    });
+
+    cardContent.appendChild(dragHandle);
     cardContent.appendChild(checkbox);
     cardContent.appendChild(titleElement);
 
@@ -1000,6 +1010,7 @@ function renderTodayView(
     const sortableInstances: Sortable[] = [];
 
     const todaySortable = Sortable.create(cardListElement, {
+        handle: ".kanban-card__drag-handle",
         animation: 150,
         forceFallback: true,
         fallbackOnBody: true,
@@ -1032,6 +1043,7 @@ function renderTodayView(
     cardLists.forEach((cardList) => {
         const instance = Sortable.create(cardList, {
             group: "kanban-cards",
+            handle: ".kanban-card__drag-handle",
             animation: 150,
             forceFallback: true,
             fallbackOnBody: true,
@@ -1115,6 +1127,7 @@ function renderBoardColumns(
     cardLists.forEach((cardList) => {
         const instance = Sortable.create(cardList, {
             group: "kanban-cards",
+            handle: ".kanban-card__drag-handle",
             animation: 150,
             forceFallback: true,
             fallbackOnBody: true,
@@ -1158,6 +1171,12 @@ export function renderBoard(
     const previousBoard = container.querySelector(".kanban-board");
     const savedScrollLeft = previousBoard ? previousBoard.scrollLeft : 0;
 
+    const previousTodayList = container.querySelector(".kanban-today");
+    const savedTodayScroll = previousTodayList ? previousTodayList.scrollTop : 0;
+
+    const previousColumnsPanel = container.querySelector(".kanban-today-layout__columns");
+    const savedColumnsPanelScroll = previousColumnsPanel ? previousColumnsPanel.scrollTop : 0;
+
     container.empty();
 
     if (viewState.hideCompletedActive) {
@@ -1171,7 +1190,14 @@ export function renderBoard(
     container.appendChild(toolbar);
 
     if (viewState.todayFilterActive) {
-        return renderTodayView(container, board, viewState, onMutation, vault, pluginSettings);
+        const sortableInstances = renderTodayView(container, board, viewState, onMutation, vault, pluginSettings);
+        const newTodayList = container.querySelector(".kanban-today");
+        const newColumnsPanel = container.querySelector(".kanban-today-layout__columns");
+
+        if (newTodayList) newTodayList.scrollTop = savedTodayScroll;
+        if (newColumnsPanel) newColumnsPanel.scrollTop = savedColumnsPanelScroll;
+
+        return sortableInstances;
     }
 
     const sortableInstances = renderBoardColumns(container, board, viewState, onMutation, vault, pluginSettings);

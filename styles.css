@@ -240,7 +240,7 @@
     border-radius: 6px;
     padding: 8px 10px;
     border: 2px solid transparent;
-    cursor: grab;
+    cursor: default;
     transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
@@ -276,6 +276,31 @@
     display: flex;
     align-items: flex-start;
     gap: 6px;
+}
+
+.kanban-card__drag-handle {
+    display: inline-flex;
+    align-items: center;
+    cursor: grab;
+    color: var(--text-faint);
+    opacity: 0.4;
+    transition: opacity 0.15s ease;
+    flex-shrink: 0;
+    margin-top: 1px;
+    touch-action: none;
+}
+
+.kanban-card__drag-handle:hover {
+    opacity: 1;
+}
+
+.kanban-card__drag-handle:active {
+    cursor: grabbing;
+}
+
+.kanban-card__drag-handle svg {
+    width: 12px;
+    height: 12px;
 }
 
 .kanban-card__checkbox {
@@ -438,6 +463,7 @@
 
 .kanban-today-layout__columns .kanban-column__cards {
     min-height: 20px;
+    overflow-y: visible;
 }
 
 .kanban-today {
