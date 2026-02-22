@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { toDateString } from "./board-utils";
 import { parseBoard, serializeBoard } from "./parser";
+
+const TODAY_STRING = toDateString(new Date());
 
 const SAMPLE_BOARD = `---
 
@@ -141,12 +144,12 @@ describe("parseBoard", () => {
         expect(general.cards[3].completed).toBe(true);
     });
 
-    it("should parse @today token", () => {
+    it("should parse @today token as today's date", () => {
         const board = parseBoard(SAMPLE_BOARD);
 
-        expect(board.columns[0].cards[1].today).toBe(true);
+        expect(board.columns[0].cards[1].date).toBe(TODAY_STRING);
         expect(board.columns[0].cards[1].title).toBe("Call grandma");
-        expect(board.columns[1].cards[0].today).toBe(true);
+        expect(board.columns[1].cards[0].date).toBe(TODAY_STRING);
     });
 
     it("should parse priority tokens", () => {
@@ -294,7 +297,7 @@ kanban-plugin: vuki-kanban
         const discordCard = sheepAI.cards[1];
 
         expect(discordCard.title).toContain("@all");
-        expect(discordCard.today).toBe(false);
+        expect(discordCard.date).toBeNull();
     });
 
     it("should parse archived cards after *** separator", () => {
@@ -356,7 +359,6 @@ kanban-plugin: vuki-kanban
         const card = board.columns[0].cards[0];
 
         expect(card.linkedNote).toBe("MyNote");
-        expect(card.today).toBe(true);
         expect(card.priority).toBe("important");
         expect(card.date).toBe("2026-03-01");
         expect(card.id).toBe("xyz789");
@@ -423,6 +425,7 @@ describe("serializeBoard", () => {
         expect(serialized).toContain("- [ ] Call grandma @today @id:bbb222");
         expect(serialized).toContain("- [ ] Style guide !important @{2026-02-25} @id:ccc333");
         expect(serialized).toContain("- [ ] Review ognjens PRs @today !important @id:eee555");
+        expect(serialized).not.toContain(`@today @{${TODAY_STRING}}`);
     });
 
     it("should serialize settings block", () => {
@@ -511,7 +514,6 @@ describe("round-trip", () => {
 
                 expect(reparsedCard.title).toBe(originalCard.title);
                 expect(reparsedCard.completed).toBe(originalCard.completed);
-                expect(reparsedCard.today).toBe(originalCard.today);
                 expect(reparsedCard.priority).toBe(originalCard.priority);
                 expect(reparsedCard.date).toBe(originalCard.date);
                 expect(reparsedCard.linkedNote).toBe(originalCard.linkedNote);

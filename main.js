@@ -2413,7 +2413,6 @@ function parseCard(line) {
     return null;
   }
   let text = line.replace(CHECKBOX_CHECKED_REGEX, "").replace(CHECKBOX_UNCHECKED_REGEX, "");
-  let today = false;
   let priority = null;
   let date = null;
   let linkedNote = null;
@@ -2426,7 +2425,7 @@ function parseCard(line) {
   ID_REGEX.lastIndex = 0;
   const todayMatch = TODAY_REGEX.exec(text);
   if (todayMatch) {
-    today = true;
+    date = toDateString(/* @__PURE__ */ new Date());
     text = text.replace(TODAY_REGEX, "");
   }
   TODAY_REGEX.lastIndex = 0;
@@ -2451,7 +2450,6 @@ function parseCard(line) {
   return {
     title: text.trim(),
     completed: isChecked,
-    today,
     priority,
     date,
     linkedNote,
@@ -2565,13 +2563,14 @@ function serializeCard(card) {
   } else {
     line += card.title;
   }
-  if (card.today) {
+  const isToday = card.date === toDateString(/* @__PURE__ */ new Date());
+  if (isToday) {
     line += " @today";
   }
   if (card.priority) {
     line += ` !${card.priority}`;
   }
-  if (card.date) {
+  if (card.date && !isToday) {
     line += ` @{${card.date}}`;
   }
   line += ` @id:${card.id}`;
@@ -2770,7 +2769,6 @@ function showDatePicker(card, columnIndex, cardIndex, board, onMutation) {
 }
 function isCardVisibleInTodayFilter(card) {
   if (card.completed) return false;
-  if (card.today) return true;
   if (card.date) return true;
   return false;
 }
@@ -2813,12 +2811,10 @@ function collectCardsByDateGroup(board) {
         cardIndex,
         columnTitle: column.title
       };
-      if (card.today && !card.date) {
-        todayCards.push(todayCard);
-      } else if (card.date) {
+      if (card.date) {
         if (card.date < todayString) {
           overdueCards.push(todayCard);
-        } else if (card.date === todayString || card.today) {
+        } else if (card.date === todayString) {
           todayCards.push(todayCard);
         } else {
           const existing = futureBuckets.get(card.date);
@@ -2932,18 +2928,13 @@ function createCardElement(card, columnIndex, cardIndex, board, onMutation, vaul
     pillElement.style.background = projectPill.color;
     metaRow.appendChild(pillElement);
   }
-  if (card.today) {
-    const todayBadge = document.createElement("span");
-    todayBadge.className = "kanban-card__badge kanban-card__badge--today";
-    todayBadge.textContent = "today";
-    metaRow.appendChild(todayBadge);
-  }
   if (card.date) {
     const dateBadge = document.createElement("span");
+    const isToday = card.date === toDateString(/* @__PURE__ */ new Date());
     const isOverdue = new Date(card.date) < new Date((/* @__PURE__ */ new Date()).toDateString()) && !card.completed;
-    dateBadge.className = "kanban-card__badge kanban-card__badge--date";
+    dateBadge.className = isToday ? "kanban-card__badge kanban-card__badge--today" : "kanban-card__badge kanban-card__badge--date";
     if (isOverdue) dateBadge.classList.add("kanban-card__badge--overdue");
-    dateBadge.textContent = formatDate(card.date);
+    dateBadge.textContent = isToday ? "today" : formatDate(card.date);
     metaRow.appendChild(dateBadge);
   }
   if (metaRow.children.length > 0) {
@@ -2973,17 +2964,18 @@ function showPriorityMenu(event, card, columnIndex, cardIndex, board, onMutation
 }
 function showCardContextMenu(event, card, columnIndex, cardIndex, board, onMutation, vault, pluginSettings) {
   const menu = new import_obsidian3.Menu();
-  if (card.today) {
+  const todayString = toDateString(/* @__PURE__ */ new Date());
+  if (card.date === todayString) {
     menu.addItem(
       (item) => item.setIcon("sun-dim").setTitle("Remove from today").onClick(() => {
-        const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { today: false });
+        const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: null });
         onMutation({ ...board, columns: newColumns });
       })
     );
   } else {
     menu.addItem(
       (item) => item.setIcon("sun").setTitle("Add to today").onClick(() => {
-        const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { today: true });
+        const newColumns = immutableUpdateCard(board.columns, columnIndex, cardIndex, { date: todayString });
         onMutation({ ...board, columns: newColumns });
       })
     );
@@ -3128,7 +3120,6 @@ function createAddCardForm(columnIndex, board, onMutation) {
         const newCard = {
           title: text,
           completed: false,
-          today: false,
           priority: null,
           date: null,
           linkedNote: null,
@@ -3449,10 +3440,8 @@ function renderTodayView(container, board, viewState, onMutation, vault, pluginS
         const targetDate = getDateForSection(targetDateKey);
         const card = board.columns[movedColumnIndex].cards[movedCardIndex];
         if (targetDate) {
-          const movingToToday = targetDateKey === "today";
           const newColumns = immutableUpdateCard(board.columns, movedColumnIndex, movedCardIndex, {
-            date: targetDate,
-            today: movingToToday
+            date: targetDate
           });
           const newTodayOrder2 = { ...board.settings.todayOrder };
           for (const listItem of sectionCardLists) {

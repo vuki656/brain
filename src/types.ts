@@ -3,7 +3,6 @@ export type Priority = "important" | null;
 export type Card = {
     title: string;
     completed: boolean;
-    today: boolean;
     priority: Priority;
     date: string | null;
     linkedNote: string | null;

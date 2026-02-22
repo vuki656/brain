@@ -3,11 +3,10 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { immutableSpliceCard, immutableUpdateCard, toDateString, getNextMonday, formatDate } from "./board-utils";
 import { Column } from "./types";
 
-function makeCard(overrides: Partial<{ title: string; completed: boolean; today: boolean; priority: "important" | null; date: string | null; linkedNote: string | null; id: string }> = {}) {
+function makeCard(overrides: Partial<{ title: string; completed: boolean; priority: "important" | null; date: string | null; linkedNote: string | null; id: string }> = {}) {
     return {
         title: overrides.title ?? "Test card",
         completed: overrides.completed ?? false,
-        today: overrides.today ?? false,
         priority: overrides.priority ?? null,
         date: overrides.date ?? null,
         linkedNote: overrides.linkedNote ?? null,
@@ -71,9 +70,9 @@ describe("immutableUpdateCard", () => {
 
     it("should update multiple properties at once", () => {
         const columns = makeColumns();
-        const result = immutableUpdateCard(columns, 0, 0, { today: true, priority: "important" });
+        const result = immutableUpdateCard(columns, 0, 0, { date: "2026-03-01", priority: "important" });
 
-        expect(result[0].cards[0].today).toBe(true);
+        expect(result[0].cards[0].date).toBe("2026-03-01");
         expect(result[0].cards[0].priority).toBe("important");
     });
 

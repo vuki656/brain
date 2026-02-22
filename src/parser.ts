@@ -1,3 +1,4 @@
+import { toDateString } from "./board-utils";
 import { Board, Card, Column, KanbanSettings, Priority, FRONTMATTER_KEY } from "./types";
 
 const TODAY_REGEX = /\s@today/g;
@@ -34,7 +35,6 @@ function parseCard(line: string): Card | null {
 
     let text = line.replace(CHECKBOX_CHECKED_REGEX, "").replace(CHECKBOX_UNCHECKED_REGEX, "");
 
-    let today = false;
     let priority: Priority = null;
     let date: string | null = null;
     let linkedNote: string | null = null;
@@ -49,7 +49,7 @@ function parseCard(line: string): Card | null {
 
     const todayMatch = TODAY_REGEX.exec(text);
     if (todayMatch) {
-        today = true;
+        date = toDateString(new Date());
         text = text.replace(TODAY_REGEX, "");
     }
     TODAY_REGEX.lastIndex = 0;
@@ -78,7 +78,6 @@ function parseCard(line: string): Card | null {
     return {
         title: text.trim(),
         completed: isChecked,
-        today,
         priority,
         date,
         linkedNote,
@@ -220,7 +219,9 @@ function serializeCard(card: Card): string {
         line += card.title;
     }
 
-    if (card.today) {
+    const isToday = card.date === toDateString(new Date());
+
+    if (isToday) {
         line += " @today";
     }
 
@@ -228,7 +229,7 @@ function serializeCard(card: Card): string {
         line += ` !${card.priority}`;
     }
 
-    if (card.date) {
+    if (card.date && !isToday) {
         line += ` @{${card.date}}`;
     }
 
