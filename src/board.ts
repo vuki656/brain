@@ -786,6 +786,7 @@ function renderTodayView(
     const instance = Sortable.create(cardListElement, {
         animation: 150,
         forceFallback: true,
+        fallbackOnBody: true,
         fallbackClass: "kanban-card--dragging",
         ghostClass: "kanban-card--ghost",
         dragClass: "kanban-card--drag",
@@ -843,6 +844,7 @@ function renderBoardColumns(
             group: "kanban-cards",
             animation: 150,
             forceFallback: true,
+            fallbackOnBody: true,
             fallbackClass: "kanban-card--dragging",
             ghostClass: "kanban-card--ghost",
             dragClass: "kanban-card--drag",
