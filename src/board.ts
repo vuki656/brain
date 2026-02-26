@@ -1464,16 +1464,6 @@ function renderTodayView(
         if (group.dateKey === "overdue") title.classList.add("kanban-today__title--overdue");
         title.textContent = group.label;
 
-        const subtitle = formatDateGroupSubtitle(group.dateKey);
-
-        if (subtitle) {
-            const subtitleSpan = document.createElement("span");
-
-            subtitleSpan.className = "kanban-today__title-date";
-            subtitleSpan.textContent = ` — ${subtitle}`;
-            title.appendChild(subtitleSpan);
-        }
-
         const count = document.createElement("span");
 
         count.className = "kanban-today__count";
@@ -1481,6 +1471,17 @@ function renderTodayView(
 
         header.appendChild(title);
         header.appendChild(count);
+
+        const subtitle = formatDateGroupSubtitle(group.dateKey);
+
+        if (subtitle) {
+            const subtitleSpan = document.createElement("span");
+
+            subtitleSpan.className = "kanban-today__title-date";
+            subtitleSpan.textContent = subtitle;
+            header.appendChild(subtitleSpan);
+        }
+
         section.appendChild(header);
 
         const cardListElement = document.createElement("div");

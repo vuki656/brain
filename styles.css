@@ -516,6 +516,7 @@
 }
 
 .kanban-today__title-date {
+    margin-left: auto;
     font-size: 13px;
     font-weight: 400;
     color: var(--text-muted);
