@@ -2836,13 +2836,11 @@ function collectCardsByDateGroup(board) {
       cards: sortCardsByOrder(overdueCards, (_a = savedOrder["overdue"]) != null ? _a : [])
     });
   }
-  if (todayCards.length > 0) {
-    groups.push({
-      label: "Today",
-      dateKey: "today",
-      cards: sortCardsByOrder(todayCards, (_b = savedOrder["today"]) != null ? _b : [])
-    });
-  }
+  groups.push({
+    label: "Today",
+    dateKey: "today",
+    cards: sortCardsByOrder(todayCards, (_b = savedOrder["today"]) != null ? _b : [])
+  });
   const sortedFutureDates = [...futureBuckets.keys()].sort();
   for (const dateKey of sortedFutureDates) {
     const cards = futureBuckets.get(dateKey);

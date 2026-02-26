@@ -315,13 +315,11 @@ function collectCardsByDateGroup(board: Board): DateGroup[] {
         });
     }
 
-    if (todayCards.length > 0) {
-        groups.push({
-            label: "Today",
-            dateKey: "today",
-            cards: sortCardsByOrder(todayCards, savedOrder["today"] ?? []),
-        });
-    }
+    groups.push({
+        label: "Today",
+        dateKey: "today",
+        cards: sortCardsByOrder(todayCards, savedOrder["today"] ?? []),
+    });
 
     const sortedFutureDates = [...futureBuckets.keys()].sort();
 
