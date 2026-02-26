@@ -539,6 +539,7 @@
     padding: 8px 10px;
     font-size: 13px;
     color: var(--text-faint);
+    text-align: center;
 }
 
 /* Project pill */
