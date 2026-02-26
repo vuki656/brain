@@ -262,7 +262,23 @@ function formatDateGroupLabel(dateString: string): string {
     if (differenceInDays === 1) return "Tomorrow";
     if (differenceInDays <= 7) return `In ${differenceInDays} days`;
 
-    return dateString;
+    return cardDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+function formatDateGroupSubtitle(dateKey: string): string {
+    if (dateKey === "today" || dateKey === "overdue") return "";
+
+    const date = new Date(dateKey + "T00:00:00");
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+
+    const differenceInDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (differenceInDays < 1 || differenceInDays > 7) return "";
+
+    return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
 function collectCardsByDateGroup(board: Board): DateGroup[] {
@@ -1447,6 +1463,16 @@ function renderTodayView(
         title.className = "kanban-today__title";
         if (group.dateKey === "overdue") title.classList.add("kanban-today__title--overdue");
         title.textContent = group.label;
+
+        const subtitle = formatDateGroupSubtitle(group.dateKey);
+
+        if (subtitle) {
+            const subtitleSpan = document.createElement("span");
+
+            subtitleSpan.className = "kanban-today__title-date";
+            subtitleSpan.textContent = ` — ${subtitle}`;
+            title.appendChild(subtitleSpan);
+        }
 
         const count = document.createElement("span");
 

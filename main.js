@@ -2792,7 +2792,17 @@ function formatDateGroupLabel(dateString) {
   const differenceInDays = Math.round((cardDate.getTime() - today.getTime()) / (1e3 * 60 * 60 * 24));
   if (differenceInDays === 1) return "Tomorrow";
   if (differenceInDays <= 7) return `In ${differenceInDays} days`;
-  return dateString;
+  return cardDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+function formatDateGroupSubtitle(dateKey) {
+  if (dateKey === "today" || dateKey === "overdue") return "";
+  const date = /* @__PURE__ */ new Date(dateKey + "T00:00:00");
+  const today = /* @__PURE__ */ new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  const differenceInDays = Math.round((date.getTime() - today.getTime()) / (1e3 * 60 * 60 * 24));
+  if (differenceInDays < 1 || differenceInDays > 7) return "";
+  return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 function collectCardsByDateGroup(board) {
   var _a, _b, _c;
@@ -3659,6 +3669,13 @@ function renderTodayView(container, board, viewState, onMutation, vault, pluginS
     title.className = "kanban-today__title";
     if (group.dateKey === "overdue") title.classList.add("kanban-today__title--overdue");
     title.textContent = group.label;
+    const subtitle = formatDateGroupSubtitle(group.dateKey);
+    if (subtitle) {
+      const subtitleSpan = document.createElement("span");
+      subtitleSpan.className = "kanban-today__title-date";
+      subtitleSpan.textContent = ` \u2014 ${subtitle}`;
+      title.appendChild(subtitleSpan);
+    }
     const count = document.createElement("span");
     count.className = "kanban-today__count";
     count.textContent = String(group.cards.length);

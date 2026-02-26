@@ -515,6 +515,12 @@
     margin-top: 16px;
 }
 
+.kanban-today__title-date {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
 .kanban-today__title--overdue {
     color: var(--color-red);
 }
@@ -536,7 +542,7 @@
 .kanban-today__empty {
     background: var(--background-primary);
     border-radius: 6px;
-    padding: 8px 10px;
+    padding: 16px 10px;
     font-size: 13px;
     color: var(--text-faint);
     text-align: center;
