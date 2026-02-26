@@ -3685,6 +3685,12 @@ function renderTodayView(container, board, viewState, onMutation, vault, pluginS
       );
       cardListElement.appendChild(cardElement);
     }
+    if (group.cards.length === 0) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.className = "kanban-today__empty";
+      emptyMessage.textContent = "No tasks for today";
+      cardListElement.appendChild(emptyMessage);
+    }
     section.appendChild(cardListElement);
     todayPanel.appendChild(section);
     sectionCardLists.push({ dateKey: group.dateKey, element: cardListElement });
