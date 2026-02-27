@@ -3476,26 +3476,32 @@ function openQuickAddDialog(board, onMutation, prefillDate, editContext) {
   columnRow.className = "kanban-quick-add__row";
   const columnLabel = document.createElement("span");
   columnLabel.className = "kanban-quick-add__label";
-  columnLabel.textContent = "Column";
+  columnLabel.textContent = "Project";
   columnRow.appendChild(columnLabel);
-  const columnSelect = document.createElement("select");
-  columnSelect.className = "kanban-quick-add__select";
-  if (!isEditMode) {
-    const placeholderOption = document.createElement("option");
-    placeholderOption.value = "";
-    placeholderOption.textContent = "Select column...";
-    placeholderOption.disabled = true;
-    placeholderOption.selected = true;
-    columnSelect.appendChild(placeholderOption);
-  }
+  let selectedColumnIndex = isEditMode ? editContext.columnIndex : null;
+  const columnChips = document.createElement("div");
+  columnChips.className = "kanban-quick-add__dates";
+  const updateColumnChipStates = () => {
+    for (const chip of Array.from(columnChips.querySelectorAll(".kanban-quick-add__date-button"))) {
+      const chipValue = chip.dataset.columnValue;
+      chip.classList.toggle("kanban-quick-add__date-button--active", chipValue !== void 0 && Number(chipValue) === selectedColumnIndex);
+    }
+  };
   for (const [columnIndex, column] of board.columns.entries()) {
-    const option2 = document.createElement("option");
-    option2.value = String(columnIndex);
-    option2.textContent = column.title;
-    if (isEditMode && columnIndex === editContext.columnIndex) option2.selected = true;
-    columnSelect.appendChild(option2);
+    const chip = document.createElement("span");
+    chip.className = "kanban-quick-add__date-button";
+    chip.textContent = column.title;
+    chip.dataset.columnValue = String(columnIndex);
+    if (isEditMode && columnIndex === editContext.columnIndex) {
+      chip.classList.add("kanban-quick-add__date-button--active");
+    }
+    chip.addEventListener("click", () => {
+      selectedColumnIndex = selectedColumnIndex === columnIndex ? null : columnIndex;
+      updateColumnChipStates();
+    });
+    columnChips.appendChild(chip);
   }
-  columnRow.appendChild(columnSelect);
+  columnRow.appendChild(columnChips);
   dialog.appendChild(columnRow);
   const dateRow = document.createElement("div");
   dateRow.className = "kanban-quick-add__row";
@@ -3590,11 +3596,10 @@ function openQuickAddDialog(board, onMutation, prefillDate, editContext) {
       titleInput.focus();
       return;
     }
-    if (!columnSelect.value) {
-      columnSelect.focus();
+    if (selectedColumnIndex === null) {
       return;
     }
-    const columnIndex = Number(columnSelect.value);
+    const columnIndex = selectedColumnIndex;
     const descriptionValue = descriptionInput.value.trim() || null;
     if (isEditMode) {
       const update = {
