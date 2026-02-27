@@ -3675,21 +3675,21 @@ function renderTodayView(container, board, viewState, onMutation, vault, pluginS
     count.textContent = String(group.cards.length);
     header.appendChild(title);
     header.appendChild(count);
-    if (group.dateKey !== "overdue") {
-      const addButton = document.createElement("span");
-      addButton.className = "kanban-today__add-button";
-      addButton.textContent = "+";
-      addButton.addEventListener("click", () => {
-        openQuickAddDialog(board, onMutation, getDateForSection(group.dateKey));
-      });
-      header.appendChild(addButton);
-    }
     const subtitle = formatDateGroupSubtitle(group.dateKey);
     if (subtitle) {
       const subtitleSpan = document.createElement("span");
       subtitleSpan.className = "kanban-today__title-date";
       subtitleSpan.textContent = subtitle;
       header.appendChild(subtitleSpan);
+    }
+    if (group.dateKey !== "overdue") {
+      const addButton = document.createElement("span");
+      addButton.className = "kanban-today__add-button";
+      addButton.textContent = "+ Add task";
+      addButton.addEventListener("click", () => {
+        openQuickAddDialog(board, onMutation, getDateForSection(group.dateKey));
+      });
+      header.appendChild(addButton);
     }
     section.appendChild(header);
     const cardListElement = document.createElement("div");
