@@ -515,8 +515,11 @@
     margin-top: 16px;
 }
 
-.kanban-today__add-button {
+.kanban-today__count + .kanban-today__add-button {
     margin-left: auto;
+}
+
+.kanban-today__add-button {
     padding: 0 6px;
     border: 1px solid var(--background-modifier-border);
     border-radius: 6px;
