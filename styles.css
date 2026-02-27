@@ -517,8 +517,8 @@
 
 .kanban-today__add-button {
     margin-left: auto;
-    padding: 2px 8px;
-    border: 1px dashed var(--background-modifier-border);
+    padding: 0 6px;
+    border: 1px solid var(--background-modifier-border);
     border-radius: 6px;
     background: none;
     color: var(--text-muted);

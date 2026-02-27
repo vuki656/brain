@@ -3685,7 +3685,7 @@ function renderTodayView(container, board, viewState, onMutation, vault, pluginS
     if (group.dateKey !== "overdue") {
       const addButton = document.createElement("span");
       addButton.className = "kanban-today__add-button";
-      addButton.textContent = "+ Add task";
+      addButton.textContent = "+";
       addButton.addEventListener("click", () => {
         openQuickAddDialog(board, onMutation, getDateForSection(group.dateKey));
       });

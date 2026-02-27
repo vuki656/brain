@@ -1,7 +1,7 @@
 {
   "id": "obsidian-vuki-kanban",
   "name": "Vuki Kanban",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "minAppVersion": "1.0.0",
   "description": "Custom Kanban board with today filter, priority colors, and hide-completed toggle.",
   "author": "vuki656",
