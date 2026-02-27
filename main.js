@@ -3157,7 +3157,7 @@ function createAddCardForm(columnIndex, board, onMutation) {
           linkedNote: null,
           id: generateId()
         };
-        const newColumns = immutableSpliceCard(board.columns, columnIndex, board.columns[columnIndex].cards.length, 0, newCard);
+        const newColumns = immutableSpliceCard(board.columns, columnIndex, 0, 0, newCard);
         onMutation({ ...board, columns: newColumns });
       }
       textarea.remove();
@@ -3404,9 +3404,9 @@ function showQuickAddDatePicker(onSelect) {
   document.body.appendChild(overlay);
   document.body.appendChild(modal);
 }
-function openQuickAddDialog(board, onMutation) {
+function openQuickAddDialog(board, onMutation, prefillDate) {
   var _a;
-  let selectedDate = null;
+  let selectedDate = prefillDate != null ? prefillDate : null;
   let selectedPriority = null;
   const overlay = document.createElement("div");
   overlay.className = "kanban-quick-add-overlay";
@@ -3491,6 +3491,7 @@ function openQuickAddDialog(board, onMutation) {
     }
     dateButtons.appendChild(dateButton);
   }
+  updateDateButtonStates();
   dateRow.appendChild(dateButtons);
   dialog.appendChild(dateRow);
   const priorityRow = document.createElement("div");
@@ -3537,7 +3538,7 @@ function openQuickAddDialog(board, onMutation) {
       linkedNote: null,
       id: generateId()
     };
-    const newColumns = immutableSpliceCard(board.columns, columnIndex, board.columns[columnIndex].cards.length, 0, newCard);
+    const newColumns = immutableSpliceCard(board.columns, columnIndex, 0, 0, newCard);
     onMutation({ ...board, columns: newColumns });
     cleanup();
   };
@@ -3674,6 +3675,15 @@ function renderTodayView(container, board, viewState, onMutation, vault, pluginS
     count.textContent = String(group.cards.length);
     header.appendChild(title);
     header.appendChild(count);
+    if (group.dateKey !== "overdue") {
+      const addButton = document.createElement("span");
+      addButton.className = "kanban-today__add-button";
+      addButton.textContent = "+";
+      addButton.addEventListener("click", () => {
+        openQuickAddDialog(board, onMutation, getDateForSection(group.dateKey));
+      });
+      header.appendChild(addButton);
+    }
     const subtitle = formatDateGroupSubtitle(group.dateKey);
     if (subtitle) {
       const subtitleSpan = document.createElement("span");

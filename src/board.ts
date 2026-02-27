@@ -752,7 +752,7 @@ function createAddCardForm(columnIndex: number, board: Board, onMutation: Mutati
                     linkedNote: null,
                     id: generateId(),
                 };
-                const newColumns = immutableSpliceCard(board.columns, columnIndex, board.columns[columnIndex].cards.length, 0, newCard);
+                const newColumns = immutableSpliceCard(board.columns, columnIndex, 0, 0, newCard);
                 onMutation({ ...board, columns: newColumns });
             }
 
@@ -1101,8 +1101,8 @@ function showQuickAddDatePicker(onSelect: (dateString: string) => void): void {
     document.body.appendChild(modal);
 }
 
-function openQuickAddDialog(board: Board, onMutation: MutationHandler): void {
-    let selectedDate: string | null = null;
+function openQuickAddDialog(board: Board, onMutation: MutationHandler, prefillDate?: string | null): void {
+    let selectedDate: string | null = prefillDate ?? null;
     let selectedPriority: Priority = null;
 
     const overlay = document.createElement("div");
@@ -1219,6 +1219,8 @@ function openQuickAddDialog(board: Board, onMutation: MutationHandler): void {
         dateButtons.appendChild(dateButton);
     }
 
+    updateDateButtonStates();
+
     dateRow.appendChild(dateButtons);
     dialog.appendChild(dateRow);
 
@@ -1282,7 +1284,7 @@ function openQuickAddDialog(board: Board, onMutation: MutationHandler): void {
             linkedNote: null,
             id: generateId(),
         };
-        const newColumns = immutableSpliceCard(board.columns, columnIndex, board.columns[columnIndex].cards.length, 0, newCard);
+        const newColumns = immutableSpliceCard(board.columns, columnIndex, 0, 0, newCard);
 
         onMutation({ ...board, columns: newColumns });
         cleanup();
@@ -1471,6 +1473,17 @@ function renderTodayView(
 
         header.appendChild(title);
         header.appendChild(count);
+
+        if (group.dateKey !== "overdue") {
+            const addButton = document.createElement("span");
+
+            addButton.className = "kanban-today__add-button";
+            addButton.textContent = "+";
+            addButton.addEventListener("click", () => {
+                openQuickAddDialog(board, onMutation, getDateForSection(group.dateKey));
+            });
+            header.appendChild(addButton);
+        }
 
         const subtitle = formatDateGroupSubtitle(group.dateKey);
 
