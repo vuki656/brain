@@ -7,6 +7,7 @@ export type Card = {
     date: string | null;
     linkedNote: string | null;
     id: string;
+    description: string | null;
 };
 
 export type Column = {

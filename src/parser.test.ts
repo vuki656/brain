@@ -493,6 +493,231 @@ describe("serializeBoard", () => {
     });
 });
 
+describe("descriptions", () => {
+    it("should parse a card with a single-line description", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task one @id:abc123
+  This is a description
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].description).toBe("This is a description");
+    });
+
+    it("should parse a card with a multi-line description", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task one @id:abc123
+  Line one
+  Line two
+  Line three
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].description).toBe("Line one\nLine two\nLine three");
+    });
+
+    it("should return null description for cards without descriptions", () => {
+        const board = parseBoard(SAMPLE_BOARD);
+
+        expect(board.columns[0].cards[0].description).toBeNull();
+    });
+
+    it("should stop description at next card line", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task one @id:abc123
+  Description for task one
+- [ ] Task two @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].description).toBe("Description for task one");
+        expect(board.columns[0].cards[1].description).toBeNull();
+    });
+
+    it("should stop description at column heading", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col One
+
+- [ ] Task @id:abc123
+  Some description
+
+## Col Two
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].description).toBe("Some description");
+    });
+
+    it("should stop description at archive separator", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task @id:abc123
+  Description here
+
+***
+
+- [x] Archived @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].description).toBe("Description here");
+    });
+
+    it("should not parse tokens inside descriptions", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task @id:abc123
+  Contains @today and !important tokens
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].description).toBe("Contains @today and !important tokens");
+        expect(board.columns[0].cards[0].date).toBeNull();
+    });
+
+    it("should serialize card with description as indented lines", () => {
+        const board = parseBoard(SAMPLE_BOARD);
+
+        board.columns[0].cards[0].description = "My description\nSecond line";
+
+        const serialized = serializeBoard(board);
+
+        expect(serialized).toContain("- [ ] Review payments in bank app @id:aaa111\n  My description\n  Second line");
+    });
+
+    it("should parse descriptions on archived cards", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task @id:abc123
+
+***
+
+- [x] Archived task @id:def456
+  Archived description
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.archivedCards[0].description).toBe("Archived description");
+    });
+
+    it("should round-trip cards with descriptions", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task one @id:abc123
+  First description
+  With two lines
+- [ ] Task two @id:def456
+- [x] Task three @id:ghi789
+  Completed description
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+        const serialized = serializeBoard(board);
+        const reparsed = parseBoard(serialized);
+
+        expect(reparsed.columns[0].cards[0].description).toBe("First description\nWith two lines");
+        expect(reparsed.columns[0].cards[1].description).toBeNull();
+        expect(reparsed.columns[0].cards[2].description).toBe("Completed description");
+    });
+});
+
 describe("round-trip", () => {
     it("should preserve board content through parse and serialize", () => {
         const board = parseBoard(SAMPLE_BOARD);
@@ -518,6 +743,7 @@ describe("round-trip", () => {
                 expect(reparsedCard.date).toBe(originalCard.date);
                 expect(reparsedCard.linkedNote).toBe(originalCard.linkedNote);
                 expect(reparsedCard.id).toBe(originalCard.id);
+                expect(reparsedCard.description).toBe(originalCard.description);
             }
         }
 

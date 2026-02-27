@@ -445,6 +445,14 @@ function createCardElement(
     cardContent.appendChild(priorityButton);
     cardElement.appendChild(cardContent);
 
+    if (card.description) {
+        const descriptionElement = document.createElement("div");
+
+        descriptionElement.className = "kanban-card__description";
+        descriptionElement.textContent = card.description;
+        cardElement.appendChild(descriptionElement);
+    }
+
     const metaRow = document.createElement("div");
 
     metaRow.className = "kanban-card__meta";
@@ -539,6 +547,12 @@ function showCardContextMenu(
             }),
         );
     }
+
+    menu.addItem((item) =>
+        item.setIcon("pencil").setTitle("Edit").onClick(() => {
+            openQuickAddDialog(board, onMutation, undefined, { card, columnIndex, cardIndex });
+        }),
+    );
 
     menu.addSeparator();
 
@@ -751,6 +765,7 @@ function createAddCardForm(columnIndex: number, board: Board, onMutation: Mutati
                     date: null,
                     linkedNote: null,
                     id: generateId(),
+                    description: null,
                 };
                 const newColumns = immutableSpliceCard(board.columns, columnIndex, 0, 0, newCard);
                 onMutation({ ...board, columns: newColumns });
@@ -960,7 +975,16 @@ function createColumnElement(
         cardList.className = "kanban-column__cards";
         cardList.dataset.columnIndex = String(columnIndex);
 
-        for (let cardIndex = 0; cardIndex < column.cards.length; cardIndex++) {
+        const sortedCardIndices = column.cards
+            .map((_, index) => index)
+            .sort((indexA, indexB) => {
+                const completedA = column.cards[indexA].completed ? 1 : 0;
+                const completedB = column.cards[indexB].completed ? 1 : 0;
+
+                return completedA - completedB;
+            });
+
+        for (const cardIndex of sortedCardIndices) {
             const card = column.cards[cardIndex];
 
             cardList.appendChild(createCardElement(card, columnIndex, cardIndex, board, onMutation, vault, pluginSettings, null));
@@ -1101,9 +1125,16 @@ function showQuickAddDatePicker(onSelect: (dateString: string) => void): void {
     document.body.appendChild(modal);
 }
 
-function openQuickAddDialog(board: Board, onMutation: MutationHandler, prefillDate?: string | null): void {
-    let selectedDate: string | null = prefillDate ?? null;
-    let selectedPriority: Priority = null;
+type EditContext = {
+    card: Card;
+    columnIndex: number;
+    cardIndex: number;
+};
+
+function openQuickAddDialog(board: Board, onMutation: MutationHandler, prefillDate?: string | null, editContext?: EditContext): void {
+    const isEditMode = editContext !== undefined;
+    let selectedDate: string | null = isEditMode ? editContext.card.date : (prefillDate ?? null);
+    let selectedPriority: Priority = isEditMode ? editContext.card.priority : null;
 
     const overlay = document.createElement("div");
 
@@ -1120,6 +1151,7 @@ function openQuickAddDialog(board: Board, onMutation: MutationHandler, prefillDa
     titleInput.className = "kanban-quick-add__input";
     titleInput.type = "text";
     titleInput.placeholder = "Task title...";
+    if (isEditMode) titleInput.value = editContext.card.linkedNote ?? editContext.card.title;
     dialog.appendChild(titleInput);
 
     const columnRow = document.createElement("div");
@@ -1136,19 +1168,22 @@ function openQuickAddDialog(board: Board, onMutation: MutationHandler, prefillDa
 
     columnSelect.className = "kanban-quick-add__select";
 
-    const placeholderOption = document.createElement("option");
+    if (!isEditMode) {
+        const placeholderOption = document.createElement("option");
 
-    placeholderOption.value = "";
-    placeholderOption.textContent = "Select column...";
-    placeholderOption.disabled = true;
-    placeholderOption.selected = true;
-    columnSelect.appendChild(placeholderOption);
+        placeholderOption.value = "";
+        placeholderOption.textContent = "Select column...";
+        placeholderOption.disabled = true;
+        placeholderOption.selected = true;
+        columnSelect.appendChild(placeholderOption);
+    }
 
     for (const [columnIndex, column] of board.columns.entries()) {
         const option = document.createElement("option");
 
         option.value = String(columnIndex);
         option.textContent = column.title;
+        if (isEditMode && columnIndex === editContext.columnIndex) option.selected = true;
         columnSelect.appendChild(option);
     }
 
@@ -1245,6 +1280,10 @@ function openQuickAddDialog(board: Board, onMutation: MutationHandler, prefillDa
     priorityButton.appendChild(priorityIcon);
     priorityButton.appendChild(document.createTextNode("Important"));
 
+    if (isEditMode && selectedPriority === "important") {
+        priorityButton.classList.add("kanban-quick-add__priority--active");
+    }
+
     priorityButton.addEventListener("click", () => {
         selectedPriority = selectedPriority === "important" ? null : "important";
         priorityButton.classList.toggle("kanban-quick-add__priority--active", selectedPriority === "important");
@@ -1253,10 +1292,18 @@ function openQuickAddDialog(board: Board, onMutation: MutationHandler, prefillDa
     priorityRow.appendChild(priorityButton);
     dialog.appendChild(priorityRow);
 
+    const descriptionInput = document.createElement("textarea");
+
+    descriptionInput.className = "kanban-quick-add__input kanban-quick-add__description";
+    descriptionInput.placeholder = "Description (optional)...";
+    descriptionInput.rows = 3;
+    if (isEditMode && editContext.card.description) descriptionInput.value = editContext.card.description;
+    dialog.appendChild(descriptionInput);
+
     const submitButton = document.createElement("span");
 
     submitButton.className = "kanban-quick-add__submit";
-    submitButton.textContent = "Add task";
+    submitButton.textContent = isEditMode ? "Save task" : "Add task";
 
     const cleanup = () => {
         overlay.remove();
@@ -1276,17 +1323,46 @@ function openQuickAddDialog(board: Board, onMutation: MutationHandler, prefillDa
         }
 
         const columnIndex = Number(columnSelect.value);
-        const newCard: Card = {
-            title,
-            completed: false,
-            priority: selectedPriority,
-            date: selectedDate,
-            linkedNote: null,
-            id: generateId(),
-        };
-        const newColumns = immutableSpliceCard(board.columns, columnIndex, 0, 0, newCard);
+        const descriptionValue = descriptionInput.value.trim() || null;
 
-        onMutation({ ...board, columns: newColumns });
+        if (isEditMode) {
+            const update: Partial<Card> = {
+                priority: selectedPriority,
+                date: selectedDate,
+                description: descriptionValue,
+            };
+
+            if (editContext.card.linkedNote) {
+                update.linkedNote = title;
+            } else {
+                update.title = title;
+            }
+
+            let newColumns = immutableUpdateCard(board.columns, editContext.columnIndex, editContext.cardIndex, update);
+
+            if (columnIndex !== editContext.columnIndex) {
+                const updatedCard = newColumns[editContext.columnIndex].cards[editContext.cardIndex];
+
+                newColumns = immutableSpliceCard(newColumns, editContext.columnIndex, editContext.cardIndex, 1);
+                newColumns = immutableSpliceCard(newColumns, columnIndex, 0, 0, updatedCard);
+            }
+
+            onMutation({ ...board, columns: newColumns });
+        } else {
+            const newCard: Card = {
+                title,
+                completed: false,
+                priority: selectedPriority,
+                date: selectedDate,
+                linkedNote: null,
+                id: generateId(),
+                description: descriptionValue,
+            };
+            const newColumns = immutableSpliceCard(board.columns, columnIndex, 0, 0, newCard);
+
+            onMutation({ ...board, columns: newColumns });
+        }
+
         cleanup();
     };
 
@@ -1412,16 +1488,38 @@ function createColumnCardMoveHandler(board: Board, onMutation: MutationHandler):
     return (event: SortableEvent) => {
         const fromColumnIndex = Number(event.from.dataset.columnIndex);
         const toColumnIndex = Number(event.to.dataset.columnIndex);
-        const oldIndex = event.oldIndex;
-        const newIndex = event.newIndex;
+        const draggedCardId = (event.item as HTMLElement).dataset.cardId;
 
-        if (oldIndex === undefined || newIndex === undefined) return;
+        if (!draggedCardId) return;
 
-        const card = board.columns[fromColumnIndex].cards[oldIndex];
-        let newColumns = immutableSpliceCard(board.columns, fromColumnIndex, oldIndex, 1);
+        const sourceCardIndex = board.columns[fromColumnIndex].cards.findIndex((card) => card.id === draggedCardId);
 
-        const adjustedToIndex = fromColumnIndex === toColumnIndex && newIndex > oldIndex ? newIndex - 1 : newIndex;
-        newColumns = immutableSpliceCard(newColumns, toColumnIndex, adjustedToIndex, 0, card);
+        if (sourceCardIndex === -1) return;
+
+        const card = board.columns[fromColumnIndex].cards[sourceCardIndex];
+        let newColumns = immutableSpliceCard(board.columns, fromColumnIndex, sourceCardIndex, 1);
+
+        const targetCardElements = event.to.querySelectorAll<HTMLElement>(".kanban-card");
+        let insertIndex = newColumns[toColumnIndex].cards.length;
+
+        for (let domIndex = 0; domIndex < targetCardElements.length; domIndex++) {
+            if (targetCardElements[domIndex].dataset.cardId === draggedCardId) {
+                const nextElement = targetCardElements[domIndex + 1];
+
+                if (nextElement) {
+                    const nextCardId = nextElement.dataset.cardId;
+                    const nextDataIndex = newColumns[toColumnIndex].cards.findIndex((searchCard) => searchCard.id === nextCardId);
+
+                    if (nextDataIndex !== -1) {
+                        insertIndex = nextDataIndex;
+                    }
+                }
+
+                break;
+            }
+        }
+
+        newColumns = immutableSpliceCard(newColumns, toColumnIndex, insertIndex, 0, card);
 
         onMutation({ ...board, columns: newColumns });
     };

@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { immutableSpliceCard, immutableUpdateCard, toDateString, getNextMonday, formatDate } from "./board-utils";
 import { Column } from "./types";
 
-function makeCard(overrides: Partial<{ title: string; completed: boolean; priority: "important" | null; date: string | null; linkedNote: string | null; id: string }> = {}) {
+function makeCard(overrides: Partial<{ title: string; completed: boolean; priority: "important" | null; date: string | null; linkedNote: string | null; id: string; description: string | null }> = {}) {
     return {
         title: overrides.title ?? "Test card",
         completed: overrides.completed ?? false,
@@ -11,6 +11,7 @@ function makeCard(overrides: Partial<{ title: string; completed: boolean; priori
         date: overrides.date ?? null,
         linkedNote: overrides.linkedNote ?? null,
         id: overrides.id ?? "abc123",
+        description: overrides.description ?? null,
     };
 }
 

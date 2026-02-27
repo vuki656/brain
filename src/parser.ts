@@ -82,6 +82,7 @@ function parseCard(line: string): Card | null {
         date,
         linkedNote,
         id: id ?? generateId(),
+        description: null,
     };
 }
 
@@ -143,6 +144,36 @@ function parseSettings(lines: string[]): KanbanSettings {
     }
 }
 
+function collectDescription(lines: string[], cardLineIndex: number): string | null {
+    const descriptionLines: string[] = [];
+
+    for (let nextIndex = cardLineIndex + 1; nextIndex < lines.length; nextIndex++) {
+        const nextLine = lines[nextIndex];
+
+        if (!nextLine.startsWith("  ") || nextLine.trim() === "") {
+            break;
+        }
+
+        const nextTrimmed = nextLine.trim();
+
+        if (CHECKBOX_UNCHECKED_REGEX.test(nextTrimmed) || CHECKBOX_CHECKED_REGEX.test(nextTrimmed)) {
+            break;
+        }
+
+        if (COLUMN_HEADING_REGEX.test(nextTrimmed)) {
+            break;
+        }
+
+        if (nextTrimmed === ARCHIVE_SEPARATOR || nextTrimmed === SETTINGS_START) {
+            break;
+        }
+
+        descriptionLines.push(nextTrimmed);
+    }
+
+    return descriptionLines.length > 0 ? descriptionLines.join("\n") : null;
+}
+
 export function parseBoard(markdown: string): Board {
     const lines = markdown.split("\n");
     const columns: Column[] = [];
@@ -152,8 +183,8 @@ export function parseBoard(markdown: string): Board {
     let inFrontmatter = false;
     let inArchive = false;
 
-    for (const line of lines) {
-        const trimmed = line.trim();
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+        const trimmed = lines[lineIndex].trim();
 
         if (!pastFrontmatter) {
             if (trimmed === "---" && !inFrontmatter) {
@@ -181,6 +212,7 @@ export function parseBoard(markdown: string): Board {
                 const card = parseCard(trimmed);
 
                 if (card) {
+                    card.description = collectDescription(lines, lineIndex);
                     archivedCards.push(card);
                 }
             }
@@ -199,6 +231,7 @@ export function parseBoard(markdown: string): Board {
             const card = parseCard(trimmed);
 
             if (card) {
+                card.description = collectDescription(lines, lineIndex);
                 currentColumn.cards.push(card);
             }
         }
@@ -254,6 +287,12 @@ export function serializeBoard(board: Board): string {
 
         for (const card of column.cards) {
             lines.push(serializeCard(card));
+
+            if (card.description) {
+                for (const descriptionLine of card.description.split("\n")) {
+                    lines.push(`  ${descriptionLine}`);
+                }
+            }
         }
 
         lines.push("");
@@ -266,6 +305,12 @@ export function serializeBoard(board: Board): string {
 
         for (const card of board.archivedCards) {
             lines.push(serializeCard(card));
+
+            if (card.description) {
+                for (const descriptionLine of card.description.split("\n")) {
+                    lines.push(`  ${descriptionLine}`);
+                }
+            }
         }
 
         lines.push("");
