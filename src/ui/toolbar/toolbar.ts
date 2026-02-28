@@ -71,7 +71,7 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
 
     const updateButton = document.createElement("button")
 
-    updateButton.className = "kanban-toolbar__button kanban-toolbar__button--update"
+    updateButton.className = "kanban-toolbar__button"
     setButtonContent(updateButton, "download", "Update")
     updateButton.addEventListener("click", async () => {
         setButtonContent(updateButton, "loader-2", "Updating...")
