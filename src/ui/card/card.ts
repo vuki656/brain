@@ -64,8 +64,7 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
             const file = vault.getAbstractFileByPath(`${card.linkedNote}.md`)
 
             if (file && file instanceof TFile) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian exposes app on window but has no typed global
-                ;(window as any).app.workspace.getLeaf(false).openFile(file)
+                window.app.workspace.getLeaf(false).openFile(file)
             }
         })
 
