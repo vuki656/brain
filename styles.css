@@ -96,6 +96,7 @@
 .kanban-column--collapsed {
     cursor: pointer;
     flex: 0 0 40px;
+    overflow: visible;
 }
 
 .kanban-column--collapsed .kanban-column__header {
