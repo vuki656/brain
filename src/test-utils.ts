@@ -1,49 +1,58 @@
-import { Card, Column, Board, KanbanSettings } from "./types";
+import type { BoardType, CardType, ColumnType, KanbanSettingsType } from "./types"
 
-export function makeCard(overrides: Partial<Card> = {}): Card {
+type MakeTodayCardOptionsType = {
+    card?: Partial<CardType>
+    cardIndex?: number
+    columnIndex?: number
+    columnTitle?: string
+}
+
+export function makeCard(overrides: Partial<CardType> = {}): CardType {
     return {
-        title: overrides.title ?? "Test card",
         completed: overrides.completed ?? false,
-        priority: overrides.priority ?? null,
         date: overrides.date ?? null,
-        linkedNote: overrides.linkedNote ?? null,
-        id: overrides.id ?? "abc123",
         description: overrides.description ?? null,
-    };
+        id: overrides.id ?? "abc123",
+        linkedNote: overrides.linkedNote ?? null,
+        priority: overrides.priority ?? null,
+        title: overrides.title ?? "Test card",
+    }
 }
 
-export function makeColumns(): Column[] {
+export function makeColumns(): ColumnType[] {
     return [
-        { title: "Todo", cards: [makeCard({ id: "a1", title: "First" }), makeCard({ id: "a2", title: "Second" })] },
-        { title: "Done", cards: [makeCard({ id: "b1", title: "Third", completed: true })] },
-    ];
+        {
+            cards: [
+                makeCard({ id: "a1", title: "First" }),
+                makeCard({ id: "a2", title: "Second" }),
+            ],
+            title: "Todo",
+        },
+        {
+            cards: [makeCard({ completed: true, id: "b1", title: "Third" })],
+            title: "Done",
+        },
+    ]
 }
 
-export function makeBoard(overrides: Partial<Board> = {}): Board {
-    const defaultSettings: KanbanSettings = {
+export function makeBoard(overrides: Partial<BoardType> = {}): BoardType {
+    const defaultSettings: KanbanSettingsType = {
         collapsedColumns: [],
-        todayOrder: {},
         columnColors: {},
-    };
+        todayOrder: {},
+    }
 
     return {
         columns: overrides.columns ?? makeColumns(),
         settings: overrides.settings ?? defaultSettings,
-    };
+    }
 }
 
-export type MakeTodayCardOptions = {
-    card?: Partial<Card>;
-    columnIndex?: number;
-    cardIndex?: number;
-    columnTitle?: string;
-};
-
-export function makeTodayCard(options: MakeTodayCardOptions = {}) {
+export function makeTodayCard(options: MakeTodayCardOptionsType = {}) {
     return {
         card: makeCard(options.card),
-        columnIndex: options.columnIndex ?? 0,
         cardIndex: options.cardIndex ?? 0,
+        columnIndex: options.columnIndex ?? 0,
         columnTitle: options.columnTitle ?? "Todo",
-    };
+    }
 }

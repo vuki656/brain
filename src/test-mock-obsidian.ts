@@ -1,11 +1,15 @@
-import { mock } from "bun:test";
+import { mock } from "bun:test"
 
-mock.module("obsidian", () => ({
-    App: class {},
-    Menu: class {},
-    Notice: class {},
-    TFile: class {},
-    Vault: class {},
-    requestUrl: () => Promise.resolve({ text: "" }),
-    setIcon: () => {},
-}));
+mock.module("obsidian", () => {
+    return {
+        App: class {},
+        Menu: class {},
+        Notice: class {},
+        TFile: class {},
+        Vault: class {},
+        requestUrl: async () => {
+            return { text: "" }
+        },
+        setIcon: () => {},
+    }
+})

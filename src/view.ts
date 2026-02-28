@@ -1,85 +1,94 @@
-import { TextFileView, WorkspaceLeaf } from "obsidian";
-import Sortable from "sortablejs";
+import { TextFileView, type WorkspaceLeaf } from "obsidian"
+// eslint-disable-next-line import-x/no-named-as-default -- sortablejs exports default class
+import type Sortable from "sortablejs"
 
-import { renderBoard } from "./board";
-import { parseBoard, serializeBoard } from "./parser";
-import { Board, KANBAN_VIEW_TYPE, ViewState, PluginSettings } from "./types";
-
-import type VukiKanbanPlugin from "./main";
+import { renderBoard } from "./board"
+import type VukiKanbanPlugin from "./main"
+import { parseBoard, serializeBoard } from "./parser"
+import { type BoardType, KANBAN_VIEW_TYPE, type ViewStateType } from "./types"
 
 export class KanbanView extends TextFileView {
-    private board: Board = { columns: [], settings: { collapsedColumns: [], todayOrder: {}, columnColors: {} } };
-    private viewState: ViewState = { todayFilterActive: true, hideCompletedActive: true };
-    private sortableInstances: Sortable[] = [];
-    private plugin: VukiKanbanPlugin;
-    private boardContainer: HTMLElement;
+    private board: BoardType = {
+        columns: [],
+        settings: { collapsedColumns: [], columnColors: {}, todayOrder: {} },
+    }
+
+    private readonly boardContainer: HTMLElement
+
+    private readonly plugin: VukiKanbanPlugin
+
+    private sortableInstances: Sortable[] = []
+
+    private viewState: ViewStateType = { hideCompletedActive: true, todayFilterActive: true }
 
     constructor(leaf: WorkspaceLeaf, plugin: VukiKanbanPlugin) {
-        super(leaf);
-        this.plugin = plugin;
-        this.boardContainer = this.contentEl.createDiv({ cls: "kanban-container" });
+        super(leaf)
+        this.plugin = plugin
+        this.boardContainer = this.contentEl.createDiv({ cls: "kanban-container" })
     }
 
-    getViewType(): string {
-        return KANBAN_VIEW_TYPE;
+    public clear(): void {
+        this.board = {
+            columns: [],
+            settings: { collapsedColumns: [], columnColors: {}, todayOrder: {} },
+        }
+        this.boardContainer.empty()
     }
 
-    getDisplayText(): string {
-        return this.file?.basename ?? "Kanban";
+    public getDisplayText(): string {
+        return this.file?.basename ?? "Kanban"
     }
 
-    getViewData(): string {
-        return serializeBoard(this.board);
+    public getViewData(): string {
+        return serializeBoard(this.board)
     }
 
-    setViewData(data: string, clear: boolean): void {
-        this.board = parseBoard(data);
+    public getViewType(): string {
+        return KANBAN_VIEW_TYPE
+    }
+
+    // eslint-disable-next-line @typescript-eslint/require-await -- Obsidian base class requires async signature
+    public async onClose(): Promise<void> {
+        this.destroySortable()
+    }
+
+    public setViewData(data: string, clear: boolean): void {
+        this.board = parseBoard(data)
 
         if (clear) {
-            this.viewState = { todayFilterActive: true, hideCompletedActive: true };
+            this.viewState = { hideCompletedActive: true, todayFilterActive: true }
         }
 
-        this.render();
-    }
-
-    clear(): void {
-        this.board = { columns: [], settings: { collapsedColumns: [], todayOrder: {}, columnColors: {} } };
-        this.boardContainer.empty();
-    }
-
-    onClose(): Promise<void> {
-        this.destroySortable();
-
-        return Promise.resolve();
+        this.render()
     }
 
     private destroySortable(): void {
         for (const instance of this.sortableInstances) {
-            instance.destroy();
+            instance.destroy()
         }
 
-        this.sortableInstances = [];
+        this.sortableInstances = []
     }
 
     private render(): void {
-        this.destroySortable();
+        this.destroySortable()
 
-        this.sortableInstances = renderBoard(
-            this.boardContainer,
-            this.board,
-            this.viewState,
-            (newBoard) => {
-                this.board = newBoard;
-                this.requestSave();
-                this.render();
+        this.sortableInstances = renderBoard({
+            app: this.app,
+            board: this.board,
+            container: this.boardContainer,
+            onMutation: (newBoard) => {
+                this.board = newBoard
+                this.requestSave()
+                this.render()
             },
-            (newViewState) => {
-                this.viewState = newViewState;
-                this.render();
+            onViewStateChange: (newViewState) => {
+                this.viewState = newViewState
+                this.render()
             },
-            this.app.vault,
-            this.plugin.settings,
-            this.app,
-        );
+            pluginSettings: this.plugin.settings,
+            vault: this.app.vault,
+            viewState: this.viewState,
+        })
     }
 }

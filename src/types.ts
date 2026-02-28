@@ -1,43 +1,43 @@
-export type Priority = "important" | null;
+export type PriorityType = "important" | null
 
-export type Card = {
-    title: string;
-    completed: boolean;
-    priority: Priority;
-    date: string | null;
-    linkedNote: string | null;
-    id: string;
-    description: string | null;
-};
+export type CardType = {
+    completed: boolean
+    date: string | null
+    description: string | null
+    id: string
+    linkedNote: string | null
+    priority: PriorityType
+    title: string
+}
 
-export type Column = {
-    title: string;
-    cards: Card[];
-};
+export type ColumnType = {
+    cards: CardType[]
+    title: string
+}
 
-export type KanbanSettings = {
-    collapsedColumns: string[];
-    todayOrder: Record<string, string[]>;
-    columnColors: Record<string, string>;
-};
+export type KanbanSettingsType = {
+    collapsedColumns: string[]
+    columnColors: Record<string, string>
+    todayOrder: Partial<Record<string, string[]>>
+}
 
-export type Board = {
-    columns: Column[];
-    settings: KanbanSettings;
-};
+export type BoardType = {
+    columns: ColumnType[]
+    settings: KanbanSettingsType
+}
 
-export type ViewState = {
-    todayFilterActive: boolean;
-    hideCompletedActive: boolean;
-};
+export type ViewStateType = {
+    hideCompletedActive: boolean
+    todayFilterActive: boolean
+}
 
-export type PluginSettings = {
-    notePathPrefix: string;
-};
+export type PluginSettingsType = {
+    notePathPrefix: string
+}
 
-export const DEFAULT_PLUGIN_SETTINGS: PluginSettings = {
+export const DEFAULT_PLUGIN_SETTINGS: PluginSettingsType = {
     notePathPrefix: "Projects",
-};
+}
 
-export const KANBAN_VIEW_TYPE = "vuki-kanban-view";
-export const FRONTMATTER_KEY = "vuki-kanban";
+export const KANBAN_VIEW_TYPE = "vuki-kanban-view"
+export const FRONTMATTER_KEY = "vuki-kanban"
