@@ -3673,10 +3673,11 @@ function createCardElement(options) {
   if (projectPill) {
     const pillElement = document.createElement("span");
     pillElement.className = "kanban-card__project-pill";
-    pillElement.style.background = projectPill.color;
+    pillElement.style.borderColor = projectPill.color;
     if (projectPill.icon) {
       const pillIcon = document.createElement("span");
       pillIcon.className = "kanban-pill-icon";
+      pillIcon.style.color = projectPill.color;
       import_obsidian4.setIcon(pillIcon, projectPill.icon);
       pillElement.append(pillIcon);
     }
