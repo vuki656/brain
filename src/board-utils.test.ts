@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, setSystemTime } from "bun:test";
 
 import { immutableSpliceCard, immutableUpdateCard, toDateString, getNextMonday, formatDate } from "./board-utils";
 import { Column } from "./types";
@@ -101,16 +101,12 @@ describe("toDateString", () => {
 });
 
 describe("getNextMonday", () => {
-    beforeEach(() => {
-        vi.useFakeTimers();
-    });
-
     afterEach(() => {
-        vi.useRealTimers();
+        setSystemTime();
     });
 
     it("should return next Monday when today is Wednesday", () => {
-        vi.setSystemTime(new Date(2026, 1, 18));
+        setSystemTime(new Date(2026, 1, 18));
         const result = getNextMonday();
 
         expect(result.getDay()).toBe(1);
@@ -118,7 +114,7 @@ describe("getNextMonday", () => {
     });
 
     it("should return next Monday when today is Monday", () => {
-        vi.setSystemTime(new Date(2026, 1, 23));
+        setSystemTime(new Date(2026, 1, 23));
         const result = getNextMonday();
 
         expect(result.getDay()).toBe(1);
@@ -126,7 +122,7 @@ describe("getNextMonday", () => {
     });
 
     it("should return next Monday when today is Sunday", () => {
-        vi.setSystemTime(new Date(2026, 1, 22));
+        setSystemTime(new Date(2026, 1, 22));
         const result = getNextMonday();
 
         expect(result.getDay()).toBe(1);
@@ -136,12 +132,11 @@ describe("getNextMonday", () => {
 
 describe("formatDate", () => {
     beforeEach(() => {
-        vi.useFakeTimers();
-        vi.setSystemTime(new Date(2026, 1, 22));
+        setSystemTime(new Date(2026, 1, 22));
     });
 
     afterEach(() => {
-        vi.useRealTimers();
+        setSystemTime();
     });
 
     it("should return 'Today' for today's date", () => {
