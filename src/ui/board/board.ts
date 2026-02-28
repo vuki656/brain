@@ -14,12 +14,20 @@ function renderBoardProjects(options: BoardProjectsOptionsType): Sortable[] {
     boardElement.className = "kanban-board"
     container.append(boardElement)
 
+    const visibleProjectIndices: number[] = []
+
     for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
         const project = board.projects[projectIndex]
 
         if (!project) {
             continue
         }
+
+        if (board.settings.archivedProjects.includes(project.title)) {
+            continue
+        }
+
+        visibleProjectIndices.push(projectIndex)
 
         const projectElement = createProjectElement({
             board,
@@ -53,14 +61,21 @@ function renderBoardProjects(options: BoardProjectsOptionsType): Sortable[] {
                 return
             }
 
+            const actualOldIndex = visibleProjectIndices[oldIndex]
+            const actualNewIndex = visibleProjectIndices[newIndex]
+
+            if (actualOldIndex === undefined || actualNewIndex === undefined) {
+                return
+            }
+
             const newProjects = [...board.projects]
-            const [moved] = newProjects.splice(oldIndex, 1)
+            const [moved] = newProjects.splice(actualOldIndex, 1)
 
             if (!moved) {
                 return
             }
 
-            newProjects.splice(newIndex, 0, moved)
+            newProjects.splice(actualNewIndex, 0, moved)
             onMutation({ ...board, projects: newProjects })
         },
     })

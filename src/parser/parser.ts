@@ -90,7 +90,13 @@ function parseSettings(lines: string[]): KanbanSettingsType {
     })
 
     if (settingsStartIndex === -1) {
-        return { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} }
+        return {
+            archivedProjects: [],
+            collapsedProjects: [],
+            projectColors: {},
+            projectIcons: {},
+            todayOrder: {},
+        }
     }
 
     const jsonLines: string[] = []
@@ -126,7 +132,13 @@ function parseSettings(lines: string[]): KanbanSettingsType {
     const jsonString = jsonLines.join("\n")
 
     if (!jsonString) {
-        return { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} }
+        return {
+            archivedProjects: [],
+            collapsedProjects: [],
+            projectColors: {},
+            projectIcons: {},
+            todayOrder: {},
+        }
     }
 
     try {
@@ -140,13 +152,20 @@ function parseSettings(lines: string[]): KanbanSettingsType {
         }
 
         return {
+            archivedProjects: parsed["archived-projects"] ?? [],
             collapsedProjects: parsed["collapsed-projects"] ?? [],
             projectColors: parsed["project-colors"] ?? {},
             projectIcons: parsed["project-icons"] ?? {},
             todayOrder,
         }
     } catch {
-        return { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} }
+        return {
+            archivedProjects: [],
+            collapsedProjects: [],
+            projectColors: {},
+            projectIcons: {},
+            todayOrder: {},
+        }
     }
 }
 
@@ -288,6 +307,10 @@ export function serializeBoard(board: BoardType): string {
     }
 
     const settingsObject: Record<string, unknown> = {}
+
+    if (board.settings.archivedProjects.length > 0) {
+        settingsObject["archived-projects"] = board.settings.archivedProjects
+    }
 
     if (board.settings.collapsedProjects.length > 0) {
         settingsObject["collapsed-projects"] = board.settings.collapsedProjects

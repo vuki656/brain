@@ -44,10 +44,12 @@ export function createProjectElement(options: ProjectElementOptionsType): HTMLEl
     titleElement.addEventListener("dblclick", () => {
         startInlineEdit(titleElement, project.title, (newTitle) => {
             const wasCollapsed = board.settings.collapsedProjects.includes(project.title)
+            const wasArchived = board.settings.archivedProjects.includes(project.title)
             const newProjects = board.projects.map((proj, index) => {
                 return index === projectIndex ? { ...proj, title: newTitle } : proj
             })
             let newCollapsedProjects = [...board.settings.collapsedProjects]
+            let newArchivedProjects = [...board.settings.archivedProjects]
 
             if (wasCollapsed) {
                 newCollapsedProjects = newCollapsedProjects.map((name) => {
@@ -55,10 +57,20 @@ export function createProjectElement(options: ProjectElementOptionsType): HTMLEl
                 })
             }
 
+            if (wasArchived) {
+                newArchivedProjects = newArchivedProjects.map((name) => {
+                    return name === project.title ? newTitle : name
+                })
+            }
+
             onMutation({
                 ...board,
                 projects: newProjects,
-                settings: { ...board.settings, collapsedProjects: newCollapsedProjects },
+                settings: {
+                    ...board.settings,
+                    archivedProjects: newArchivedProjects,
+                    collapsedProjects: newCollapsedProjects,
+                },
             })
         })
     })
@@ -111,6 +123,20 @@ export function createProjectElement(options: ProjectElementOptionsType): HTMLEl
                     onMutation({
                         ...board,
                         settings: { ...board.settings, collapsedProjects: newCollapsed },
+                    })
+                })
+        })
+
+        menu.addItem((item) => {
+            return item
+                .setIcon("archive")
+                .setTitle("Archive project")
+                .onClick(() => {
+                    const newArchived = [...board.settings.archivedProjects, project.title]
+
+                    onMutation({
+                        ...board,
+                        settings: { ...board.settings, archivedProjects: newArchived },
                     })
                 })
         })
@@ -235,11 +261,18 @@ export function createProjectElement(options: ProjectElementOptionsType): HTMLEl
                     const newCollapsed = board.settings.collapsedProjects.filter((name) => {
                         return name !== project.title
                     })
+                    const newArchived = board.settings.archivedProjects.filter((name) => {
+                        return name !== project.title
+                    })
 
                     onMutation({
                         ...board,
                         projects: newProjects,
-                        settings: { ...board.settings, collapsedProjects: newCollapsed },
+                        settings: {
+                            ...board.settings,
+                            archivedProjects: newArchived,
+                            collapsedProjects: newCollapsed,
+                        },
                     })
                 })
         })

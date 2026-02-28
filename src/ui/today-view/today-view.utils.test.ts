@@ -288,6 +288,7 @@ describe("collectCardsByDateGroup", () => {
                 },
             ],
             settings: {
+                archivedProjects: [],
                 collapsedProjects: [],
                 projectColors: {},
                 projectIcons: {},

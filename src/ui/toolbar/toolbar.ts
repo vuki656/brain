@@ -1,4 +1,4 @@
-import { Notice } from "obsidian"
+import { Menu, Notice } from "obsidian"
 
 import { selfUpdate } from "../../plugin/self-update"
 import { openQuickAddDialog } from "../quick-add"
@@ -49,6 +49,38 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
         onViewStateChange({ ...viewState, hideCompletedActive: !viewState.hideCompletedActive })
     })
 
+    const archivedCount = board.settings.archivedProjects.length
+    let archivedButton: HTMLElement | null = null
+
+    if (archivedCount > 0) {
+        archivedButton = document.createElement("button")
+        archivedButton.className = "kanban-toolbar__button"
+        setButtonContent(archivedButton, "archive", `Archived (${archivedCount})`)
+        archivedButton.addEventListener("click", (clickEvent) => {
+            const menu = new Menu()
+
+            for (const archivedTitle of board.settings.archivedProjects) {
+                menu.addItem((item) => {
+                    return item
+                        .setIcon("archive-restore")
+                        .setTitle(archivedTitle)
+                        .onClick(() => {
+                            const newArchived = board.settings.archivedProjects.filter((name) => {
+                                return name !== archivedTitle
+                            })
+
+                            onMutation({
+                                ...board,
+                                settings: { ...board.settings, archivedProjects: newArchived },
+                            })
+                        })
+                })
+            }
+
+            menu.showAtMouseEvent(clickEvent as MouseEvent)
+        })
+    }
+
     const toolbarSpacer = document.createElement("div")
 
     toolbarSpacer.className = "kanban-toolbar__spacer"
@@ -77,14 +109,14 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
         updateButton.disabled = false
     })
 
-    toolbar.append(
-        addTaskButton,
-        todayButton,
-        hideCompletedButton,
-        toolbarSpacer,
-        versionLabel,
-        updateButton,
-    )
+    const toolbarButtons: HTMLElement[] = [addTaskButton, todayButton, hideCompletedButton]
+
+    if (archivedButton) {
+        toolbarButtons.push(archivedButton)
+    }
+
+    toolbarButtons.push(toolbarSpacer, versionLabel, updateButton)
+    toolbar.append(...toolbarButtons)
 
     return toolbar
 }

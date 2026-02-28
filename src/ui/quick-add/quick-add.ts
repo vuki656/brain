@@ -86,6 +86,10 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
     }
 
     for (const [loopProjectIndex, project] of board.projects.entries()) {
+        if (board.settings.archivedProjects.includes(project.title)) {
+            continue
+        }
+
         const chip = document.createElement("span")
 
         chip.className = "kanban-quick-add__date-button"

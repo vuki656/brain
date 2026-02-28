@@ -37,6 +37,7 @@ export function makeProjects(): ProjectType[] {
 
 export function makeBoard(overrides: Partial<BoardType> = {}): BoardType {
     const defaultSettings: KanbanSettingsType = {
+        archivedProjects: [],
         collapsedProjects: [],
         projectColors: {},
         projectIcons: {},

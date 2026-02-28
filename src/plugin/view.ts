@@ -11,7 +11,13 @@ import type VukiKanbanPlugin from "./plugin"
 export class KanbanView extends TextFileView {
     private board: BoardType = {
         projects: [],
-        settings: { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} },
+        settings: {
+            archivedProjects: [],
+            collapsedProjects: [],
+            projectColors: {},
+            projectIcons: {},
+            todayOrder: {},
+        },
     }
 
     private readonly boardContainer: HTMLElement
@@ -32,6 +38,7 @@ export class KanbanView extends TextFileView {
         this.board = {
             projects: [],
             settings: {
+                archivedProjects: [],
                 collapsedProjects: [],
                 projectColors: {},
                 projectIcons: {},

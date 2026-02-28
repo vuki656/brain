@@ -135,6 +135,10 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
             continue
         }
 
+        if (board.settings.archivedProjects.includes(project.title)) {
+            continue
+        }
+
         const projectElement = createProjectElement({
             board,
             onMutation,

@@ -109,6 +109,28 @@ describe("parseBoard", () => {
         expect(board.settings.collapsedProjects).toEqual(["Completed"])
     })
 
+    it("should parse archived projects from settings", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## General
+
+- [ ] Task one @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{"archived-projects":["Done","Later"]}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+
+        expect(board.settings.archivedProjects).toEqual(["Done", "Later"])
+    })
+
     it("should parse today order record from settings", () => {
         const markdown = `---
 
@@ -303,6 +325,7 @@ kanban-plugin: vuki-kanban
         const board = parseBoard(markdown)
 
         expect(board.projects).toHaveLength(1)
+        expect(board.settings.archivedProjects).toEqual([])
         expect(board.settings.collapsedProjects).toEqual([])
         expect(board.settings.projectColors).toEqual({})
         expect(board.settings.projectIcons).toEqual({})
@@ -408,6 +431,57 @@ describe("serializeBoard", () => {
         const serialized = serializeBoard(board)
 
         expect(serialized).not.toContain("project-colors")
+    })
+
+    it("should serialize archived projects in settings", () => {
+        const board = parseBoard(SAMPLE_BOARD)
+
+        board.settings.archivedProjects = ["Done", "Later"]
+
+        const serialized = serializeBoard(board)
+
+        expect(serialized).toContain('"archived-projects":["Done","Later"]')
+    })
+
+    it("should not include archived-projects key when archivedProjects is empty", () => {
+        const board = parseBoard(SAMPLE_BOARD)
+
+        board.settings.archivedProjects = []
+
+        const serialized = serializeBoard(board)
+
+        expect(serialized).not.toContain("archived-projects")
+    })
+
+    it("should round-trip archived projects through parse and serialize", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Backlog
+
+- [ ] Task one @id:abc123
+
+## Done
+
+- [x] Task two @id:def456
+
+%% kanban:settings
+\`\`\`json
+{"archived-projects":["Done"]}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+
+        expect(board.settings.archivedProjects).toEqual(["Done"])
+
+        const serialized = serializeBoard(board)
+        const reparsed = parseBoard(serialized)
+
+        expect(reparsed.settings.archivedProjects).toEqual(["Done"])
     })
 
     it("should not include today-order key when todayOrder is empty", () => {

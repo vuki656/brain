@@ -96,6 +96,10 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
             continue
         }
 
+        if (board.settings.archivedProjects.includes(project.title)) {
+            continue
+        }
+
         for (let cardIndex = 0; cardIndex < project.cards.length; cardIndex++) {
             const card = project.cards[cardIndex]
 

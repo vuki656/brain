@@ -16,6 +16,7 @@ export type ProjectType = {
 }
 
 export type KanbanSettingsType = {
+    archivedProjects: string[]
     collapsedProjects: string[]
     projectColors: Record<string, string>
     projectIcons: Record<string, string>
