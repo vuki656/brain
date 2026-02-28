@@ -11,22 +11,22 @@ kanban-plugin: vuki-kanban
 
 ---
 
-## General
+## Backlog
 
-- [ ] Review payments in bank app @id:aaa111
-- [ ] Call grandma @today @id:bbb222
-- [ ] Style guide !important @{2026-02-25} @id:ccc333
-- [x] Send AG Invoice @id:ddd444
+- [ ] Update billing dashboard @id:aaa111
+- [ ] Schedule weekly standup @today @id:bbb222
+- [ ] Design system tokens !important @{2026-02-25} @id:ccc333
+- [x] Send monthly report @id:ddd444
 
-## Ancient
+## In Progress
 
-- [ ] Review ognjens PRs @today !important @id:eee555
-- [x] Review marc comments @{2026-02-18} @id:fff666
+- [ ] Review open pull requests @today !important @id:eee555
+- [x] Address code review feedback @{2026-02-18} @id:fff666
 
 
 %% kanban:settings
 \`\`\`json
-{"collapsed-columns":["Medforall"]}
+{"collapsed-columns":["Completed"]}
 \`\`\`
 %%`;
 
@@ -36,10 +36,10 @@ kanban-plugin: vuki-kanban
 
 ---
 
-## General
+## Backlog
 
-- [ ] Review payments in bank app
-- [ ] Call grandma @today
+- [ ] Update billing dashboard
+- [ ] Schedule weekly standup @today
 
 %% kanban:settings
 \`\`\`json
@@ -53,66 +53,66 @@ kanban-plugin: board
 
 ---
 
-## General
+## Backlog
 
-- [ ] Review payments in bank app
-- [ ] Call grandma
-- [ ] [[Openclaw news summary on RPI]]
-- [ ] Custom kanban plugin
-- [x] Send AG Invocie
-- [x] ABC Email
-- [x] [[Research claude plugin for auto compact as you go]]
+- [ ] Update billing dashboard
+- [ ] Schedule weekly standup
+- [ ] [[Raspberry Pi setup notes]]
+- [ ] Build custom plugin
+- [x] Send monthly report
+- [x] Reply to vendor email
+- [x] [[Research auto-compaction strategies]]
 
 
-## Ancient
+## In Progress
 
-- [ ] Review ognjens PRs and tickets
-- [ ] Make a post in merlin channel to update UI regarding market change once PR is merged
+- [ ] Review open pull requests
+- [ ] Post changelog update in team channel after deploy
 - [ ] [[Strict mode research]]
-- [ ] Play around with bun
-- [ ] Improve PR review flow
-- [ ] Play casino games
-- [x] Review BOB structure
-- [x] Ping onion so he can give you his tasks
-- [x] Ask for das0 token
-- [x] Make ticket for errors
-- [x] !IMP! Review marc comments @{2026-02-18}
-- [x] Ask QA to test bug @{2026-02-18}
-- [x] Market change PR comments @{2026-02-17}
-- [x] Repro promo bug and fix
-- [x] Promo bug
-- [x] Onion msg
+- [ ] Experiment with new bundler
+- [ ] Improve code review workflow
+- [ ] Try load testing tool
+- [x] Review project structure
+- [x] Sync with teammate on task handoff
+- [x] Request staging API token
+- [x] Create bug report ticket
+- [x] !IMP! Address code review feedback @{2026-02-18}
+- [x] Ask QA to verify fix @{2026-02-18}
+- [x] Respond to deploy PR comments @{2026-02-17}
+- [x] Reproduce and fix promo bug
+- [x] Investigate promo bug
+- [x] Follow up on team message
 
 
-## Serenity
+## Project Alpha
 
-- [ ] Review tickets on clickup @{2026-02-18}
-- [ ] Openapi
-- [ ] New app setup with register
-- [ ] Google SSO for login to clickup
-- [x] Post a status update for this month
-
-
-## Medforall
-
-- [x] [[how are emar single calendars gonna have week slider]]
-- [x] Refine and polish create emar
-- [x] Create eMAR flow
-- [x] Fix deployed enterprise apps in azure
+- [ ] Triage tickets in tracker @{2026-02-18}
+- [ ] Set up OpenAPI spec
+- [ ] Scaffold new app with auth
+- [ ] Configure SSO for project tracker
+- [x] Post monthly status update
 
 
-## Ignit
+## Project Beta
 
-- [ ] Style guide
-- [ ] Refine company goals
-- [x] Update timesheet with descriptions
+- [x] [[Calendar widget week slider design]]
+- [x] Polish record creation flow
+- [x] Build record creation flow
+- [x] Fix cloud deployment config
 
 
-## SheepAI
+## Project Gamma
 
-- [ ] Add zagreb winter to web
-- [ ] Ask claude whats a better way to organize discord (to avoid tagging @all)
-- [x] Add logo moving bar & founders
+- [ ] Create style guide
+- [ ] Define team objectives
+- [x] Update timesheet entries
+
+
+## Project Delta
+
+- [ ] Add winter event to website
+- [ ] Reorganize team chat channels (to avoid tagging @all)
+- [x] Add logo carousel and team section
 
 
 ***
@@ -132,8 +132,8 @@ describe("parseBoard", () => {
         const board = parseBoard(SAMPLE_BOARD);
 
         expect(board.columns).toHaveLength(2);
-        expect(board.columns[0].title).toBe("General");
-        expect(board.columns[1].title).toBe("Ancient");
+        expect(board.columns[0].title).toBe("Backlog");
+        expect(board.columns[1].title).toBe("In Progress");
     });
 
     it("should parse card completion state", () => {
@@ -148,7 +148,7 @@ describe("parseBoard", () => {
         const board = parseBoard(SAMPLE_BOARD);
 
         expect(board.columns[0].cards[1].date).toBe(TODAY_STRING);
-        expect(board.columns[0].cards[1].title).toBe("Call grandma");
+        expect(board.columns[0].cards[1].title).toBe("Schedule weekly standup");
         expect(board.columns[1].cards[0].date).toBe(TODAY_STRING);
     });
 
@@ -156,7 +156,7 @@ describe("parseBoard", () => {
         const board = parseBoard(SAMPLE_BOARD);
 
         expect(board.columns[0].cards[2].priority).toBe("important");
-        expect(board.columns[0].cards[2].title).toBe("Style guide");
+        expect(board.columns[0].cards[2].title).toBe("Design system tokens");
         expect(board.columns[1].cards[0].priority).toBe("important");
     });
 
@@ -186,7 +186,7 @@ describe("parseBoard", () => {
     it("should parse collapsed columns from settings", () => {
         const board = parseBoard(SAMPLE_BOARD);
 
-        expect(board.settings.collapsedColumns).toEqual(["Medforall"]);
+        expect(board.settings.collapsedColumns).toEqual(["Completed"]);
     });
 
     it("should parse today order record from settings", () => {
@@ -249,15 +249,15 @@ kanban-plugin: vuki-kanban
 
 %% kanban:settings
 \`\`\`json
-{"column-colors":{"General":"var(--color-red)","Ancient":"var(--color-green)"}}
+{"column-colors":{"Backlog":"var(--color-red)","In Progress":"var(--color-green)"}}
 \`\`\`
 %%`;
 
         const board = parseBoard(markdown);
 
         expect(board.settings.columnColors).toEqual({
-            General: "var(--color-red)",
-            Ancient: "var(--color-green)",
+            Backlog: "var(--color-red)",
+            "In Progress": "var(--color-green)",
         });
     });
 
@@ -265,12 +265,12 @@ kanban-plugin: vuki-kanban
         const board = parseBoard(DASHBOARD_ORIGINAL);
 
         expect(board.columns.map((column) => column.title)).toEqual([
-            "General",
-            "Ancient",
-            "Serenity",
-            "Medforall",
-            "Ignit",
-            "SheepAI",
+            "Backlog",
+            "In Progress",
+            "Project Alpha",
+            "Project Beta",
+            "Project Gamma",
+            "Project Delta",
         ]);
     });
 
@@ -278,26 +278,26 @@ kanban-plugin: vuki-kanban
         const board = parseBoard(DASHBOARD_ORIGINAL);
         const general = board.columns[0];
 
-        expect(general.cards[2].linkedNote).toBe("Openclaw news summary on RPI");
+        expect(general.cards[2].linkedNote).toBe("Raspberry Pi setup notes");
         expect(general.cards[2].title).toBe("");
     });
 
     it("should parse dates from old format", () => {
         const board = parseBoard(DASHBOARD_ORIGINAL);
-        const ancient = board.columns[1];
+        const inProgress = board.columns[1];
 
-        const reviewMarc = ancient.cards.find((card) => card.title.includes("Review marc comments"));
+        const reviewFeedback = inProgress.cards.find((card) => card.title.includes("Address code review feedback"));
 
-        expect(reviewMarc?.date).toBe("2026-02-18");
+        expect(reviewFeedback?.date).toBe("2026-02-18");
     });
 
     it("should handle cards with @all without treating it as a token", () => {
         const board = parseBoard(DASHBOARD_ORIGINAL);
-        const sheepAI = board.columns[5];
-        const discordCard = sheepAI.cards[1];
+        const projectDelta = board.columns[5];
+        const chatCard = projectDelta.cards[1];
 
-        expect(discordCard.title).toContain("@all");
-        expect(discordCard.date).toBeNull();
+        expect(chatCard.title).toContain("@all");
+        expect(chatCard.date).toBeNull();
     });
 
     it("should parse archived cards after *** separator", () => {
@@ -422,9 +422,9 @@ describe("serializeBoard", () => {
         const board = parseBoard(SAMPLE_BOARD);
         const serialized = serializeBoard(board);
 
-        expect(serialized).toContain("- [ ] Call grandma @today @id:bbb222");
-        expect(serialized).toContain("- [ ] Style guide !important @{2026-02-25} @id:ccc333");
-        expect(serialized).toContain("- [ ] Review ognjens PRs @today !important @id:eee555");
+        expect(serialized).toContain("- [ ] Schedule weekly standup @today @id:bbb222");
+        expect(serialized).toContain("- [ ] Design system tokens !important @{2026-02-25} @id:ccc333");
+        expect(serialized).toContain("- [ ] Review open pull requests @today !important @id:eee555");
         expect(serialized).not.toContain(`@today @{${TODAY_STRING}}`);
     });
 
@@ -433,7 +433,7 @@ describe("serializeBoard", () => {
         const serialized = serializeBoard(board);
 
         expect(serialized).toContain("%% kanban:settings");
-        expect(serialized).toContain('"collapsed-columns":["Medforall"]');
+        expect(serialized).toContain('"collapsed-columns":["Completed"]');
         expect(serialized).toContain("%%");
     });
 
@@ -656,7 +656,7 @@ kanban-plugin: vuki-kanban
 
         const serialized = serializeBoard(board);
 
-        expect(serialized).toContain("- [ ] Review payments in bank app @id:aaa111\n  My description\n  Second line");
+        expect(serialized).toContain("- [ ] Update billing dashboard @id:aaa111\n  My description\n  Second line");
     });
 
     it("should parse descriptions on archived cards", () => {
