@@ -1,26 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach, setSystemTime } from "bun:test";
 
 import { immutableSpliceCard, immutableUpdateCard, toDateString, getNextMonday, formatDate } from "./board-utils";
-import { Column } from "./types";
-
-function makeCard(overrides: Partial<{ title: string; completed: boolean; priority: "important" | null; date: string | null; linkedNote: string | null; id: string; description: string | null }> = {}) {
-    return {
-        title: overrides.title ?? "Test card",
-        completed: overrides.completed ?? false,
-        priority: overrides.priority ?? null,
-        date: overrides.date ?? null,
-        linkedNote: overrides.linkedNote ?? null,
-        id: overrides.id ?? "abc123",
-        description: overrides.description ?? null,
-    };
-}
-
-function makeColumns(): Column[] {
-    return [
-        { title: "Todo", cards: [makeCard({ id: "a1", title: "First" }), makeCard({ id: "a2", title: "Second" })] },
-        { title: "Done", cards: [makeCard({ id: "b1", title: "Third", completed: true })] },
-    ];
-}
+import { makeCard, makeColumns } from "./test-utils";
 
 describe("immutableSpliceCard", () => {
     it("should remove a card without mutating the original", () => {
@@ -58,6 +39,53 @@ describe("immutableSpliceCard", () => {
 
         expect(result[1]).toBe(columns[1]);
     });
+
+    it("should insert a card at position 0", () => {
+        const columns = makeColumns();
+        const newCard = makeCard({ id: "front", title: "Front" });
+        const result = immutableSpliceCard(columns, 0, 0, 0, newCard);
+
+        expect(result[0].cards).toHaveLength(3);
+        expect(result[0].cards[0].id).toBe("front");
+        expect(result[0].cards[1].id).toBe("a1");
+    });
+
+    it("should insert a card at the end", () => {
+        const columns = makeColumns();
+        const newCard = makeCard({ id: "last", title: "Last" });
+        const result = immutableSpliceCard(columns, 0, 2, 0, newCard);
+
+        expect(result[0].cards).toHaveLength(3);
+        expect(result[0].cards[2].id).toBe("last");
+    });
+
+    it("should handle splice on empty column", () => {
+        const columns = [{ title: "Empty", cards: [] as ReturnType<typeof makeCard>[] }];
+        const newCard = makeCard({ id: "first", title: "First" });
+        const result = immutableSpliceCard(columns, 0, 0, 0, newCard);
+
+        expect(result[0].cards).toHaveLength(1);
+        expect(result[0].cards[0].id).toBe("first");
+    });
+
+    it("should insert multiple cards at once", () => {
+        const columns = makeColumns();
+        const cardA = makeCard({ id: "m1", title: "Multi 1" });
+        const cardB = makeCard({ id: "m2", title: "Multi 2" });
+        const result = immutableSpliceCard(columns, 0, 1, 0, cardA, cardB);
+
+        expect(result[0].cards).toHaveLength(4);
+        expect(result[0].cards[1].id).toBe("m1");
+        expect(result[0].cards[2].id).toBe("m2");
+        expect(result[0].cards[3].id).toBe("a2");
+    });
+
+    it("should handle large deleteCount gracefully", () => {
+        const columns = makeColumns();
+        const result = immutableSpliceCard(columns, 0, 0, 100);
+
+        expect(result[0].cards).toHaveLength(0);
+    });
 });
 
 describe("immutableUpdateCard", () => {
@@ -84,6 +112,23 @@ describe("immutableUpdateCard", () => {
         expect(result[0].cards[1]).toBe(columns[0].cards[1]);
         expect(result[1]).toBe(columns[1]);
     });
+
+    it("should handle empty partial update", () => {
+        const columns = makeColumns();
+        const result = immutableUpdateCard(columns, 0, 0, {});
+
+        expect(result[0].cards[0].title).toBe("First");
+        expect(result[0].cards[0].id).toBe("a1");
+    });
+
+    it("should update card in second column", () => {
+        const columns = makeColumns();
+        const result = immutableUpdateCard(columns, 1, 0, { completed: false });
+
+        expect(result[1].cards[0].completed).toBe(false);
+        expect(columns[1].cards[0].completed).toBe(true);
+        expect(result[0]).toBe(columns[0]);
+    });
 });
 
 describe("toDateString", () => {
@@ -97,6 +142,18 @@ describe("toDateString", () => {
 
     it("should not zero-pad double-digit months and days", () => {
         expect(toDateString(new Date(2026, 11, 25))).toBe("2026-12-25");
+    });
+
+    it("should handle leap year Feb 29", () => {
+        expect(toDateString(new Date(2024, 1, 29))).toBe("2024-02-29");
+    });
+
+    it("should handle year boundary Dec 31", () => {
+        expect(toDateString(new Date(2025, 11, 31))).toBe("2025-12-31");
+    });
+
+    it("should handle year boundary Jan 1", () => {
+        expect(toDateString(new Date(2026, 0, 1))).toBe("2026-01-01");
     });
 });
 
@@ -123,6 +180,38 @@ describe("getNextMonday", () => {
 
     it("should return next Monday when today is Sunday", () => {
         setSystemTime(new Date(2026, 1, 22));
+        const result = getNextMonday();
+
+        expect(result.getDay()).toBe(1);
+        expect(toDateString(result)).toBe("2026-02-23");
+    });
+
+    it("should return next Monday when today is Tuesday", () => {
+        setSystemTime(new Date(2026, 1, 17));
+        const result = getNextMonday();
+
+        expect(result.getDay()).toBe(1);
+        expect(toDateString(result)).toBe("2026-02-23");
+    });
+
+    it("should return next Monday when today is Thursday", () => {
+        setSystemTime(new Date(2026, 1, 19));
+        const result = getNextMonday();
+
+        expect(result.getDay()).toBe(1);
+        expect(toDateString(result)).toBe("2026-02-23");
+    });
+
+    it("should return next Monday when today is Friday", () => {
+        setSystemTime(new Date(2026, 1, 20));
+        const result = getNextMonday();
+
+        expect(result.getDay()).toBe(1);
+        expect(toDateString(result)).toBe("2026-02-23");
+    });
+
+    it("should return next Monday when today is Saturday", () => {
+        setSystemTime(new Date(2026, 1, 21));
         const result = getNextMonday();
 
         expect(result.getDay()).toBe(1);
@@ -161,5 +250,21 @@ describe("formatDate", () => {
 
     it("should return raw date string for dates more than 7 days away", () => {
         expect(formatDate("2026-03-15")).toBe("2026-03-15");
+    });
+
+    it("should return 'In 7 days' for exactly 7 days in the future", () => {
+        expect(formatDate("2026-03-01")).toBe("In 7 days");
+    });
+
+    it("should return raw date string for exactly 8 days in the future", () => {
+        expect(formatDate("2026-03-02")).toBe("2026-03-02");
+    });
+
+    it("should return 'X days ago' for far past dates", () => {
+        expect(formatDate("2026-01-01")).toBe("52 days ago");
+    });
+
+    it("should return raw date string for far future dates", () => {
+        expect(formatDate("2026-12-31")).toBe("2026-12-31");
     });
 });

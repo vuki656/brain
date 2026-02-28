@@ -47,20 +47,20 @@ async function selfUpdate(app: App): Promise<void> {
 
 type MutationHandler = (board: Board) => void;
 
-type TodayCard = {
+export type TodayCard = {
     card: Card;
     columnIndex: number;
     cardIndex: number;
     columnTitle: string;
 };
 
-type DateGroup = {
+export type DateGroup = {
     label: string;
     dateKey: string;
     cards: TodayCard[];
 };
 
-const COLUMN_COLORS = [
+export const COLUMN_COLORS = [
     "var(--color-blue)",
     "var(--color-purple)",
     "var(--color-green)",
@@ -82,7 +82,7 @@ const COLUMN_COLOR_LABELS: Record<string, string> = {
     "var(--color-pink)": "Pink",
 };
 
-function getColumnColor(columnTitle: string, columnIndex: number, board: Board): string {
+export function getColumnColor(columnTitle: string, columnIndex: number, board: Board): string {
     const customColor = board.settings.columnColors[columnTitle];
 
     if (customColor) return customColor;
@@ -225,7 +225,7 @@ function showDatePicker(
     document.body.appendChild(modal);
 }
 
-function isCardVisibleInTodayFilter(card: Card): boolean {
+export function isCardVisibleInTodayFilter(card: Card): boolean {
     if (card.completed) return false;
     if (card.date) return true;
 
@@ -233,7 +233,7 @@ function isCardVisibleInTodayFilter(card: Card): boolean {
 }
 
 
-function sortCardsByOrder(cards: TodayCard[], savedOrder: string[]): TodayCard[] {
+export function sortCardsByOrder(cards: TodayCard[], savedOrder: string[]): TodayCard[] {
     if (savedOrder.length === 0) return cards;
 
     const sorted = [...cards];
@@ -250,7 +250,7 @@ function sortCardsByOrder(cards: TodayCard[], savedOrder: string[]): TodayCard[]
     return sorted;
 }
 
-function formatDateGroupLabel(dateString: string): string {
+export function formatDateGroupLabel(dateString: string): string {
     const cardDate = new Date(dateString + "T00:00:00");
     const today = new Date();
 
@@ -265,7 +265,7 @@ function formatDateGroupLabel(dateString: string): string {
     return cardDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
-function formatDateGroupSubtitle(dateKey: string): string {
+export function formatDateGroupSubtitle(dateKey: string): string {
     if (dateKey === "today" || dateKey === "overdue") return "";
 
     const date = new Date(dateKey + "T00:00:00");
@@ -281,7 +281,7 @@ function formatDateGroupSubtitle(dateKey: string): string {
     return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
-function collectCardsByDateGroup(board: Board): DateGroup[] {
+export function collectCardsByDateGroup(board: Board): DateGroup[] {
     const todayString = toDateString(new Date());
     const overdueCards: TodayCard[] = [];
     const todayCards: TodayCard[] = [];
@@ -1534,7 +1534,7 @@ function createColumnCardMoveHandler(board: Board, onMutation: MutationHandler):
     };
 }
 
-function getDateForSection(dateKey: string): string | null {
+export function getDateForSection(dateKey: string): string | null {
     if (dateKey === "today") return toDateString(new Date());
     if (dateKey === "overdue") return null;
 

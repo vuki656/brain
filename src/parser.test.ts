@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import { toDateString } from "./board-utils";
-import { parseBoard, serializeBoard } from "./parser";
+import { parseBoard, serializeBoard, generateId } from "./parser";
 
 const TODAY_STRING = toDateString(new Date());
 
@@ -715,6 +715,269 @@ kanban-plugin: vuki-kanban
         expect(reparsed.columns[0].cards[0].description).toBe("First description\nWith two lines");
         expect(reparsed.columns[0].cards[1].description).toBeNull();
         expect(reparsed.columns[0].cards[2].description).toBe("Completed description");
+    });
+});
+
+describe("parseCard edge cases", () => {
+    it("should keep malformed date @{invalid} in title", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Fix bug @{invalid} @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].date).toBeNull();
+        expect(board.columns[0].cards[0].title).toContain("@{invalid}");
+    });
+
+    it("should accept impossible calendar date as string passthrough", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Fix bug @{2026-13-45} @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].date).toBe("2026-13-45");
+    });
+
+    it("should capture first linked note and remove all from title", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] [[First Note]] and [[Second Note]] @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].linkedNote).toBe("First Note");
+        expect(board.columns[0].cards[0].title).not.toContain("[[");
+    });
+
+    it("should handle empty title after all tokens stripped", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Do stuff @today !important @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].title).toBe("Do stuff");
+        expect(board.columns[0].cards[0].date).toBe(TODAY_STRING);
+        expect(board.columns[0].cards[0].priority).toBe("important");
+        expect(board.columns[0].cards[0].id).toBe("abc123");
+    });
+
+    it("should let explicit @{date} overwrite @today", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task @today @{2026-03-01} @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].date).toBe("2026-03-01");
+    });
+
+    it("should not parse @id: at start of card line (regex requires leading whitespace)", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] @id:xyz789 Some task
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].id).not.toBe("xyz789");
+        expect(board.columns[0].cards[0].id).toMatch(/^[a-z0-9]{6}$/);
+        expect(board.columns[0].cards[0].title).toContain("@id:xyz789");
+    });
+});
+
+describe("description edge cases", () => {
+    it("should stop description at empty/whitespace-only line", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task @id:abc123
+  Description line
+
+- [ ] Next task @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].description).toBe("Description line");
+    });
+
+    it("should stop description at indented checkbox line", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task @id:abc123
+  Description here
+  - [ ] Subtask
+- [ ] Other @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].description).toBe("Description here");
+    });
+});
+
+describe("frontmatter edge cases", () => {
+    it("should return empty board when missing closing ---", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+## Col
+
+- [ ] Task @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns).toEqual([]);
+    });
+});
+
+describe("round-trip edge cases", () => {
+    it("should survive round-trip for card with all tokens AND description", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] [[MyNote]] @today !important @{2026-03-01} @id:xyz789
+  Some detailed description
+  Spanning multiple lines
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+        const serialized = serializeBoard(board);
+        const reparsed = parseBoard(serialized);
+        const card = reparsed.columns[0].cards[0];
+
+        expect(card.linkedNote).toBe("MyNote");
+        expect(card.priority).toBe("important");
+        expect(card.date).toBe("2026-03-01");
+        expect(card.id).toBe("xyz789");
+        expect(card.description).toBe("Some detailed description\nSpanning multiple lines");
+    });
+});
+
+describe("generateId", () => {
+    it("should produce 6-char alphanumeric strings with no collisions across 100 calls", () => {
+        const ids = new Set<string>();
+
+        for (let index = 0; index < 100; index++) {
+            const id = generateId();
+
+            expect(id).toMatch(/^[a-z0-9]{6}$/);
+            ids.add(id);
+        }
+
+        expect(ids.size).toBe(100);
     });
 });
 
