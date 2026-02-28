@@ -12,7 +12,6 @@ const CHECKBOX_CHECKED_REGEX = /^- \[x\] /;
 const COLUMN_HEADING_REGEX = /^## (.+)$/;
 const SETTINGS_START = "%% kanban:settings";
 const SETTINGS_END = "%%";
-const ARCHIVE_SEPARATOR = "***";
 
 export function generateId(): string {
     const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -128,9 +127,7 @@ function parseSettings(lines: string[]): KanbanSettings {
         const rawTodayOrder = parsed["today-order"];
         let todayOrder: Record<string, string[]> = {};
 
-        if (Array.isArray(rawTodayOrder)) {
-            todayOrder = { today: rawTodayOrder };
-        } else if (rawTodayOrder && typeof rawTodayOrder === "object") {
+        if (rawTodayOrder && typeof rawTodayOrder === "object") {
             todayOrder = rawTodayOrder;
         }
 
@@ -164,7 +161,7 @@ function collectDescription(lines: string[], cardLineIndex: number): string | nu
             break;
         }
 
-        if (nextTrimmed === ARCHIVE_SEPARATOR || nextTrimmed === SETTINGS_START) {
+        if (nextTrimmed === SETTINGS_START) {
             break;
         }
 
@@ -177,11 +174,9 @@ function collectDescription(lines: string[], cardLineIndex: number): string | nu
 export function parseBoard(markdown: string): Board {
     const lines = markdown.split("\n");
     const columns: Column[] = [];
-    const archivedCards: Card[] = [];
     let currentColumn: Column | null = null;
     let pastFrontmatter = false;
     let inFrontmatter = false;
-    let inArchive = false;
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
         const trimmed = lines[lineIndex].trim();
@@ -200,24 +195,6 @@ export function parseBoard(markdown: string): Board {
 
         if (trimmed === SETTINGS_START) {
             break;
-        }
-
-        if (trimmed === ARCHIVE_SEPARATOR) {
-            inArchive = true;
-            continue;
-        }
-
-        if (inArchive) {
-            if (CHECKBOX_UNCHECKED_REGEX.test(trimmed) || CHECKBOX_CHECKED_REGEX.test(trimmed)) {
-                const card = parseCard(trimmed);
-
-                if (card) {
-                    card.description = collectDescription(lines, lineIndex);
-                    archivedCards.push(card);
-                }
-            }
-
-            continue;
         }
 
         const headingMatch = COLUMN_HEADING_REGEX.exec(trimmed);
@@ -239,7 +216,7 @@ export function parseBoard(markdown: string): Board {
 
     const settings = parseSettings(lines);
 
-    return { columns, archivedCards, settings };
+    return { columns, settings };
 }
 
 function serializeCard(card: Card): string {
@@ -296,23 +273,6 @@ export function serializeBoard(board: Board): string {
         }
 
         lines.push("");
-        lines.push("");
-    }
-
-    if (board.archivedCards.length > 0) {
-        lines.push("***");
-        lines.push("");
-
-        for (const card of board.archivedCards) {
-            lines.push(serializeCard(card));
-
-            if (card.description) {
-                for (const descriptionLine of card.description.split("\n")) {
-                    lines.push(`  ${descriptionLine}`);
-                }
-            }
-        }
-
         lines.push("");
     }
 

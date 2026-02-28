@@ -47,86 +47,6 @@ kanban-plugin: vuki-kanban
 \`\`\`
 %%`;
 
-const DASHBOARD_ORIGINAL = `---
-
-kanban-plugin: board
-
----
-
-## Backlog
-
-- [ ] Update billing dashboard
-- [ ] Schedule weekly standup
-- [ ] [[Raspberry Pi setup notes]]
-- [ ] Build custom plugin
-- [x] Send monthly report
-- [x] Reply to vendor email
-- [x] [[Research auto-compaction strategies]]
-
-
-## In Progress
-
-- [ ] Review open pull requests
-- [ ] Post changelog update in team channel after deploy
-- [ ] [[Strict mode research]]
-- [ ] Experiment with new bundler
-- [ ] Improve code review workflow
-- [ ] Try load testing tool
-- [x] Review project structure
-- [x] Sync with teammate on task handoff
-- [x] Request staging API token
-- [x] Create bug report ticket
-- [x] !IMP! Address code review feedback @{2026-02-18}
-- [x] Ask QA to verify fix @{2026-02-18}
-- [x] Respond to deploy PR comments @{2026-02-17}
-- [x] Reproduce and fix promo bug
-- [x] Investigate promo bug
-- [x] Follow up on team message
-
-
-## Project Alpha
-
-- [ ] Triage tickets in tracker @{2026-02-18}
-- [ ] Set up OpenAPI spec
-- [ ] Scaffold new app with auth
-- [ ] Configure SSO for project tracker
-- [x] Post monthly status update
-
-
-## Project Beta
-
-- [x] [[Calendar widget week slider design]]
-- [x] Polish record creation flow
-- [x] Build record creation flow
-- [x] Fix cloud deployment config
-
-
-## Project Gamma
-
-- [ ] Create style guide
-- [ ] Define team objectives
-- [x] Update timesheet entries
-
-
-## Project Delta
-
-- [ ] Add winter event to website
-- [ ] Reorganize team chat channels (to avoid tagging @all)
-- [x] Add logo carousel and team section
-
-
-***
-
-## Archive
-
-- [x] test
-
-%% kanban:settings
-\`\`\`
-{"kanban-plugin":"board","list-collapse":[false,false,false,false,false],"show-checkboxes":true,"hide-tags-in-title":false,"hide-tags-display":false,"hide-date-in-title":false,"hide-date-display":false,"show-relative-date":false,"prepend-archive-date":false,"prepend-archive-separator":" ","link-date-to-daily-note":false,"mark-cards-complete":true,"new-card-insertion-method":"append","show-add-list":false,"show-archive-all":true}
-\`\`\`
-%%`;
-
 describe("parseBoard", () => {
     it("should parse columns from headings", () => {
         const board = parseBoard(SAMPLE_BOARD);
@@ -214,28 +134,6 @@ kanban-plugin: vuki-kanban
         });
     });
 
-    it("should migrate old array today order to record format", () => {
-        const markdown = `---
-
-kanban-plugin: vuki-kanban
-
----
-
-## General
-
-- [ ] Task one @id:abc123
-
-%% kanban:settings
-\`\`\`json
-{"today-order":["abc123","def456"]}
-\`\`\`
-%%`;
-
-        const board = parseBoard(markdown);
-
-        expect(board.settings.todayOrder).toEqual({ today: ["abc123", "def456"] });
-    });
-
     it("should parse column colors from settings", () => {
         const markdown = `---
 
@@ -261,57 +159,53 @@ kanban-plugin: vuki-kanban
         });
     });
 
-    it("should stop parsing at archive separator", () => {
-        const board = parseBoard(DASHBOARD_ORIGINAL);
-
-        expect(board.columns.map((column) => column.title)).toEqual([
-            "Backlog",
-            "In Progress",
-            "Project Alpha",
-            "Project Beta",
-            "Project Gamma",
-            "Project Delta",
-        ]);
-    });
-
     it("should parse linked notes", () => {
-        const board = parseBoard(DASHBOARD_ORIGINAL);
-        const general = board.columns[0];
+        const markdown = `---
 
-        expect(general.cards[2].linkedNote).toBe("Raspberry Pi setup notes");
-        expect(general.cards[2].title).toBe("");
-    });
+kanban-plugin: vuki-kanban
 
-    it("should parse dates from old format", () => {
-        const board = parseBoard(DASHBOARD_ORIGINAL);
-        const inProgress = board.columns[1];
+---
 
-        const reviewFeedback = inProgress.cards.find((card) => card.title.includes("Address code review feedback"));
+## Backlog
 
-        expect(reviewFeedback?.date).toBe("2026-02-18");
+- [ ] [[Raspberry Pi setup notes]] @id:abc123
+- [ ] Regular task @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+
+        expect(board.columns[0].cards[0].linkedNote).toBe("Raspberry Pi setup notes");
+        expect(board.columns[0].cards[0].title).toBe("");
+        expect(board.columns[0].cards[1].linkedNote).toBeNull();
     });
 
     it("should handle cards with @all without treating it as a token", () => {
-        const board = parseBoard(DASHBOARD_ORIGINAL);
-        const projectDelta = board.columns[5];
-        const chatCard = projectDelta.cards[1];
+        const markdown = `---
 
-        expect(chatCard.title).toContain("@all");
-        expect(chatCard.date).toBeNull();
-    });
+kanban-plugin: vuki-kanban
 
-    it("should parse archived cards after *** separator", () => {
-        const board = parseBoard(DASHBOARD_ORIGINAL);
+---
 
-        expect(board.archivedCards).toHaveLength(1);
-        expect(board.archivedCards[0].title).toBe("test");
-        expect(board.archivedCards[0].completed).toBe(true);
-    });
+## General
 
-    it("should return empty archivedCards when no archive section exists", () => {
-        const board = parseBoard(SAMPLE_BOARD);
+- [ ] Reorganize team chat channels (to avoid tagging @all) @id:abc123
 
-        expect(board.archivedCards).toEqual([]);
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`;
+
+        const board = parseBoard(markdown);
+        const card = board.columns[0].cards[0];
+
+        expect(card.title).toContain("@all");
+        expect(card.date).toBeNull();
     });
 
     it("should handle empty columns", () => {
@@ -405,7 +299,6 @@ kanban-plugin: vuki-kanban
         const board = parseBoard(markdown);
 
         expect(board.columns).toEqual([]);
-        expect(board.archivedCards).toEqual([]);
     });
 });
 
@@ -435,21 +328,6 @@ describe("serializeBoard", () => {
         expect(serialized).toContain("%% kanban:settings");
         expect(serialized).toContain('"collapsed-columns":["Completed"]');
         expect(serialized).toContain("%%");
-    });
-
-    it("should serialize archived cards after *** separator", () => {
-        const board = parseBoard(DASHBOARD_ORIGINAL);
-        const serialized = serializeBoard(board);
-
-        expect(serialized).toContain("***");
-        expect(serialized).toContain("- [x] test");
-    });
-
-    it("should not include *** when there are no archived cards", () => {
-        const board = parseBoard(SAMPLE_BOARD);
-        const serialized = serializeBoard(board);
-
-        expect(serialized).not.toContain("***");
     });
 
     it("should serialize today order record in settings", () => {
@@ -598,33 +476,6 @@ kanban-plugin: vuki-kanban
         expect(board.columns[0].cards[0].description).toBe("Some description");
     });
 
-    it("should stop description at archive separator", () => {
-        const markdown = `---
-
-kanban-plugin: vuki-kanban
-
----
-
-## Col
-
-- [ ] Task @id:abc123
-  Description here
-
-***
-
-- [x] Archived @id:def456
-
-%% kanban:settings
-\`\`\`json
-{}
-\`\`\`
-%%`;
-
-        const board = parseBoard(markdown);
-
-        expect(board.columns[0].cards[0].description).toBe("Description here");
-    });
-
     it("should not parse tokens inside descriptions", () => {
         const markdown = `---
 
@@ -657,33 +508,6 @@ kanban-plugin: vuki-kanban
         const serialized = serializeBoard(board);
 
         expect(serialized).toContain("- [ ] Update billing dashboard @id:aaa111\n  My description\n  Second line");
-    });
-
-    it("should parse descriptions on archived cards", () => {
-        const markdown = `---
-
-kanban-plugin: vuki-kanban
-
----
-
-## Col
-
-- [ ] Task @id:abc123
-
-***
-
-- [x] Archived task @id:def456
-  Archived description
-
-%% kanban:settings
-\`\`\`json
-{}
-\`\`\`
-%%`;
-
-        const board = parseBoard(markdown);
-
-        expect(board.archivedCards[0].description).toBe("Archived description");
     });
 
     it("should round-trip cards with descriptions", () => {
@@ -1011,20 +835,6 @@ describe("round-trip", () => {
         }
 
         expect(reparsed.settings.collapsedColumns).toEqual(board.settings.collapsedColumns);
-    });
-
-    it("should preserve archived cards through round-trip", () => {
-        const board = parseBoard(DASHBOARD_ORIGINAL);
-        const serialized = serializeBoard(board);
-        const reparsed = parseBoard(serialized);
-
-        expect(reparsed.archivedCards).toHaveLength(board.archivedCards.length);
-
-        for (let index = 0; index < board.archivedCards.length; index++) {
-            expect(reparsed.archivedCards[index].title).toBe(board.archivedCards[index].title);
-            expect(reparsed.archivedCards[index].completed).toBe(board.archivedCards[index].completed);
-            expect(reparsed.archivedCards[index].id).toBe(board.archivedCards[index].id);
-        }
     });
 
     it("should be idempotent on second serialize", () => {

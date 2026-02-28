@@ -8,7 +8,7 @@ import { Board, KANBAN_VIEW_TYPE, ViewState, PluginSettings } from "./types";
 import type VukiKanbanPlugin from "./main";
 
 export class KanbanView extends TextFileView {
-    private board: Board = { columns: [], archivedCards: [], settings: { collapsedColumns: [], todayOrder: {}, columnColors: {} } };
+    private board: Board = { columns: [], settings: { collapsedColumns: [], todayOrder: {}, columnColors: {} } };
     private viewState: ViewState = { todayFilterActive: true, hideCompletedActive: true };
     private sortableInstances: Sortable[] = [];
     private plugin: VukiKanbanPlugin;
@@ -43,7 +43,7 @@ export class KanbanView extends TextFileView {
     }
 
     clear(): void {
-        this.board = { columns: [], archivedCards: [], settings: { collapsedColumns: [], todayOrder: {}, columnColors: {} } };
+        this.board = { columns: [], settings: { collapsedColumns: [], todayOrder: {}, columnColors: {} } };
         this.boardContainer.empty();
     }
 

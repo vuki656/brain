@@ -28,7 +28,6 @@ export function makeBoard(overrides: Partial<Board> = {}): Board {
 
     return {
         columns: overrides.columns ?? makeColumns(),
-        archivedCards: overrides.archivedCards ?? [],
         settings: overrides.settings ?? defaultSettings,
     };
 }

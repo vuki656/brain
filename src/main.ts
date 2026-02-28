@@ -1,7 +1,6 @@
 import { Plugin, WorkspaceLeaf } from "obsidian";
 import { around } from "monkey-around";
 
-import { migrateFromOldKanban } from "./migration";
 import { VukiKanbanSettingTab } from "./settings";
 import { KanbanView } from "./view";
 import { DEFAULT_PLUGIN_SETTINGS, FRONTMATTER_KEY, KANBAN_VIEW_TYPE, PluginSettings } from "./types";
@@ -14,12 +13,6 @@ export default class VukiKanbanPlugin extends Plugin {
         await this.loadSettings();
 
         this.registerView(KANBAN_VIEW_TYPE, (leaf) => new KanbanView(leaf, this));
-
-        this.addCommand({
-            id: "migrate-old-kanban",
-            name: "Migrate from old kanban format",
-            callback: () => migrateFromOldKanban(this.app),
-        });
 
         this.addSettingTab(new VukiKanbanSettingTab(this.app, this));
 
