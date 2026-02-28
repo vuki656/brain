@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { makeCard, makeColumns } from "../../core/shared/test-utils"
+import { makeCard, makeColumns } from "../../shared/test-utils"
 
 import { immutableSpliceCard, immutableUpdateCard } from "./card-mutations"
 

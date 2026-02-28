@@ -1,5 +1,5 @@
-import { immutableUpdateCard } from "../card/card-mutations"
-import { toDateString } from "../../core/shared/date.utils"
+import { immutableUpdateCard } from "../card"
+import { toDateString } from "../../shared"
 
 import type { DatePickerOptionsType } from "./date-picker.types"
 

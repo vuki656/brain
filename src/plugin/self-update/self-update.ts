@@ -1,6 +1,6 @@
 import { type App, Notice, requestUrl } from "obsidian"
 
-import { BRAT_REPO, PLUGIN_ID } from "../../core/shared/constants"
+import { BRAT_REPO, PLUGIN_ID } from "../../shared"
 
 export async function selfUpdate(app: App): Promise<void> {
     const pluginDirectory = `${app.vault.configDir}/plugins/${PLUGIN_ID}`

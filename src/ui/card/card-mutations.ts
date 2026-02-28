@@ -1,4 +1,4 @@
-import type { CardType, ColumnType } from "../../core/shared/types"
+import type { CardType, ColumnType } from "../../shared"
 
 type SpliceCardOptionsType = {
     cardIndex: number

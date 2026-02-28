@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
-import { COLUMN_COLORS } from "../../core/shared/constants"
-import { makeBoard } from "../../core/shared/test-utils"
+import { COLUMN_COLORS } from "../../shared"
+import { makeBoard } from "../../shared/test-utils"
 
 import { getColumnColor } from "./column.utils"
 

@@ -1,5 +1,5 @@
-import { toDateString } from "../../core/shared/date.utils"
-import type { BoardType, CardType } from "../../core/shared/types"
+import { toDateString } from "../../shared"
+import type { BoardType, CardType } from "../../shared"
 
 import type { DateGroupType, TodayCardType } from "./today-view.types"
 

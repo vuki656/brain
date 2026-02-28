@@ -1,10 +1,10 @@
 // eslint-disable-next-line import-x/no-named-as-default -- SortableJS exports Sortable as both default and named
 import Sortable, { type SortableEvent } from "sortablejs"
 
-import { createAddColumnButton, createColumnElement } from "../column/column"
-import { createToolbar } from "../toolbar/toolbar"
-import { createCardSortableOptions, createColumnCardMoveHandler } from "../sortable/sortable"
-import { renderTodayView } from "../today-view/today-view"
+import { createAddColumnButton, createColumnElement } from "../column"
+import { createToolbar } from "../toolbar"
+import { createCardSortableOptions, createColumnCardMoveHandler } from "../sortable"
+import { renderTodayView } from "../today-view"
 
 import type { BoardColumnsOptionsType, RenderBoardOptionsType } from "./board.types"
 

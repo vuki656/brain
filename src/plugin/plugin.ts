@@ -7,7 +7,7 @@ import {
     FRONTMATTER_KEY,
     KANBAN_VIEW_TYPE,
     type PluginSettingsType,
-} from "../core/shared/plugin.types"
+} from "../shared"
 import { KanbanView } from "./view"
 
 export default class VukiKanbanPlugin extends Plugin {

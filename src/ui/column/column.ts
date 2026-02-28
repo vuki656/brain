@@ -1,9 +1,9 @@
 import { Menu, Notice, setIcon } from "obsidian"
 
-import { createAddCardForm, createCardElement } from "../card/card"
-import { startInlineEdit } from "../inline-edit/inline-edit"
-import { COLUMN_COLOR_LABELS, COLUMN_COLORS } from "../../core/shared/constants"
-import type { BoardType, ColumnType } from "../../core/shared/types"
+import { createAddCardForm, createCardElement } from "../card"
+import { startInlineEdit } from "../inline-edit"
+import { COLUMN_COLOR_LABELS, COLUMN_COLORS } from "../../shared"
+import type { BoardType, ColumnType } from "../../shared"
 
 import type { ColumnElementOptionsType } from "./column.types"
 import { getColumnColor } from "./column.utils"

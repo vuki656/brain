@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { toDateString } from "../shared/date.utils"
-import { generateId } from "../shared/id.utils"
+import { generateId, toDateString } from "../shared"
 import { parseBoard, serializeBoard } from "./parser"
 
 const TODAY_STRING = toDateString(new Date())

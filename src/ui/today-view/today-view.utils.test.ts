@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, setSystemTime } from "bun:test"
 
-import { toDateString } from "../../core/shared/date.utils"
-import { makeBoard, makeCard, makeTodayCard } from "../../core/shared/test-utils"
+import { toDateString } from "../../shared"
+import { makeBoard, makeCard, makeTodayCard } from "../../shared/test-utils"
 
 import {
     collectCardsByDateGroup,

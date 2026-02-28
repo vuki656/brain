@@ -1,12 +1,11 @@
-import { toDateString } from "../shared/date.utils"
-import { FRONTMATTER_KEY } from "../shared/plugin.types"
+import { generateId, toDateString, FRONTMATTER_KEY } from "../shared"
 import type {
     BoardType,
     CardType,
     ColumnType,
     KanbanSettingsType,
     PriorityType,
-} from "../shared/types"
+} from "../shared"
 
 const TODAY_REGEX = /\s@today/g
 const DATE_REGEX = /\s@{(\d{4}-\d{2}-\d{2})}/g
@@ -19,10 +18,6 @@ const CHECKBOX_CHECKED_REGEX = /^- \[x] /
 const COLUMN_HEADING_REGEX = /^## (.+)$/
 const SETTINGS_START = "%% kanban:settings"
 const SETTINGS_END = "%%"
-
-import { generateId } from "../shared/id.utils"
-
-export { generateId }
 
 function parseCard(line: string): CardType | null {
     const isChecked = line.startsWith("- [x] ")

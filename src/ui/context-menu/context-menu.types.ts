@@ -1,6 +1,6 @@
 import type { Vault } from "obsidian"
 
-import type { BoardType, CardType } from "../../core/shared/types"
+import type { BoardType, CardType } from "../../shared"
 
 type MutationHandlerType = (board: BoardType) => void
 

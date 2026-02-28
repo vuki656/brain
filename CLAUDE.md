@@ -25,30 +25,34 @@ bun run test       # bun:test single run
 bun run test:watch # bun:test watch mode
 ```
 
-Run a single test file: `bun test src/core/parser/parser.test.ts`
+Run a single test file: `bun test src/parser/parser.test.ts`
 
 ## Architecture
 
-Three top-level groups under `src/`: `core/` (data layer), `ui/` (DOM rendering), `plugin/` (Obsidian
-integration).
+Four top-level groups under `src/`: `shared/` (cross-cutting types and utils), `parser/` (markdown
+parsing), `ui/` (DOM rendering), `plugin/` (Obsidian integration). Each module has a barrel
+`index.ts` — cross-module imports use the barrel (e.g., `from "../shared"`), internal imports stay
+explicit (e.g., `from "./types"`). Test files are excluded from barrels.
 
 ```
 src/
   main.ts                              → Re-exports from plugin/plugin.ts (esbuild entry point)
   styles.css                           → All styling (copied to root by build.ts)
 
-  core/                                → Data layer — types, utils, parsing
-    shared/                            → Cross-cutting utilities and types
-      types.ts                         → CardType, ColumnType, BoardType, KanbanSettingsType, ViewStateType
-      plugin.types.ts                  → PluginSettingsType, DEFAULT_PLUGIN_SETTINGS, KANBAN_VIEW_TYPE
-      constants.ts                     → COLUMN_COLORS, COLUMN_COLOR_LABELS, BRAT_REPO, PLUGIN_ID
-      date.utils.ts                    → toDateString, getNextMonday, formatDate
-      id.utils.ts                      → generateId
-      test-utils.ts                    → makeCard, makeColumns, makeBoard, makeTodayCard
-      test-mock-obsidian.ts            → Obsidian module mock (preloaded via bunfig.toml)
-    parser/                            → parseBoard(markdown) → Board, serializeBoard(board) → markdown
-      parser.ts
-      parser.test.ts
+  shared/                              → Cross-cutting utilities and types
+    index.ts                           → Barrel (re-exports types, plugin.types, constants, date.utils, id.utils)
+    types.ts                           → CardType, ColumnType, BoardType, KanbanSettingsType, ViewStateType
+    plugin.types.ts                    → PluginSettingsType, DEFAULT_PLUGIN_SETTINGS, KANBAN_VIEW_TYPE
+    constants.ts                       → COLUMN_COLORS, COLUMN_COLOR_LABELS, BRAT_REPO, PLUGIN_ID
+    date.utils.ts                      → toDateString, getNextMonday, formatDate
+    id.utils.ts                        → generateId
+    test-utils.ts                      → makeCard, makeColumns, makeBoard, makeTodayCard (NOT in barrel)
+    test-mock-obsidian.ts              → Obsidian module mock (preloaded via bunfig.toml, NOT in barrel)
+
+  parser/                              → parseBoard(markdown) → Board, serializeBoard(board) → markdown
+    index.ts                           → Barrel (re-exports parseBoard, serializeBoard)
+    parser.ts
+    parser.test.ts
 
   ui/                                  → All DOM rendering
     board/board.ts                     → renderBoard orchestrator + renderBoardColumns

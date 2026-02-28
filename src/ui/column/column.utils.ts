@@ -1,5 +1,5 @@
-import { COLUMN_COLORS } from "../../core/shared/constants"
-import type { BoardType } from "../../core/shared/types"
+import { COLUMN_COLORS } from "../../shared"
+import type { BoardType } from "../../shared"
 
 export function getColumnColor(columnTitle: string, columnIndex: number, board: BoardType): string {
     const customColor = board.settings.columnColors[columnTitle]

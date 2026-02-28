@@ -1,10 +1,9 @@
 import { setIcon } from "obsidian"
 
-import { immutableSpliceCard, immutableUpdateCard } from "../card/card-mutations"
-import { showQuickAddDatePicker } from "../date-picker/date-picker"
-import { getNextMonday, toDateString } from "../../core/shared/date.utils"
-import { generateId } from "../../core/shared/id.utils"
-import type { BoardType, CardType, PriorityType } from "../../core/shared/types"
+import { immutableSpliceCard, immutableUpdateCard } from "../card"
+import { showQuickAddDatePicker } from "../date-picker"
+import { generateId, getNextMonday, toDateString } from "../../shared"
+import type { BoardType, CardType, PriorityType } from "../../shared"
 import type { QuickAddDialogOptionsType } from "./quick-add.types"
 
 function openQuickAddDialog(options: QuickAddDialogOptionsType): void {

@@ -1,7 +1,7 @@
 import { Notice, setIcon } from "obsidian"
 
-import { openQuickAddDialog } from "../quick-add/quick-add"
-import { selfUpdate } from "../../plugin/self-update/self-update"
+import { openQuickAddDialog } from "../quick-add"
+import { selfUpdate } from "../../plugin/self-update"
 
 import type { ToolbarOptionsType } from "./toolbar.types"
 

@@ -1,10 +1,9 @@
 import { setIcon, TFile } from "obsidian"
 
-import { showCardContextMenu, showPriorityMenu } from "../context-menu/context-menu"
-import { startInlineEdit } from "../inline-edit/inline-edit"
-import { formatDate, toDateString } from "../../core/shared/date.utils"
-import { generateId } from "../../core/shared/id.utils"
-import type { BoardType, CardType } from "../../core/shared/types"
+import { showCardContextMenu, showPriorityMenu } from "../context-menu"
+import { startInlineEdit } from "../inline-edit"
+import { formatDate, generateId, toDateString } from "../../shared"
+import type { BoardType, CardType } from "../../shared"
 
 import { immutableSpliceCard, immutableUpdateCard } from "./card-mutations"
 import type { CardElementOptionsType } from "./card.types"

@@ -1,9 +1,9 @@
 import { Menu, Notice, TFile } from "obsidian"
 
-import { immutableSpliceCard, immutableUpdateCard } from "../card/card-mutations"
-import { showDatePicker } from "../date-picker/date-picker"
-import { openQuickAddDialog } from "../quick-add/quick-add"
-import { getNextMonday, toDateString } from "../../core/shared/date.utils"
+import { immutableSpliceCard, immutableUpdateCard } from "../card"
+import { showDatePicker } from "../date-picker"
+import { openQuickAddDialog } from "../quick-add"
+import { getNextMonday, toDateString } from "../../shared"
 
 import type { CardContextMenuOptionsType, PriorityMenuOptionsType } from "./context-menu.types"
 

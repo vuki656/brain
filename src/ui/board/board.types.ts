@@ -1,6 +1,6 @@
 import type { App, Vault } from "obsidian"
 
-import type { BoardType, ViewStateType } from "../../core/shared/types"
+import type { BoardType, ViewStateType } from "../../shared"
 
 type MutationHandlerType = (board: BoardType) => void
 
