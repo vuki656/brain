@@ -1,11 +1,5 @@
-import { generateId, toDateString, FRONTMATTER_KEY } from "../shared"
-import type {
-    BoardType,
-    CardType,
-    ColumnType,
-    KanbanSettingsType,
-    PriorityType,
-} from "../shared"
+import type { BoardType, CardType, ColumnType, KanbanSettingsType, PriorityType } from "../shared"
+import { FRONTMATTER_KEY, generateId, toDateString } from "../shared"
 
 const TODAY_REGEX = /\s@today/g
 const DATE_REGEX = /\s@{(\d{4}-\d{2}-\d{2})}/g

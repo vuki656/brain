@@ -1072,29 +1072,6 @@ function around1(obj, method, createWrapper) {
 // src/plugin/plugin.ts
 var import_obsidian9 = require("obsidian");
 
-// src/plugin/settings.ts
-var import_obsidian = require("obsidian");
-
-class VukiKanbanSettingTab extends import_obsidian.PluginSettingTab {
-  plugin;
-  constructor(app, plugin) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-  display() {
-    const { containerEl } = this;
-    const { plugin } = this;
-    const { settings } = plugin;
-    containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("Note path prefix").setDesc("Base folder path for notes created via 'Create linked note' (e.g. Projects)").addText((text) => {
-      return text.setPlaceholder("Projects").setValue(settings.notePathPrefix).onChange(async (value) => {
-        settings.notePathPrefix = value;
-        await plugin.saveSettings();
-      });
-    });
-  }
-}
-
 // src/shared/constants.ts
 var BRAT_REPO = "vuki656/brain";
 var PLUGIN_ID = "obsidian-vuki-kanban";
@@ -1169,9 +1146,249 @@ var DEFAULT_PLUGIN_SETTINGS = {
 };
 var KANBAN_VIEW_TYPE = "vuki-kanban-view";
 var FRONTMATTER_KEY = "vuki-kanban";
+// src/plugin/settings.ts
+var import_obsidian = require("obsidian");
+
+class VukiKanbanSettingTab extends import_obsidian.PluginSettingTab {
+  plugin;
+  constructor(app, plugin2) {
+    super(app, plugin2);
+    this.plugin = plugin2;
+  }
+  display() {
+    const { containerEl } = this;
+    const { plugin: plugin2 } = this;
+    const { settings } = plugin2;
+    containerEl.empty();
+    new import_obsidian.Setting(containerEl).setName("Note path prefix").setDesc("Base folder path for notes created via 'Create linked note' (e.g. Projects)").addText((text) => {
+      return text.setPlaceholder("Projects").setValue(settings.notePathPrefix).onChange(async (value) => {
+        settings.notePathPrefix = value;
+        await plugin2.saveSettings();
+      });
+    });
+  }
+}
+
 // src/plugin/view.ts
 var import_obsidian8 = require("obsidian");
 
+// src/parser/parser.ts
+var TODAY_REGEX = /\s@today/g;
+var DATE_REGEX = /\s@{(\d{4}-\d{2}-\d{2})}/g;
+var PRIORITY_IMPORTANT_REGEX = /\s!important/g;
+var LINKED_NOTE_REGEX = /(?:^|\s)\[\[(.+?)]]/g;
+var ID_REGEX = /\s@id:([\da-z]+)/g;
+var CHECKBOX_UNCHECKED_REGEX = /^- \[ ] /;
+var CHECKBOX_CHECKED_REGEX = /^- \[x] /;
+var COLUMN_HEADING_REGEX = /^## (.+)$/;
+var SETTINGS_START = "%% kanban:settings";
+var SETTINGS_END = "%%";
+function parseCard(line) {
+  const isChecked = line.startsWith("- [x] ");
+  const isUnchecked = line.startsWith("- [ ] ");
+  if (!isChecked && !isUnchecked) {
+    return null;
+  }
+  let text = line.replace(CHECKBOX_CHECKED_REGEX, "").replace(CHECKBOX_UNCHECKED_REGEX, "");
+  let priority = null;
+  let date2 = null;
+  let linkedNote = null;
+  let id2 = null;
+  const idMatch = ID_REGEX.exec(text);
+  if (idMatch) {
+    id2 = idMatch[1];
+    text = text.replace(ID_REGEX, "");
+  }
+  ID_REGEX.lastIndex = 0;
+  const todayMatch = TODAY_REGEX.exec(text);
+  if (todayMatch) {
+    date2 = toDateString(new Date);
+    text = text.replace(TODAY_REGEX, "");
+  }
+  TODAY_REGEX.lastIndex = 0;
+  const dateMatch = DATE_REGEX.exec(text);
+  if (dateMatch) {
+    date2 = dateMatch[1];
+    text = text.replace(DATE_REGEX, "");
+  }
+  DATE_REGEX.lastIndex = 0;
+  const importantMatch = PRIORITY_IMPORTANT_REGEX.exec(text);
+  if (importantMatch) {
+    priority = "important";
+    text = text.replace(PRIORITY_IMPORTANT_REGEX, "");
+  }
+  PRIORITY_IMPORTANT_REGEX.lastIndex = 0;
+  const linkedNoteMatch = LINKED_NOTE_REGEX.exec(text);
+  if (linkedNoteMatch) {
+    linkedNote = linkedNoteMatch[1];
+    text = text.replace(LINKED_NOTE_REGEX, "");
+  }
+  LINKED_NOTE_REGEX.lastIndex = 0;
+  return {
+    completed: isChecked,
+    date: date2,
+    description: null,
+    id: id2 ?? generateId(),
+    linkedNote,
+    priority,
+    title: text.trim()
+  };
+}
+function parseSettings(lines) {
+  const settingsStartIndex = lines.findIndex((line) => {
+    return line.trim() === SETTINGS_START;
+  });
+  if (settingsStartIndex === -1) {
+    return { collapsedColumns: [], columnColors: {}, todayOrder: {} };
+  }
+  const jsonLines = [];
+  let capturing = false;
+  for (let index = settingsStartIndex + 1;index < lines.length; index++) {
+    const line = lines[index].trim();
+    if (line === "```" || line.startsWith("```")) {
+      if (capturing) {
+        break;
+      }
+      capturing = true;
+      continue;
+    }
+    if (line === SETTINGS_END) {
+      break;
+    }
+    if (capturing) {
+      jsonLines.push(line);
+    }
+  }
+  const jsonString = jsonLines.join(`
+`);
+  if (!jsonString) {
+    return { collapsedColumns: [], columnColors: {}, todayOrder: {} };
+  }
+  try {
+    const parsed = JSON.parse(jsonString);
+    const rawTodayOrder = parsed["today-order"];
+    let todayOrder = {};
+    if (rawTodayOrder && typeof rawTodayOrder === "object") {
+      todayOrder = rawTodayOrder;
+    }
+    return {
+      collapsedColumns: parsed["collapsed-columns"] ?? [],
+      columnColors: parsed["column-colors"] ?? {},
+      todayOrder
+    };
+  } catch {
+    return { collapsedColumns: [], columnColors: {}, todayOrder: {} };
+  }
+}
+function collectDescription(lines, cardLineIndex) {
+  const descriptionLines = [];
+  for (let nextIndex = cardLineIndex + 1;nextIndex < lines.length; nextIndex++) {
+    const nextLine = lines[nextIndex];
+    if (!nextLine.startsWith("  ") || nextLine.trim() === "") {
+      break;
+    }
+    const nextTrimmed = nextLine.trim();
+    if (nextTrimmed.startsWith("- [ ] ") || nextTrimmed.startsWith("- [x] ")) {
+      break;
+    }
+    if (COLUMN_HEADING_REGEX.test(nextTrimmed)) {
+      break;
+    }
+    if (nextTrimmed === SETTINGS_START) {
+      break;
+    }
+    descriptionLines.push(nextTrimmed);
+  }
+  return descriptionLines.length > 0 ? descriptionLines.join(`
+`) : null;
+}
+function serializeCard(card) {
+  const checkbox = card.completed ? "- [x] " : "- [ ] ";
+  let line = checkbox;
+  line = line + (card.linkedNote ? `[[${card.linkedNote}]]` : card.title);
+  const isToday = card.date === toDateString(new Date);
+  if (isToday) {
+    line = `${line} @today`;
+  }
+  if (card.priority) {
+    line = `${line} !${card.priority}`;
+  }
+  if (card.date && !isToday) {
+    line = `${line} @{${card.date}}`;
+  }
+  line = `${line} @id:${card.id}`;
+  return line;
+}
+function parseBoard(markdown) {
+  const lines = markdown.split(`
+`);
+  const columns = [];
+  let currentColumn = null;
+  let pastFrontmatter = false;
+  let inFrontmatter = false;
+  for (let lineIndex = 0;lineIndex < lines.length; lineIndex++) {
+    const trimmed = lines[lineIndex].trim();
+    if (!pastFrontmatter) {
+      if (trimmed === "---" && !inFrontmatter) {
+        inFrontmatter = true;
+        continue;
+      }
+      if (trimmed === "---" && inFrontmatter) {
+        pastFrontmatter = true;
+        continue;
+      }
+      continue;
+    }
+    if (trimmed === SETTINGS_START) {
+      break;
+    }
+    const headingMatch = COLUMN_HEADING_REGEX.exec(trimmed);
+    if (headingMatch) {
+      currentColumn = { cards: [], title: headingMatch[1] };
+      columns.push(currentColumn);
+      continue;
+    }
+    if (currentColumn && (trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] "))) {
+      const card = parseCard(trimmed);
+      if (card) {
+        card.description = collectDescription(lines, lineIndex);
+        currentColumn.cards.push(card);
+      }
+    }
+  }
+  const settings = parseSettings(lines);
+  return { columns, settings };
+}
+function serializeBoard(board) {
+  const lines = ["---", "", `kanban-plugin: ${FRONTMATTER_KEY}`, "", "---", ""];
+  for (const column of board.columns) {
+    lines.push(`## ${column.title}`, "");
+    for (const card of column.cards) {
+      lines.push(serializeCard(card));
+      if (card.description) {
+        const indentedLines = card.description.split(`
+`).map((descriptionLine) => {
+          return `  ${descriptionLine}`;
+        });
+        lines.push(...indentedLines);
+      }
+    }
+    lines.push("", "");
+  }
+  const settingsObject = {};
+  if (board.settings.collapsedColumns.length > 0) {
+    settingsObject["collapsed-columns"] = board.settings.collapsedColumns;
+  }
+  if (Object.keys(board.settings.todayOrder).length > 0) {
+    settingsObject["today-order"] = board.settings.todayOrder;
+  }
+  if (Object.keys(board.settings.columnColors).length > 0) {
+    settingsObject["column-colors"] = board.settings.columnColors;
+  }
+  lines.push("%% kanban:settings", "```json", JSON.stringify(settingsObject), "```", "%%");
+  return lines.join(`
+`);
+}
 // src/ui/board/board.ts
 var import_sortablejs2 = __toESM(require_Sortable_min(), 1);
 
@@ -1251,21 +1468,19 @@ function renderCalendar(options) {
     grid.append(cell);
   }
   modal.append(grid);
-  return { prevButton, nextButton };
+  return { nextButton, prevButton };
 }
 function createCalendarWithNavigation(options) {
   const state = { viewMonth: options.viewMonth, viewYear: options.viewYear };
   const rerender = () => {
-    renderCalendar({
+    const { nextButton, prevButton } = renderCalendar({
       currentSelectedDate: options.currentSelectedDate,
       modal: options.modal,
       onSelect: options.onSelect,
       viewMonth: state.viewMonth,
       viewYear: state.viewYear
     });
-    const prevButton = options.modal.querySelector(".kanban-date-picker__nav:first-child");
-    const nextButton = options.modal.querySelector(".kanban-date-picker__nav:last-of-type");
-    prevButton?.addEventListener("click", () => {
+    prevButton.addEventListener("click", () => {
       state.viewMonth--;
       if (state.viewMonth < 0) {
         state.viewMonth = 11;
@@ -1273,7 +1488,7 @@ function createCalendarWithNavigation(options) {
       }
       rerender();
     });
-    nextButton?.addEventListener("click", () => {
+    nextButton.addEventListener("click", () => {
       state.viewMonth++;
       if (state.viewMonth > 11) {
         state.viewMonth = 0;
@@ -1283,10 +1498,6 @@ function createCalendarWithNavigation(options) {
     });
   };
   rerender();
-  return {
-    nextButton: options.modal.querySelector(".kanban-date-picker__nav:last-of-type"),
-    prevButton: options.modal.querySelector(".kanban-date-picker__nav:first-child")
-  };
 }
 function showDatePicker(options) {
   const { board, card, cardIndex, columnIndex, onMutation } = options;
@@ -2095,8 +2306,8 @@ function createColumnElement(options) {
       });
     });
   });
-  const visibleCardCount = viewState.hideCompletedActive ? column.cards.filter((card3) => {
-    return !card3.completed;
+  const visibleCardCount = viewState.hideCompletedActive ? column.cards.filter((card2) => {
+    return !card2.completed;
   }).length : column.cards.length;
   const countBadge = document.createElement("span");
   countBadge.className = "kanban-column__count";
@@ -2198,10 +2409,10 @@ function createColumnElement(options) {
       return completedA - completedB;
     });
     for (const cardIndex of sortedCardIndices) {
-      const card3 = column.cards[cardIndex];
+      const card2 = column.cards[cardIndex];
       cardList.append(createCardElement({
         board,
-        card: card3,
+        card: card2,
         cardIndex,
         columnIndex,
         onMutation,
@@ -2229,94 +2440,6 @@ function createAddColumnButton(board, onMutation) {
   });
   return button;
 }
-// src/ui/toolbar/toolbar.ts
-var import_obsidian7 = require("obsidian");
-
-// src/plugin/self-update/self-update.ts
-var import_obsidian6 = require("obsidian");
-async function selfUpdate(app) {
-  const pluginDirectory = `${app.vault.configDir}/plugins/${PLUGIN_ID}`;
-  const files = ["main.js", "manifest.json", "styles.css"];
-  const currentManifestResponse = await app.vault.adapter.read(`${pluginDirectory}/manifest.json`);
-  const currentVersion = JSON.parse(currentManifestResponse).version;
-  const manifestResponse = await import_obsidian6.requestUrl({
-    url: `https://github.com/${BRAT_REPO}/releases/latest/download/manifest.json?cb=${Date.now()}`
-  });
-  const latestVersion = JSON.parse(manifestResponse.text).version;
-  if (currentVersion === latestVersion) {
-    new import_obsidian6.Notice(`Already on latest version (${currentVersion}).`);
-    return;
-  }
-  const downloadBase = `https://github.com/${BRAT_REPO}/releases/download/${latestVersion}`;
-  const downloads = await Promise.all(files.map(async (fileName) => {
-    const response = await import_obsidian6.requestUrl({ url: `${downloadBase}/${fileName}` });
-    return { content: response.text, fileName };
-  }));
-  for (const download of downloads) {
-    await app.vault.adapter.write(`${pluginDirectory}/${download.fileName}`, download.content);
-  }
-  await app.plugins.disablePlugin(PLUGIN_ID);
-  await app.plugins.enablePlugin(PLUGIN_ID);
-  new import_obsidian6.Notice(`Updated to ${latestVersion}. Plugin reloaded.`);
-}
-// src/ui/toolbar/toolbar.ts
-function setButtonContent(button, iconName, label) {
-  button.empty();
-  const iconSpan = button.createSpan({ cls: "kanban-toolbar__button-icon" });
-  import_obsidian7.setIcon(iconSpan, iconName);
-  button.createSpan({ text: label });
-}
-function createToolbar(options) {
-  const { app, board, onMutation, onViewStateChange, viewState } = options;
-  const toolbar = document.createElement("div");
-  toolbar.className = "kanban-toolbar";
-  const addTaskButton = document.createElement("button");
-  addTaskButton.className = "kanban-toolbar__button";
-  setButtonContent(addTaskButton, "plus", "Add task");
-  addTaskButton.addEventListener("click", () => {
-    openQuickAddDialog({ board, onMutation });
-  });
-  const todayButton = document.createElement("button");
-  todayButton.className = "kanban-toolbar__button";
-  if (viewState.todayFilterActive) {
-    todayButton.classList.add("kanban-toolbar__button--active");
-  }
-  setButtonContent(todayButton, viewState.todayFilterActive ? "calendar-check" : "sun", "Today");
-  todayButton.addEventListener("click", () => {
-    onViewStateChange({ ...viewState, todayFilterActive: !viewState.todayFilterActive });
-  });
-  const hideCompletedButton = document.createElement("button");
-  hideCompletedButton.className = "kanban-toolbar__button";
-  if (viewState.hideCompletedActive) {
-    hideCompletedButton.classList.add("kanban-toolbar__button--active");
-  }
-  setButtonContent(hideCompletedButton, viewState.hideCompletedActive ? "eye-off" : "eye", "Hide completed");
-  hideCompletedButton.addEventListener("click", () => {
-    onViewStateChange({ ...viewState, hideCompletedActive: !viewState.hideCompletedActive });
-  });
-  const toolbarSpacer = document.createElement("div");
-  toolbarSpacer.className = "kanban-toolbar__spacer";
-  const pluginManifest = app.plugins.plugins["obsidian-vuki-kanban"]?.manifest;
-  const versionLabel = document.createElement("span");
-  versionLabel.className = "kanban-toolbar__version";
-  versionLabel.textContent = pluginManifest ? `v${pluginManifest.version}` : "";
-  const updateButton = document.createElement("button");
-  updateButton.className = "kanban-toolbar__button";
-  setButtonContent(updateButton, "download", "Update");
-  updateButton.addEventListener("click", async () => {
-    setButtonContent(updateButton, "loader-2", "Updating...");
-    updateButton.disabled = true;
-    try {
-      await selfUpdate(app);
-    } catch (error) {
-      new import_obsidian7.Notice(`Update failed: ${error}`);
-    }
-    setButtonContent(updateButton, "download", "Update");
-    updateButton.disabled = false;
-  });
-  toolbar.append(addTaskButton, todayButton, hideCompletedButton, toolbarSpacer, versionLabel, updateButton);
-  return toolbar;
-}
 // src/ui/sortable/sortable.ts
 function createCardSortableOptions(onEnd, group) {
   return {
@@ -2339,13 +2462,13 @@ function createColumnCardMoveHandler(board, onMutation) {
     if (!draggedCardId) {
       return;
     }
-    const sourceCardIndex = board.columns[fromColumnIndex].cards.findIndex((card4) => {
-      return card4.id === draggedCardId;
+    const sourceCardIndex = board.columns[fromColumnIndex].cards.findIndex((card3) => {
+      return card3.id === draggedCardId;
     });
     if (sourceCardIndex === -1) {
       return;
     }
-    const card3 = board.columns[fromColumnIndex].cards[sourceCardIndex];
+    const card2 = board.columns[fromColumnIndex].cards[sourceCardIndex];
     let newColumns = immutableSpliceCard({
       cardIndex: sourceCardIndex,
       columnIndex: fromColumnIndex,
@@ -2375,7 +2498,7 @@ function createColumnCardMoveHandler(board, onMutation) {
       columnIndex: toColumnIndex,
       columns: newColumns,
       deleteCount: 0,
-      insertCards: [card3]
+      insertCards: [card2]
     });
     onMutation({ ...board, columns: newColumns });
   };
@@ -2384,11 +2507,11 @@ function createColumnCardMoveHandler(board, onMutation) {
 var import_sortablejs = __toESM(require_Sortable_min(), 1);
 
 // src/ui/today-view/today-view.utils.ts
-function isCardVisibleInTodayFilter(card3) {
-  if (card3.completed) {
+function isCardVisibleInTodayFilter(card2) {
+  if (card2.completed) {
     return false;
   }
-  if (card3.date) {
+  if (card2.date) {
     return true;
   }
   return false;
@@ -2453,30 +2576,30 @@ function collectCardsByDateGroup(board) {
   const todayCards = [];
   const futureBuckets = new Map;
   for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
-    const column4 = board.columns[columnIndex];
-    for (let cardIndex = 0;cardIndex < column4.cards.length; cardIndex++) {
-      const card3 = column4.cards[cardIndex];
-      if (!isCardVisibleInTodayFilter(card3)) {
+    const column3 = board.columns[columnIndex];
+    for (let cardIndex = 0;cardIndex < column3.cards.length; cardIndex++) {
+      const card2 = column3.cards[cardIndex];
+      if (!isCardVisibleInTodayFilter(card2)) {
         continue;
       }
-      if (!card3.date) {
+      if (!card2.date) {
         continue;
       }
       const todayCard = {
-        card: card3,
+        card: card2,
         cardIndex,
         columnIndex,
-        columnTitle: column4.title
+        columnTitle: column3.title
       };
-      if (card3.date.localeCompare(todayString) < 0) {
+      if (card2.date.localeCompare(todayString) < 0) {
         overdueCards.push(todayCard);
         continue;
       }
-      if (card3.date === todayString) {
+      if (card2.date === todayString) {
         todayCards.push(todayCard);
         continue;
       }
-      addCardToFutureBucket(futureBuckets, card3.date, todayCard);
+      addCardToFutureBucket(futureBuckets, card2.date, todayCard);
     }
   }
   const savedOrder = board.settings.todayOrder;
@@ -2619,10 +2742,10 @@ function renderTodayView(options) {
   const columnsPanel = document.createElement("div");
   columnsPanel.className = "kanban-today-layout__columns";
   for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
-    const column4 = board.columns[columnIndex];
+    const column3 = board.columns[columnIndex];
     const columnElement = createColumnElement({
       board,
-      column: column4,
+      column: column3,
       columnIndex,
       onMutation,
       pluginSettings,
@@ -2673,6 +2796,94 @@ function renderTodayView(options) {
   }
   return sortableInstances;
 }
+// src/ui/toolbar/toolbar.ts
+var import_obsidian7 = require("obsidian");
+
+// src/plugin/self-update/self-update.ts
+var import_obsidian6 = require("obsidian");
+async function selfUpdate(app) {
+  const pluginDirectory = `${app.vault.configDir}/plugins/${PLUGIN_ID}`;
+  const files = ["main.js", "manifest.json", "styles.css"];
+  const currentManifestResponse = await app.vault.adapter.read(`${pluginDirectory}/manifest.json`);
+  const currentVersion = JSON.parse(currentManifestResponse).version;
+  const manifestResponse = await import_obsidian6.requestUrl({
+    url: `https://github.com/${BRAT_REPO}/releases/latest/download/manifest.json?cb=${Date.now()}`
+  });
+  const latestVersion = JSON.parse(manifestResponse.text).version;
+  if (currentVersion === latestVersion) {
+    new import_obsidian6.Notice(`Already on latest version (${currentVersion}).`);
+    return;
+  }
+  const downloadBase = `https://github.com/${BRAT_REPO}/releases/download/${latestVersion}`;
+  const downloads = await Promise.all(files.map(async (fileName) => {
+    const response = await import_obsidian6.requestUrl({ url: `${downloadBase}/${fileName}` });
+    return { content: response.text, fileName };
+  }));
+  for (const download of downloads) {
+    await app.vault.adapter.write(`${pluginDirectory}/${download.fileName}`, download.content);
+  }
+  await app.plugins.disablePlugin(PLUGIN_ID);
+  await app.plugins.enablePlugin(PLUGIN_ID);
+  new import_obsidian6.Notice(`Updated to ${latestVersion}. Plugin reloaded.`);
+}
+// src/ui/toolbar/toolbar.ts
+function setButtonContent(button, iconName, label) {
+  button.empty();
+  const iconSpan = button.createSpan({ cls: "kanban-toolbar__button-icon" });
+  import_obsidian7.setIcon(iconSpan, iconName);
+  button.createSpan({ text: label });
+}
+function createToolbar(options) {
+  const { app, board, onMutation, onViewStateChange, viewState } = options;
+  const toolbar = document.createElement("div");
+  toolbar.className = "kanban-toolbar";
+  const addTaskButton = document.createElement("button");
+  addTaskButton.className = "kanban-toolbar__button";
+  setButtonContent(addTaskButton, "plus", "Add task");
+  addTaskButton.addEventListener("click", () => {
+    openQuickAddDialog({ board, onMutation });
+  });
+  const todayButton = document.createElement("button");
+  todayButton.className = "kanban-toolbar__button";
+  if (viewState.todayFilterActive) {
+    todayButton.classList.add("kanban-toolbar__button--active");
+  }
+  setButtonContent(todayButton, viewState.todayFilterActive ? "calendar-check" : "sun", "Today");
+  todayButton.addEventListener("click", () => {
+    onViewStateChange({ ...viewState, todayFilterActive: !viewState.todayFilterActive });
+  });
+  const hideCompletedButton = document.createElement("button");
+  hideCompletedButton.className = "kanban-toolbar__button";
+  if (viewState.hideCompletedActive) {
+    hideCompletedButton.classList.add("kanban-toolbar__button--active");
+  }
+  setButtonContent(hideCompletedButton, viewState.hideCompletedActive ? "eye-off" : "eye", "Hide completed");
+  hideCompletedButton.addEventListener("click", () => {
+    onViewStateChange({ ...viewState, hideCompletedActive: !viewState.hideCompletedActive });
+  });
+  const toolbarSpacer = document.createElement("div");
+  toolbarSpacer.className = "kanban-toolbar__spacer";
+  const pluginManifest = app.plugins.plugins["obsidian-vuki-kanban"]?.manifest;
+  const versionLabel = document.createElement("span");
+  versionLabel.className = "kanban-toolbar__version";
+  versionLabel.textContent = pluginManifest ? `v${pluginManifest.version}` : "";
+  const updateButton = document.createElement("button");
+  updateButton.className = "kanban-toolbar__button";
+  setButtonContent(updateButton, "download", "Update");
+  updateButton.addEventListener("click", async () => {
+    setButtonContent(updateButton, "loader-2", "Updating...");
+    updateButton.disabled = true;
+    try {
+      await selfUpdate(app);
+    } catch (error) {
+      new import_obsidian7.Notice(`Update failed: ${error}`);
+    }
+    setButtonContent(updateButton, "download", "Update");
+    updateButton.disabled = false;
+  });
+  toolbar.append(addTaskButton, todayButton, hideCompletedButton, toolbarSpacer, versionLabel, updateButton);
+  return toolbar;
+}
 // src/ui/board/board.ts
 function renderBoardColumns(options) {
   const { board, container, onMutation, pluginSettings, vault, viewState } = options;
@@ -2680,10 +2891,10 @@ function renderBoardColumns(options) {
   boardElement.className = "kanban-board";
   container.append(boardElement);
   for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
-    const column4 = board.columns[columnIndex];
+    const column3 = board.columns[columnIndex];
     const columnElement = createColumnElement({
       board,
-      column: column4,
+      column: column3,
       columnIndex,
       onMutation,
       pluginSettings,
@@ -2744,8 +2955,8 @@ function renderBoard(options) {
   } else {
     delete container.dataset.hideCompleted;
   }
-  const toolbar3 = createToolbar({ app, board, onMutation, onViewStateChange, viewState });
-  container.append(toolbar3);
+  const toolbar2 = createToolbar({ app, board, onMutation, onViewStateChange, viewState });
+  container.append(toolbar2);
   if (viewState.todayFilterActive) {
     const sortableInstances2 = renderTodayView({
       board,
@@ -2778,223 +2989,6 @@ function renderBoard(options) {
     newBoard.scrollLeft = savedScrollLeft;
   }
   return sortableInstances;
-}
-// src/parser/parser.ts
-var TODAY_REGEX = /\s@today/g;
-var DATE_REGEX = /\s@{(\d{4}-\d{2}-\d{2})}/g;
-var PRIORITY_IMPORTANT_REGEX = /\s!important/g;
-var LINKED_NOTE_REGEX = /(?:^|\s)\[\[(.+?)]]/g;
-var ID_REGEX = /\s@id:([\da-z]+)/g;
-var CHECKBOX_UNCHECKED_REGEX = /^- \[ ] /;
-var CHECKBOX_CHECKED_REGEX = /^- \[x] /;
-var COLUMN_HEADING_REGEX = /^## (.+)$/;
-var SETTINGS_START = "%% kanban:settings";
-var SETTINGS_END = "%%";
-function parseCard(line) {
-  const isChecked = line.startsWith("- [x] ");
-  const isUnchecked = line.startsWith("- [ ] ");
-  if (!isChecked && !isUnchecked) {
-    return null;
-  }
-  let text = line.replace(CHECKBOX_CHECKED_REGEX, "").replace(CHECKBOX_UNCHECKED_REGEX, "");
-  let priority = null;
-  let date2 = null;
-  let linkedNote = null;
-  let id2 = null;
-  const idMatch = ID_REGEX.exec(text);
-  if (idMatch) {
-    id2 = idMatch[1];
-    text = text.replace(ID_REGEX, "");
-  }
-  ID_REGEX.lastIndex = 0;
-  const todayMatch = TODAY_REGEX.exec(text);
-  if (todayMatch) {
-    date2 = toDateString(new Date);
-    text = text.replace(TODAY_REGEX, "");
-  }
-  TODAY_REGEX.lastIndex = 0;
-  const dateMatch = DATE_REGEX.exec(text);
-  if (dateMatch) {
-    date2 = dateMatch[1];
-    text = text.replace(DATE_REGEX, "");
-  }
-  DATE_REGEX.lastIndex = 0;
-  const importantMatch = PRIORITY_IMPORTANT_REGEX.exec(text);
-  if (importantMatch) {
-    priority = "important";
-    text = text.replace(PRIORITY_IMPORTANT_REGEX, "");
-  }
-  PRIORITY_IMPORTANT_REGEX.lastIndex = 0;
-  const linkedNoteMatch = LINKED_NOTE_REGEX.exec(text);
-  if (linkedNoteMatch) {
-    linkedNote = linkedNoteMatch[1];
-    text = text.replace(LINKED_NOTE_REGEX, "");
-  }
-  LINKED_NOTE_REGEX.lastIndex = 0;
-  return {
-    completed: isChecked,
-    date: date2,
-    description: null,
-    id: id2 ?? generateId(),
-    linkedNote,
-    priority,
-    title: text.trim()
-  };
-}
-function parseSettings(lines) {
-  const settingsStartIndex = lines.findIndex((line) => {
-    return line.trim() === SETTINGS_START;
-  });
-  if (settingsStartIndex === -1) {
-    return { collapsedColumns: [], columnColors: {}, todayOrder: {} };
-  }
-  const jsonLines = [];
-  let capturing = false;
-  for (let index = settingsStartIndex + 1;index < lines.length; index++) {
-    const line = lines[index].trim();
-    if (line === "```" || line.startsWith("```")) {
-      if (capturing) {
-        break;
-      }
-      capturing = true;
-      continue;
-    }
-    if (line === SETTINGS_END) {
-      break;
-    }
-    if (capturing) {
-      jsonLines.push(line);
-    }
-  }
-  const jsonString = jsonLines.join(`
-`);
-  if (!jsonString) {
-    return { collapsedColumns: [], columnColors: {}, todayOrder: {} };
-  }
-  try {
-    const parsed = JSON.parse(jsonString);
-    const rawTodayOrder = parsed["today-order"];
-    let todayOrder = {};
-    if (rawTodayOrder && typeof rawTodayOrder === "object") {
-      todayOrder = rawTodayOrder;
-    }
-    return {
-      collapsedColumns: parsed["collapsed-columns"] ?? [],
-      columnColors: parsed["column-colors"] ?? {},
-      todayOrder
-    };
-  } catch {
-    return { collapsedColumns: [], columnColors: {}, todayOrder: {} };
-  }
-}
-function collectDescription(lines, cardLineIndex) {
-  const descriptionLines = [];
-  for (let nextIndex = cardLineIndex + 1;nextIndex < lines.length; nextIndex++) {
-    const nextLine = lines[nextIndex];
-    if (!nextLine.startsWith("  ") || nextLine.trim() === "") {
-      break;
-    }
-    const nextTrimmed = nextLine.trim();
-    if (nextTrimmed.startsWith("- [ ] ") || nextTrimmed.startsWith("- [x] ")) {
-      break;
-    }
-    if (COLUMN_HEADING_REGEX.test(nextTrimmed)) {
-      break;
-    }
-    if (nextTrimmed === SETTINGS_START) {
-      break;
-    }
-    descriptionLines.push(nextTrimmed);
-  }
-  return descriptionLines.length > 0 ? descriptionLines.join(`
-`) : null;
-}
-function serializeCard(card3) {
-  const checkbox = card3.completed ? "- [x] " : "- [ ] ";
-  let line = checkbox;
-  line = line + (card3.linkedNote ? `[[${card3.linkedNote}]]` : card3.title);
-  const isToday = card3.date === toDateString(new Date);
-  if (isToday) {
-    line = `${line} @today`;
-  }
-  if (card3.priority) {
-    line = `${line} !${card3.priority}`;
-  }
-  if (card3.date && !isToday) {
-    line = `${line} @{${card3.date}}`;
-  }
-  line = `${line} @id:${card3.id}`;
-  return line;
-}
-function parseBoard(markdown) {
-  const lines = markdown.split(`
-`);
-  const columns = [];
-  let currentColumn = null;
-  let pastFrontmatter = false;
-  let inFrontmatter = false;
-  for (let lineIndex = 0;lineIndex < lines.length; lineIndex++) {
-    const trimmed = lines[lineIndex].trim();
-    if (!pastFrontmatter) {
-      if (trimmed === "---" && !inFrontmatter) {
-        inFrontmatter = true;
-        continue;
-      }
-      if (trimmed === "---" && inFrontmatter) {
-        pastFrontmatter = true;
-        continue;
-      }
-      continue;
-    }
-    if (trimmed === SETTINGS_START) {
-      break;
-    }
-    const headingMatch = COLUMN_HEADING_REGEX.exec(trimmed);
-    if (headingMatch) {
-      currentColumn = { cards: [], title: headingMatch[1] };
-      columns.push(currentColumn);
-      continue;
-    }
-    if (currentColumn && (trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] "))) {
-      const card3 = parseCard(trimmed);
-      if (card3) {
-        card3.description = collectDescription(lines, lineIndex);
-        currentColumn.cards.push(card3);
-      }
-    }
-  }
-  const settings = parseSettings(lines);
-  return { columns, settings };
-}
-function serializeBoard(board3) {
-  const lines = ["---", "", `kanban-plugin: ${FRONTMATTER_KEY}`, "", "---", ""];
-  for (const column4 of board3.columns) {
-    lines.push(`## ${column4.title}`, "");
-    for (const card3 of column4.cards) {
-      lines.push(serializeCard(card3));
-      if (card3.description) {
-        const indentedLines = card3.description.split(`
-`).map((descriptionLine) => {
-          return `  ${descriptionLine}`;
-        });
-        lines.push(...indentedLines);
-      }
-    }
-    lines.push("", "");
-  }
-  const settingsObject = {};
-  if (board3.settings.collapsedColumns.length > 0) {
-    settingsObject["collapsed-columns"] = board3.settings.collapsedColumns;
-  }
-  if (Object.keys(board3.settings.todayOrder).length > 0) {
-    settingsObject["today-order"] = board3.settings.todayOrder;
-  }
-  if (Object.keys(board3.settings.columnColors).length > 0) {
-    settingsObject["column-colors"] = board3.settings.columnColors;
-  }
-  lines.push("%% kanban:settings", "```json", JSON.stringify(settingsObject), "```", "%%");
-  return lines.join(`
-`);
 }
 // src/plugin/view.ts
 class KanbanView extends import_obsidian8.TextFileView {

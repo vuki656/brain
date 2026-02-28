@@ -1,10 +1,9 @@
 import { Menu, Notice, setIcon } from "obsidian"
 
+import type { BoardType, ColumnType } from "../../shared"
+import { COLUMN_COLOR_LABELS, COLUMN_COLORS } from "../../shared"
 import { createAddCardForm, createCardElement } from "../card"
 import { startInlineEdit } from "../inline-edit"
-import { COLUMN_COLOR_LABELS, COLUMN_COLORS } from "../../shared"
-import type { BoardType, ColumnType } from "../../shared"
-
 import type { ColumnElementOptionsType } from "./column.types"
 import { getColumnColor } from "./column.utils"
 
@@ -245,7 +244,10 @@ export function createColumnElement(options: ColumnElementOptionsType): HTMLElem
     return columnElement
 }
 
-export function createAddColumnButton(board: BoardType, onMutation: MutationHandlerType): HTMLElement {
+export function createAddColumnButton(
+    board: BoardType,
+    onMutation: MutationHandlerType,
+): HTMLElement {
     const button = document.createElement("button")
 
     button.className = "kanban-add-column__button"

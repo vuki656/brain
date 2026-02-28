@@ -1,2 +1,2 @@
 export * from "./toolbar"
-export * from "./toolbar.types"
+export type * from "./toolbar.types"

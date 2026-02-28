@@ -1,19 +1,9 @@
-import { Notice, setIcon } from "obsidian"
+import { Notice } from "obsidian"
 
-import { openQuickAddDialog } from "../quick-add"
 import { selfUpdate } from "../../plugin/self-update"
-
+import { openQuickAddDialog } from "../quick-add"
 import type { ToolbarOptionsType } from "./toolbar.types"
-
-export function setButtonContent(button: HTMLElement, iconName: string, label: string): void {
-    button.empty()
-
-    const iconSpan = button.createSpan({ cls: "kanban-toolbar__button-icon" })
-
-    setIcon(iconSpan, iconName)
-
-    button.createSpan({ text: label })
-}
+import { setButtonContent } from "./toolbar.utils"
 
 export function createToolbar(options: ToolbarOptionsType): HTMLElement {
     const { app, board, onMutation, onViewStateChange, viewState } = options
@@ -63,7 +53,7 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
 
     toolbarSpacer.className = "kanban-toolbar__spacer"
 
-    const pluginManifest = (app as any).plugins.plugins["obsidian-vuki-kanban"]?.manifest
+    const pluginManifest = app.plugins.plugins["obsidian-vuki-kanban"]?.manifest
     const versionLabel = document.createElement("span")
 
     versionLabel.className = "kanban-toolbar__version"
@@ -87,7 +77,14 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
         updateButton.disabled = false
     })
 
-    toolbar.append(addTaskButton, todayButton, hideCompletedButton, toolbarSpacer, versionLabel, updateButton)
+    toolbar.append(
+        addTaskButton,
+        todayButton,
+        hideCompletedButton,
+        toolbarSpacer,
+        versionLabel,
+        updateButton,
+    )
 
     return toolbar
 }

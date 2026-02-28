@@ -9,7 +9,7 @@
         "lint": "bun lint:eslint && bun lint:prettier && bun lint:stylelint && bun lint:cspell && bun lint:knip",
         "lint:cspell": "cspell --no-progress --no-summary --unique '**'",
         "lint:eslint": "eslint . --cache --concurrency=auto",
-        "lint:fix": "bun lint:eslint --fix && bun lint:prettier --write && bun lint:stylelint --fix",
+        "lint:fix": "bun lint:eslint --fix && bun lint:prettier --write && bun lint:stylelint --fix && bun lint:cspell && bun lint:knip",
         "lint:knip": "knip",
         "lint:prettier": "prettier --check --cache .",
         "lint:stylelint": "stylelint ./**/*.css --cache",

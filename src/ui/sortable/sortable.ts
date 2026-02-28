@@ -1,8 +1,9 @@
 // eslint-disable-next-line import-x/no-named-as-default -- SortableJS exports Sortable as both default and named
-import Sortable, { type SortableEvent } from "sortablejs"
+import type Sortable from "sortablejs"
+import type { SortableEvent } from "sortablejs"
 
-import { immutableSpliceCard } from "../card"
 import type { BoardType } from "../../shared"
+import { immutableSpliceCard } from "../card"
 
 type MutationHandlerType = (board: BoardType) => void
 

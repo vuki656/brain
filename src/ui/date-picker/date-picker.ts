@@ -1,6 +1,5 @@
-import { immutableUpdateCard } from "../card"
 import { toDateString } from "../../shared"
-
+import { immutableUpdateCard } from "../card"
 import type { DatePickerOptionsType } from "./date-picker.types"
 
 const MONTH_NAMES = [
@@ -28,7 +27,12 @@ type RenderCalendarOptionsType = {
     viewYear: number
 }
 
-function renderCalendar(options: RenderCalendarOptionsType): void {
+type CalendarNavigationResultType = {
+    nextButton: HTMLElement
+    prevButton: HTMLElement
+}
+
+function renderCalendar(options: RenderCalendarOptionsType): CalendarNavigationResultType {
     const { currentSelectedDate, modal, onSelect, viewMonth, viewYear } = options
 
     modal.empty()
@@ -104,12 +108,7 @@ function renderCalendar(options: RenderCalendarOptionsType): void {
 
     modal.append(grid)
 
-    return { prevButton, nextButton } as unknown as void
-}
-
-type CalendarNavigationResultType = {
-    nextButton: HTMLElement
-    prevButton: HTMLElement
+    return { nextButton, prevButton }
 }
 
 function createCalendarWithNavigation(options: {
@@ -118,11 +117,11 @@ function createCalendarWithNavigation(options: {
     onSelect: (dateString: string) => void
     viewMonth: number
     viewYear: number
-}): CalendarNavigationResultType {
+}): void {
     const state = { viewMonth: options.viewMonth, viewYear: options.viewYear }
 
     const rerender = () => {
-        renderCalendar({
+        const { nextButton, prevButton } = renderCalendar({
             currentSelectedDate: options.currentSelectedDate,
             modal: options.modal,
             onSelect: options.onSelect,
@@ -130,14 +129,7 @@ function createCalendarWithNavigation(options: {
             viewYear: state.viewYear,
         })
 
-        const prevButton = options.modal.querySelector(
-            ".kanban-date-picker__nav:first-child",
-        ) as HTMLElement
-        const nextButton = options.modal.querySelector(
-            ".kanban-date-picker__nav:last-of-type",
-        ) as HTMLElement
-
-        prevButton?.addEventListener("click", () => {
+        prevButton.addEventListener("click", () => {
             state.viewMonth--
 
             if (state.viewMonth < 0) {
@@ -148,7 +140,7 @@ function createCalendarWithNavigation(options: {
             rerender()
         })
 
-        nextButton?.addEventListener("click", () => {
+        nextButton.addEventListener("click", () => {
             state.viewMonth++
 
             if (state.viewMonth > 11) {
@@ -161,15 +153,6 @@ function createCalendarWithNavigation(options: {
     }
 
     rerender()
-
-    return {
-        nextButton: options.modal.querySelector(
-            ".kanban-date-picker__nav:last-of-type",
-        ) as HTMLElement,
-        prevButton: options.modal.querySelector(
-            ".kanban-date-picker__nav:first-child",
-        ) as HTMLElement,
-    }
 }
 
 export function showDatePicker(options: DatePickerOptionsType): void {

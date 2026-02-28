@@ -1,12 +1,11 @@
 import { setIcon, TFile } from "obsidian"
 
+import type { BoardType, CardType } from "../../shared"
+import { formatDate, generateId, toDateString } from "../../shared"
 import { showCardContextMenu, showPriorityMenu } from "../context-menu"
 import { startInlineEdit } from "../inline-edit"
-import { formatDate, generateId, toDateString } from "../../shared"
-import type { BoardType, CardType } from "../../shared"
-
-import { immutableSpliceCard, immutableUpdateCard } from "./card-mutations"
 import type { CardElementOptionsType } from "./card.types"
+import { immutableSpliceCard, immutableUpdateCard } from "./card-mutations"
 
 type MutationHandlerType = (board: BoardType) => void
 
@@ -64,7 +63,7 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
             const file = vault.getAbstractFileByPath(`${card.linkedNote}.md`)
 
             if (file && file instanceof TFile) {
-                window.app.workspace.getLeaf(false).openFile(file)
+                void window.app.workspace.getLeaf(false).openFile(file)
             }
         })
 

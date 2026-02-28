@@ -8,11 +8,9 @@ type EditContextType = {
     columnIndex: number
 }
 
-type QuickAddDialogOptionsType = {
+export type QuickAddDialogOptionsType = {
     board: BoardType
     editContext?: EditContextType
     onMutation: MutationHandlerType
     prefillDate?: string | null
 }
-
-export type { EditContextType, MutationHandlerType, QuickAddDialogOptionsType }

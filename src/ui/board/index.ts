@@ -1,2 +1,2 @@
 export * from "./board"
-export * from "./board.types"
+export type * from "./board.types"

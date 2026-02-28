@@ -1,3 +1,3 @@
 export * from "./column"
-export * from "./column.types"
+export type * from "./column.types"
 export * from "./column.utils"

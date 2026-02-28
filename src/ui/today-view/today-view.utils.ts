@@ -1,9 +1,8 @@
-import { toDateString } from "../../shared"
 import type { BoardType, CardType } from "../../shared"
-
+import { toDateString } from "../../shared"
 import type { DateGroupType, TodayCardType } from "./today-view.types"
 
-export function isCardVisibleInTodayFilter(card: CardType): boolean {
+function isCardVisibleInTodayFilter(card: CardType): boolean {
     if (card.completed) {
         return false
     }
@@ -15,7 +14,7 @@ export function isCardVisibleInTodayFilter(card: CardType): boolean {
     return false
 }
 
-export function sortCardsByOrder(cards: TodayCardType[], savedOrder: string[]): TodayCardType[] {
+function sortCardsByOrder(cards: TodayCardType[], savedOrder: string[]): TodayCardType[] {
     if (savedOrder.length === 0) {
         return cards
     }
@@ -34,7 +33,7 @@ export function sortCardsByOrder(cards: TodayCardType[], savedOrder: string[]): 
     return sorted
 }
 
-export function formatDateGroupLabel(dateString: string): string {
+function formatDateGroupLabel(dateString: string): string {
     const cardDate = new Date(`${dateString}T00:00:00`)
     const today = new Date()
 
@@ -60,7 +59,7 @@ export function formatDateGroupLabel(dateString: string): string {
     })
 }
 
-export function formatDateGroupSubtitle(dateKey: string): string {
+function formatDateGroupSubtitle(dateKey: string): string {
     if (dateKey === "today" || dateKey === "overdue") {
         return ""
     }
@@ -94,7 +93,7 @@ function addCardToFutureBucket(
     }
 }
 
-export function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
+function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
     const todayString = toDateString(new Date())
     const overdueCards: TodayCardType[] = []
     const todayCards: TodayCardType[] = []
@@ -175,7 +174,7 @@ export function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
     return groups
 }
 
-export function getDateForSection(dateKey: string): string | null {
+function getDateForSection(dateKey: string): string | null {
     if (dateKey === "today") {
         return toDateString(new Date())
     }
@@ -187,7 +186,7 @@ export function getDateForSection(dateKey: string): string | null {
     return dateKey
 }
 
-export function collectTodayOrderFromSections(
+function collectTodayOrderFromSections(
     sectionCardLists: { dateKey: string; element: HTMLElement }[],
 ): Record<string, string[]> {
     const newTodayOrder: Record<string, string[]> = {}
@@ -210,4 +209,14 @@ export function collectTodayOrderFromSections(
     }
 
     return newTodayOrder
+}
+
+export {
+    collectCardsByDateGroup,
+    collectTodayOrderFromSections,
+    formatDateGroupLabel,
+    formatDateGroupSubtitle,
+    getDateForSection,
+    isCardVisibleInTodayFilter,
+    sortCardsByOrder,
 }

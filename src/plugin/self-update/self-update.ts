@@ -35,10 +35,8 @@ export async function selfUpdate(app: App): Promise<void> {
         await app.vault.adapter.write(`${pluginDirectory}/${download.fileName}`, download.content)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian internal API lacks types
-    await (app as any).plugins.disablePlugin(PLUGIN_ID)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian internal API lacks types
-    await (app as any).plugins.enablePlugin(PLUGIN_ID)
+    await app.plugins.disablePlugin(PLUGIN_ID)
+    await app.plugins.enablePlugin(PLUGIN_ID)
 
     new Notice(`Updated to ${latestVersion}. Plugin reloaded.`)
 }

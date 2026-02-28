@@ -2,7 +2,6 @@ import { describe, expect, it } from "bun:test"
 
 import { COLUMN_COLORS } from "../../shared"
 import { makeBoard } from "../../shared/test-utils"
-
 import { getColumnColor } from "./column.utils"
 
 describe("getColumnColor", () => {

@@ -2,10 +2,9 @@
 import Sortable, { type SortableEvent } from "sortablejs"
 
 import { createAddColumnButton, createColumnElement } from "../column"
-import { createToolbar } from "../toolbar"
 import { createCardSortableOptions, createColumnCardMoveHandler } from "../sortable"
 import { renderTodayView } from "../today-view"
-
+import { createToolbar } from "../toolbar"
 import type { BoardColumnsOptionsType, RenderBoardOptionsType } from "./board.types"
 
 function renderBoardColumns(options: BoardColumnsOptionsType): Sortable[] {

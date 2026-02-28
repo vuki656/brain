@@ -1,10 +1,9 @@
 import { Menu, Notice, TFile } from "obsidian"
 
+import { getNextMonday, toDateString } from "../../shared"
 import { immutableSpliceCard, immutableUpdateCard } from "../card"
 import { showDatePicker } from "../date-picker"
 import { openQuickAddDialog } from "../quick-add"
-import { getNextMonday, toDateString } from "../../shared"
-
 import type { CardContextMenuOptionsType, PriorityMenuOptionsType } from "./context-menu.types"
 
 export function showPriorityMenu(options: PriorityMenuOptionsType): void {

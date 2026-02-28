@@ -1,2 +1,2 @@
 export * from "./context-menu"
-export * from "./context-menu.types"
+export type * from "./context-menu.types"

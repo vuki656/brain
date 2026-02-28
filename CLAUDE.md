@@ -92,8 +92,9 @@ via `requestSave()`.
   `button`, etc. differently on mobile/tablet. Use `div` and `span` exclusively.
 - **Immutable board mutations** — `immutableSpliceCard()` and `immutableUpdateCard()` in
   `ui/card/card-mutations.ts`. Never mutate Board directly.
-- **Self-update** in `plugin/self-update/self-update.ts` downloads from GitHub releases (`vuki656/brain`),
-  bypassing BRAT due to mobile API rate limit bugs. Uses `requestUrl` with cache-busting.
+- **Self-update** in `plugin/self-update/self-update.ts` downloads from GitHub releases
+  (`vuki656/brain`), bypassing BRAT due to mobile API rate limit bugs. Uses `requestUrl` with
+  cache-busting.
 - **Monkey-patch** via `monkey-around` package intercepts `WorkspaceLeaf.setViewState` to
   auto-detect kanban files by frontmatter.
 - **Parser tests** are the primary test surface — round-trip idempotency

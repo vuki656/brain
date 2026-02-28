@@ -1,2 +1,2 @@
 export * from "./quick-add"
-export * from "./quick-add.types"
+export type * from "./quick-add.types"

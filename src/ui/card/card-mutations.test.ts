@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
 import { makeCard, makeColumns } from "../../shared/test-utils"
-
 import { immutableSpliceCard, immutableUpdateCard } from "./card-mutations"
 
 describe("immutableSpliceCard", () => {

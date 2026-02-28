@@ -1,9 +1,9 @@
 import { setIcon } from "obsidian"
 
+import type { CardType, PriorityType } from "../../shared"
+import { generateId, getNextMonday, toDateString } from "../../shared"
 import { immutableSpliceCard, immutableUpdateCard } from "../card"
 import { showQuickAddDatePicker } from "../date-picker"
-import { generateId, getNextMonday, toDateString } from "../../shared"
-import type { BoardType, CardType, PriorityType } from "../../shared"
 import type { QuickAddDialogOptionsType } from "./quick-add.types"
 
 function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
