@@ -1,14 +1,14 @@
 import { around } from "monkey-around"
 import { Plugin, WorkspaceLeaf } from "obsidian"
 
-import { VukiKanbanSettingTab } from "../settings/settings"
+import { VukiKanbanSettingTab } from "./settings"
 import {
     DEFAULT_PLUGIN_SETTINGS,
     FRONTMATTER_KEY,
     KANBAN_VIEW_TYPE,
     type PluginSettingsType,
-} from "../shared/plugin.types"
-import { KanbanView } from "../view/view"
+} from "../core/shared/plugin.types"
+import { KanbanView } from "./view"
 
 export default class VukiKanbanPlugin extends Plugin {
     public settings: PluginSettingsType = DEFAULT_PLUGIN_SETTINGS

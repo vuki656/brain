@@ -1,2 +1,2 @@
 [test]
-preload = ["./src/shared/test-mock-obsidian.ts"]
+preload = ["./src/core/shared/test-mock-obsidian.ts"]

@@ -25,50 +25,54 @@ bun run test       # bun:test single run
 bun run test:watch # bun:test watch mode
 ```
 
-Run a single test file: `bun test src/parser/parser.test.ts`
+Run a single test file: `bun test src/core/parser/parser.test.ts`
 
 ## Architecture
 
-Feature-based folder organization under `src/`:
+Three top-level groups under `src/`: `core/` (data layer), `ui/` (DOM rendering), `plugin/` (Obsidian
+integration).
 
 ```
 src/
-  main.ts                    → Re-exports from plugin/plugin.ts (esbuild entry point)
-  styles.css                 → All styling (copied to root by build.ts)
+  main.ts                              → Re-exports from plugin/plugin.ts (esbuild entry point)
+  styles.css                           → All styling (copied to root by build.ts)
 
-  shared/                    → Cross-cutting utilities and types
-    types.ts                 → CardType, ColumnType, BoardType, KanbanSettingsType, ViewStateType
-    plugin.types.ts          → PluginSettingsType, DEFAULT_PLUGIN_SETTINGS, KANBAN_VIEW_TYPE
-    constants.ts             → COLUMN_COLORS, COLUMN_COLOR_LABELS, BRAT_REPO, PLUGIN_ID
-    date.utils.ts            → toDateString, getNextMonday, formatDate
-    id.utils.ts              → generateId
-    test-utils.ts            → makeCard, makeColumns, makeBoard, makeTodayCard
-    test-mock-obsidian.ts    → Obsidian module mock (preloaded via bunfig.toml)
+  core/                                → Data layer — types, utils, parsing
+    shared/                            → Cross-cutting utilities and types
+      types.ts                         → CardType, ColumnType, BoardType, KanbanSettingsType, ViewStateType
+      plugin.types.ts                  → PluginSettingsType, DEFAULT_PLUGIN_SETTINGS, KANBAN_VIEW_TYPE
+      constants.ts                     → COLUMN_COLORS, COLUMN_COLOR_LABELS, BRAT_REPO, PLUGIN_ID
+      date.utils.ts                    → toDateString, getNextMonday, formatDate
+      id.utils.ts                      → generateId
+      test-utils.ts                    → makeCard, makeColumns, makeBoard, makeTodayCard
+      test-mock-obsidian.ts            → Obsidian module mock (preloaded via bunfig.toml)
+    parser/                            → parseBoard(markdown) → Board, serializeBoard(board) → markdown
+      parser.ts
+      parser.test.ts
 
-  plugin/plugin.ts           → VukiKanbanPlugin: registerView, monkey-patch, settings
-  view/view.ts               → KanbanView (TextFileView): file lifecycle → board rendering
-  board/board.ts             → renderBoard orchestrator + renderBoardColumns
-  parser/parser.ts           → parseBoard(markdown) → Board, serializeBoard(board) → markdown
-  settings/settings.ts       → Plugin settings tab (notePathPrefix)
+  ui/                                  → All DOM rendering
+    board/board.ts                     → renderBoard orchestrator + renderBoardColumns
+    card/                              → Card rendering and mutations
+      card.ts                          → createCardElement, createAddCardForm
+      card-mutations.ts                → immutableSpliceCard, immutableUpdateCard
+    column/                            → Column rendering
+      column.ts                        → createColumnElement, createAddColumnButton
+      column.utils.ts                  → getColumnColor
+    toolbar/toolbar.ts                 → createToolbar, setButtonContent
+    context-menu/context-menu.ts       → showCardContextMenu, showPriorityMenu
+    quick-add/quick-add.ts             → openQuickAddDialog
+    date-picker/date-picker.ts         → showDatePicker, showQuickAddDatePicker
+    inline-edit/inline-edit.ts         → startInlineEdit
+    sortable/sortable.ts               → createCardSortableOptions, createColumnCardMoveHandler
+    today-view/                        → Today filter view
+      today-view.ts                    → renderTodayView
+      today-view.utils.ts              → collectCardsByDateGroup, sortCardsByOrder, formatDateGroupLabel, etc.
 
-  card/                      → Card rendering and mutations
-    card.ts                  → createCardElement, createAddCardForm
-    card-mutations.ts        → immutableSpliceCard, immutableUpdateCard
-
-  column/                    → Column rendering
-    column.ts                → createColumnElement, createAddColumnButton
-    column.utils.ts          → getColumnColor
-
-  toolbar/toolbar.ts         → createToolbar, setButtonContent
-  context-menu/context-menu.ts → showCardContextMenu, showPriorityMenu
-  quick-add/quick-add.ts     → openQuickAddDialog
-  date-picker/date-picker.ts → showDatePicker, showQuickAddDatePicker
-  inline-edit/inline-edit.ts → startInlineEdit
-  sortable/sortable.ts       → createCardSortableOptions, createColumnCardMoveHandler
-  self-update/self-update.ts → selfUpdate (GitHub release download)
-  today-view/                → Today filter view
-    today-view.ts            → renderTodayView
-    today-view.utils.ts      → collectCardsByDateGroup, sortCardsByOrder, formatDateGroupLabel, etc.
+  plugin/                              → Obsidian integration
+    plugin.ts                          → VukiKanbanPlugin: registerView, monkey-patch, settings
+    view.ts                            → KanbanView (TextFileView): file lifecycle → board rendering
+    settings.ts                        → Plugin settings tab (notePathPrefix)
+    self-update/self-update.ts         → selfUpdate (GitHub release download)
 ```
 
 **Data flow:** Obsidian file → `parser.parseBoard()` → `Board` object → `board.renderBoard()` → DOM.
@@ -83,8 +87,8 @@ via `requestSave()`.
 - **No semantic HTML elements** for column headers/buttons — Obsidian injects styles on `h3`,
   `button`, etc. differently on mobile/tablet. Use `div` and `span` exclusively.
 - **Immutable board mutations** — `immutableSpliceCard()` and `immutableUpdateCard()` in
-  `card/card-mutations.ts`. Never mutate Board directly.
-- **Self-update** in `self-update/self-update.ts` downloads from GitHub releases (`vuki656/brain`),
+  `ui/card/card-mutations.ts`. Never mutate Board directly.
+- **Self-update** in `plugin/self-update/self-update.ts` downloads from GitHub releases (`vuki656/brain`),
   bypassing BRAT due to mobile API rate limit bugs. Uses `requestUrl` with cache-busting.
 - **Monkey-patch** via `monkey-around` package intercepts `WorkspaceLeaf.setViewState` to
   auto-detect kanban files by frontmatter.
