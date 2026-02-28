@@ -1,6 +1,6 @@
-import { type App, Notice, requestUrl } from "obsidian"
+import { type App, MarkdownView, Notice, requestUrl, TextFileView, type WorkspaceLeaf } from "obsidian"
 
-import { BRAT_REPO, PLUGIN_ID } from "../../shared"
+import { BRAT_REPO, KANBAN_VIEW_TYPE, PLUGIN_ID } from "../../shared"
 
 export async function selfUpdate(app: App): Promise<void> {
     const pluginDirectory = `${app.vault.configDir}/plugins/${PLUGIN_ID}`
@@ -35,8 +35,31 @@ export async function selfUpdate(app: App): Promise<void> {
         await app.vault.adapter.write(`${pluginDirectory}/${download.fileName}`, download.content)
     }
 
+    const kanbanFilePaths: string[] = []
+
+    app.workspace.iterateAllLeaves((leaf) => {
+        if (leaf.view.getViewType() === KANBAN_VIEW_TYPE && leaf.view instanceof TextFileView && leaf.view.file) {
+            kanbanFilePaths.push(leaf.view.file.path)
+        }
+    })
+
     await app.plugins.disablePlugin(PLUGIN_ID)
     await app.plugins.enablePlugin(PLUGIN_ID)
+
+    const leavesToRestore: { filePath: string; leaf: WorkspaceLeaf }[] = []
+
+    for (const filePath of kanbanFilePaths) {
+        app.workspace.iterateAllLeaves((leaf) => {
+            if (leaf.view instanceof MarkdownView && leaf.view.file?.path === filePath) {
+                leavesToRestore.push({ filePath, leaf })
+            }
+        })
+    }
+
+    for (const { filePath, leaf } of leavesToRestore) {
+        // eslint-disable-next-line no-await-in-loop -- sequential to avoid race conditions
+        await leaf.setViewState({ state: { file: filePath }, type: "markdown" })
+    }
 
     new Notice(`Updated to ${latestVersion}. Plugin reloaded.`)
 }

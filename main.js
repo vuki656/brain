@@ -2868,8 +2868,25 @@ async function selfUpdate(app) {
   for (const download of downloads) {
     await app.vault.adapter.write(`${pluginDirectory}/${download.fileName}`, download.content);
   }
+  const kanbanFilePaths = [];
+  app.workspace.iterateAllLeaves((leaf) => {
+    if (leaf.view.getViewType() === KANBAN_VIEW_TYPE && leaf.view instanceof import_obsidian6.TextFileView && leaf.view.file) {
+      kanbanFilePaths.push(leaf.view.file.path);
+    }
+  });
   await app.plugins.disablePlugin(PLUGIN_ID);
   await app.plugins.enablePlugin(PLUGIN_ID);
+  const leavesToRestore = [];
+  for (const filePath of kanbanFilePaths) {
+    app.workspace.iterateAllLeaves((leaf) => {
+      if (leaf.view instanceof import_obsidian6.MarkdownView && leaf.view.file?.path === filePath) {
+        leavesToRestore.push({ filePath, leaf });
+      }
+    });
+  }
+  for (const { filePath, leaf } of leavesToRestore) {
+    await leaf.setViewState({ state: { file: filePath }, type: "markdown" });
+  }
   new import_obsidian6.Notice(`Updated to ${latestVersion}. Plugin reloaded.`);
 }
 // src/ui/toolbar/toolbar.utils.ts
