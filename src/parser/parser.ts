@@ -99,7 +99,9 @@ function parseSettings(lines: string[]): KanbanSettingsType {
     for (let index = settingsStartIndex + 1; index < lines.length; index++) {
         const rawLine = lines[index]
 
-        if (rawLine === undefined) continue
+        if (rawLine === undefined) {
+            continue
+        }
 
         const line = rawLine.trim()
 
@@ -153,7 +155,9 @@ function collectDescription(lines: string[], cardLineIndex: number): string | nu
     for (let nextIndex = cardLineIndex + 1; nextIndex < lines.length; nextIndex++) {
         const nextLine = lines[nextIndex]
 
-        if (nextLine === undefined) break
+        if (nextLine === undefined) {
+            break
+        }
 
         if (!nextLine.startsWith("  ") || nextLine.trim() === "") {
             break
@@ -214,7 +218,9 @@ export function parseBoard(markdown: string): BoardType {
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
         const rawLine = lines[lineIndex]
 
-        if (rawLine === undefined) continue
+        if (rawLine === undefined) {
+            continue
+        }
 
         const trimmed = rawLine.trim()
 

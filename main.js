@@ -1245,8 +1245,9 @@ function parseSettings(lines) {
   let capturing = false;
   for (let index = settingsStartIndex + 1;index < lines.length; index++) {
     const rawLine = lines[index];
-    if (rawLine === undefined)
+    if (rawLine === undefined) {
       continue;
+    }
     const line = rawLine.trim();
     if (line === "```" || line.startsWith("```")) {
       if (capturing) {
@@ -1287,8 +1288,9 @@ function collectDescription(lines, cardLineIndex) {
   const descriptionLines = [];
   for (let nextIndex = cardLineIndex + 1;nextIndex < lines.length; nextIndex++) {
     const nextLine = lines[nextIndex];
-    if (nextLine === undefined)
+    if (nextLine === undefined) {
       break;
+    }
     if (!nextLine.startsWith("  ") || nextLine.trim() === "") {
       break;
     }
@@ -1333,8 +1335,9 @@ function parseBoard(markdown) {
   let inFrontmatter = false;
   for (let lineIndex = 0;lineIndex < lines.length; lineIndex++) {
     const rawLine = lines[lineIndex];
-    if (rawLine === undefined)
+    if (rawLine === undefined) {
       continue;
+    }
     const trimmed = rawLine.trim();
     if (!pastFrontmatter) {
       if (trimmed === "---" && !inFrontmatter) {
@@ -1738,8 +1741,9 @@ function openQuickAddDialog(options) {
       if (columnIndex !== editContext.columnIndex) {
         const updatedColumn = newColumns[editContext.columnIndex];
         const updatedCard = updatedColumn?.cards[editContext.cardIndex];
-        if (!updatedCard)
+        if (!updatedCard) {
           return;
+        }
         newColumns = immutableSpliceCard({
           cardIndex: editContext.cardIndex,
           columnIndex: editContext.columnIndex,
@@ -1945,8 +1949,9 @@ function showCardContextMenu(options) {
     menu.addItem((item) => {
       return item.setIcon("file-plus").setTitle("Create linked note").onClick(async () => {
         const column = board.columns[columnIndex];
-        if (!column)
+        if (!column) {
           return;
+        }
         const columnTitle = column.title;
         const cardTitle = card.title;
         const notePath = `${pluginSettings.notePathPrefix}/${columnTitle}/Tasks/${cardTitle}.md`;
@@ -2424,8 +2429,9 @@ function createColumnElement(options) {
     });
     for (const cardIndex of sortedCardIndices) {
       const card2 = column.cards[cardIndex];
-      if (!card2)
+      if (!card2) {
         continue;
+      }
       cardList.append(createCardElement({
         board,
         card: card2,
@@ -2479,8 +2485,9 @@ function createColumnCardMoveHandler(board, onMutation) {
       return;
     }
     const sourceColumn = board.columns[fromColumnIndex];
-    if (!sourceColumn)
+    if (!sourceColumn) {
       return;
+    }
     const sourceCardIndex = sourceColumn.cards.findIndex((card3) => {
       return card3.id === draggedCardId;
     });
@@ -2488,8 +2495,9 @@ function createColumnCardMoveHandler(board, onMutation) {
       return;
     }
     const card2 = sourceColumn.cards[sourceCardIndex];
-    if (!card2)
+    if (!card2) {
       return;
+    }
     let newColumns = immutableSpliceCard({
       cardIndex: sourceCardIndex,
       columnIndex: fromColumnIndex,
@@ -2498,13 +2506,15 @@ function createColumnCardMoveHandler(board, onMutation) {
     });
     const targetCardElements = event.to.querySelectorAll(".kanban-card");
     const targetColumn = newColumns[toColumnIndex];
-    if (!targetColumn)
+    if (!targetColumn) {
       return;
+    }
     let insertIndex = targetColumn.cards.length;
     for (let domIndex = 0;domIndex < targetCardElements.length; domIndex++) {
       const currentElement = targetCardElements[domIndex];
-      if (!currentElement)
+      if (!currentElement) {
         continue;
+      }
       if (currentElement.dataset.cardId !== draggedCardId) {
         continue;
       }
@@ -2604,12 +2614,14 @@ function collectCardsByDateGroup(board) {
   const futureBuckets = new Map;
   for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
     const column3 = board.columns[columnIndex];
-    if (!column3)
+    if (!column3) {
       continue;
+    }
     for (let cardIndex = 0;cardIndex < column3.cards.length; cardIndex++) {
       const card2 = column3.cards[cardIndex];
-      if (!card2)
+      if (!card2) {
         continue;
+      }
       if (!isCardVisibleInTodayFilter(card2)) {
         continue;
       }
@@ -2774,8 +2786,9 @@ function renderTodayView(options) {
   columnsPanel.className = "kanban-today-layout__columns";
   for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
     const column3 = board.columns[columnIndex];
-    if (!column3)
+    if (!column3) {
       continue;
+    }
     const columnElement = createColumnElement({
       board,
       column: column3,
@@ -2928,8 +2941,9 @@ function renderBoardColumns(options) {
   container.append(boardElement);
   for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
     const column3 = board.columns[columnIndex];
-    if (!column3)
+    if (!column3) {
       continue;
+    }
     const columnElement = createColumnElement({
       board,
       column: column3,
@@ -2958,8 +2972,9 @@ function renderBoardColumns(options) {
       }
       const newColumns = [...board.columns];
       const [moved] = newColumns.splice(oldIndex, 1);
-      if (!moved)
+      if (!moved) {
         return;
+      }
       newColumns.splice(newIndex, 0, moved);
       onMutation({ ...board, columns: newColumns });
     }

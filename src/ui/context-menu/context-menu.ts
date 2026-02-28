@@ -211,7 +211,9 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                 .onClick(async () => {
                     const column = board.columns[columnIndex]
 
-                    if (!column) return
+                    if (!column) {
+                        return
+                    }
 
                     const columnTitle = column.title
                     const cardTitle = card.title

@@ -6,8 +6,7 @@ repository.
 ## Repo-Specific Overrides
 
 - Claude is allowed to commit and release in this repo (overrides the global "never commit" rule)
-- When the user says "release": commit all changes, push to remote, then create a GitHub release
-  tagging that commit (bump version, build, commit, push, `gh release create`)
+- To release, always use the `/release` skill — never run the release steps manually
 - Always release automatically after completing a bug fix or feature (don't wait to be asked)
 
 ## Overview
@@ -105,12 +104,9 @@ via `requestSave()`.
 
 ## Release Workflow
 
-**Always commit before releasing.** Do not stack multiple version bumps on a single commit.
-
-1. Bump version in `manifest.json`, `package.json`, `versions.json`
-2. `bun run build`
-3. Commit the changes
-4. `gh release create <version> main.js manifest.json styles.css --title "<version>" --notes "<description>"`
+Use the `/release` skill for all releases. It handles validation, version bumping, building,
+committing, pushing, and creating the GitHub release. See `.claude/skills/release/SKILL.md` for the
+full flow.
 
 The self-update button in the plugin toolbar fetches `manifest.json` from
 `/releases/latest/download/` to check versions, then downloads assets by tag.

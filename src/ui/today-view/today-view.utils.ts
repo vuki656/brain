@@ -102,12 +102,16 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
     for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
         const column = board.columns[columnIndex]
 
-        if (!column) continue
+        if (!column) {
+            continue
+        }
 
         for (let cardIndex = 0; cardIndex < column.cards.length; cardIndex++) {
             const card = column.cards[cardIndex]
 
-            if (!card) continue
+            if (!card) {
+                continue
+            }
 
             if (!isCardVisibleInTodayFilter(card)) {
                 continue

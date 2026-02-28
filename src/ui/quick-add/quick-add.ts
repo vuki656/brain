@@ -275,7 +275,9 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
                 const updatedColumn = newColumns[editContext.columnIndex]
                 const updatedCard = updatedColumn?.cards[editContext.cardIndex]
 
-                if (!updatedCard) return
+                if (!updatedCard) {
+                    return
+                }
 
                 newColumns = immutableSpliceCard({
                     cardIndex: editContext.cardIndex,

@@ -130,7 +130,9 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
     for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
         const column = board.columns[columnIndex]
 
-        if (!column) continue
+        if (!column) {
+            continue
+        }
 
         const columnElement = createColumnElement({
             board,

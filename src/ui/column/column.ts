@@ -223,7 +223,9 @@ export function createColumnElement(options: ColumnElementOptionsType): HTMLElem
         for (const cardIndex of sortedCardIndices) {
             const card = column.cards[cardIndex]
 
-            if (!card) continue
+            if (!card) {
+                continue
+            }
 
             cardList.append(
                 createCardElement({
