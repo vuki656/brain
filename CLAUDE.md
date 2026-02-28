@@ -25,23 +25,51 @@ bun run test       # bun:test single run
 bun run test:watch # bun:test watch mode
 ```
 
-Run a single test file: `bun test src/parser.test.ts`
+Run a single test file: `bun test src/parser/parser.test.ts`
 
 ## Architecture
 
-```
-src/main.ts           → Plugin entry: registerView, monkey-patch WorkspaceLeaf for frontmatter detection, settings
-src/view.ts           → KanbanView (extends TextFileView): bridges Obsidian file lifecycle to board rendering
-src/board.ts          → All DOM rendering, event handlers, drag-drop (SortableJS), self-update mechanism
-src/board-utils.ts    → Immutable board mutation helpers: immutableSpliceCard(), immutableUpdateCard()
-src/parser.ts         → Pure functions: parseBoard(markdown) → Board, serializeBoard(board) → markdown
-src/types.ts          → Type definitions: Card, Column, Board, Priority, ViewState, KanbanSettings
-src/settings.ts       → Plugin settings tab (notePathPrefix)
-styles.css            → All styling using Obsidian CSS variables for theme compatibility
-```
+Feature-based folder organization under `src/`:
 
-**Test infrastructure:** `src/test-utils.ts` has factories (`makeCard`, `makeColumns`, `makeBoard`).
-`src/test-mock-obsidian.ts` mocks the `obsidian` module via `bun:test`.
+```
+src/
+  main.ts                    → Re-exports from plugin/plugin.ts (esbuild entry point)
+  styles.css                 → All styling (copied to root by build.ts)
+
+  shared/                    → Cross-cutting utilities and types
+    types.ts                 → CardType, ColumnType, BoardType, KanbanSettingsType, ViewStateType
+    plugin.types.ts          → PluginSettingsType, DEFAULT_PLUGIN_SETTINGS, KANBAN_VIEW_TYPE
+    constants.ts             → COLUMN_COLORS, COLUMN_COLOR_LABELS, BRAT_REPO, PLUGIN_ID
+    date.utils.ts            → toDateString, getNextMonday, formatDate
+    id.utils.ts              → generateId
+    test-utils.ts            → makeCard, makeColumns, makeBoard, makeTodayCard
+    test-mock-obsidian.ts    → Obsidian module mock (preloaded via bunfig.toml)
+
+  plugin/plugin.ts           → VukiKanbanPlugin: registerView, monkey-patch, settings
+  view/view.ts               → KanbanView (TextFileView): file lifecycle → board rendering
+  board/board.ts             → renderBoard orchestrator + renderBoardColumns
+  parser/parser.ts           → parseBoard(markdown) → Board, serializeBoard(board) → markdown
+  settings/settings.ts       → Plugin settings tab (notePathPrefix)
+
+  card/                      → Card rendering and mutations
+    card.ts                  → createCardElement, createAddCardForm
+    card-mutations.ts        → immutableSpliceCard, immutableUpdateCard
+
+  column/                    → Column rendering
+    column.ts                → createColumnElement, createAddColumnButton
+    column.utils.ts          → getColumnColor
+
+  toolbar/toolbar.ts         → createToolbar, setButtonContent
+  context-menu/context-menu.ts → showCardContextMenu, showPriorityMenu
+  quick-add/quick-add.ts     → openQuickAddDialog
+  date-picker/date-picker.ts → showDatePicker, showQuickAddDatePicker
+  inline-edit/inline-edit.ts → startInlineEdit
+  sortable/sortable.ts       → createCardSortableOptions, createColumnCardMoveHandler
+  self-update/self-update.ts → selfUpdate (GitHub release download)
+  today-view/                → Today filter view
+    today-view.ts            → renderTodayView
+    today-view.utils.ts      → collectCardsByDateGroup, sortCardsByOrder, formatDateGroupLabel, etc.
+```
 
 **Data flow:** Obsidian file → `parser.parseBoard()` → `Board` object → `board.renderBoard()` → DOM.
 Mutations produce new `Board` objects (immutable updates) → `parser.serializeBoard()` → file save
@@ -55,14 +83,16 @@ via `requestSave()`.
 - **No semantic HTML elements** for column headers/buttons — Obsidian injects styles on `h3`,
   `button`, etc. differently on mobile/tablet. Use `div` and `span` exclusively.
 - **Immutable board mutations** — `immutableSpliceCard()` and `immutableUpdateCard()` in
-  board-utils.ts. Never mutate Board directly.
-- **Self-update** in board.ts downloads from GitHub releases (`vuki656/brain`), bypassing BRAT due
-  to mobile API rate limit bugs. Uses `requestUrl` with cache-busting.
+  `card/card-mutations.ts`. Never mutate Board directly.
+- **Self-update** in `self-update/self-update.ts` downloads from GitHub releases (`vuki656/brain`),
+  bypassing BRAT due to mobile API rate limit bugs. Uses `requestUrl` with cache-busting.
 - **Monkey-patch** via `monkey-around` package intercepts `WorkspaceLeaf.setViewState` to
   auto-detect kanban files by frontmatter.
 - **Parser tests** are the primary test surface — round-trip idempotency
   (`serializeBoard(parseBoard(raw))`) is critical.
 - **Test data** — Always use randomized/fictional data in tests, never real data from actual notes.
+- **styles.css is a build output** — source lives at `src/styles.css`, copied to root by `build.ts`.
+  Root `styles.css` is in `.gitignore`.
 
 ## Release Workflow
 

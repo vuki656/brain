@@ -2,10 +2,11 @@ import { TextFileView, type WorkspaceLeaf } from "obsidian"
 // eslint-disable-next-line import-x/no-named-as-default -- sortablejs exports default class
 import type Sortable from "sortablejs"
 
-import { renderBoard } from "./board"
-import type VukiKanbanPlugin from "./main"
-import { parseBoard, serializeBoard } from "./parser"
-import { type BoardType, KANBAN_VIEW_TYPE, type ViewStateType } from "./types"
+import { renderBoard } from "../board/board"
+import type VukiKanbanPlugin from "../plugin/plugin"
+import { parseBoard, serializeBoard } from "../parser/parser"
+import { KANBAN_VIEW_TYPE } from "../shared/plugin.types"
+import type { BoardType, ViewStateType } from "../shared/types"
 
 export class KanbanView extends TextFileView {
     private board: BoardType = {

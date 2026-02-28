@@ -1,6 +1,6 @@
 import { type App, PluginSettingTab, Setting } from "obsidian"
 
-import type VukiKanbanPlugin from "./main"
+import type VukiKanbanPlugin from "../plugin/plugin"
 
 export class VukiKanbanSettingTab extends PluginSettingTab {
     public plugin: VukiKanbanPlugin

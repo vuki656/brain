@@ -1,3 +1,5 @@
+import { copyFileSync } from "node:fs"
+
 const production = process.argv[2] === "production"
 
 const result = await Bun.build({
@@ -20,5 +22,7 @@ if (!result.success) {
 
     process.exit(1)
 }
+
+copyFileSync("src/styles.css", "styles.css")
 
 console.log("Build succeeded")

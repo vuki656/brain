@@ -1,12 +1,12 @@
-import { toDateString } from "./board-utils"
-import {
-    type BoardType,
-    type CardType,
-    type ColumnType,
-    FRONTMATTER_KEY,
-    type KanbanSettingsType,
-    type PriorityType,
-} from "./types"
+import { toDateString } from "../shared/date.utils"
+import { FRONTMATTER_KEY } from "../shared/plugin.types"
+import type {
+    BoardType,
+    CardType,
+    ColumnType,
+    KanbanSettingsType,
+    PriorityType,
+} from "../shared/types"
 
 const TODAY_REGEX = /\s@today/g
 const DATE_REGEX = /\s@{(\d{4}-\d{2}-\d{2})}/g
@@ -20,17 +20,9 @@ const COLUMN_HEADING_REGEX = /^## (.+)$/
 const SETTINGS_START = "%% kanban:settings"
 const SETTINGS_END = "%%"
 
-// eslint-disable-next-line import-x/exports-last -- parseCard below depends on generateId
-export function generateId(): string {
-    const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
-    let result = ""
+import { generateId } from "../shared/id.utils"
 
-    for (let index = 0; index < 6; index++) {
-        result = result + chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-
-    return result
-}
+export { generateId }
 
 function parseCard(line: string): CardType | null {
     const isChecked = line.startsWith("- [x] ")

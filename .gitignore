@@ -1,4 +1,7 @@
 node_modules/
 main.js
+styles.css
 *.js.map
 .eslintcache
+.stylelintcache
+TODO.md
