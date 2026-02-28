@@ -3021,6 +3021,7 @@ function renderBoard(options) {
   const savedTodayScroll = previousTodayList ? previousTodayList.scrollTop : 0;
   const previousColumnsPanel = container.querySelector(".kanban-today-layout__columns");
   const savedColumnsPanelScroll = previousColumnsPanel ? previousColumnsPanel.scrollTop : 0;
+  container.style.visibility = "hidden";
   container.empty();
   if (viewState.hideCompletedActive) {
     container.dataset.hideCompleted = "true";
@@ -3046,6 +3047,7 @@ function renderBoard(options) {
     if (newColumnsPanel) {
       newColumnsPanel.scrollTop = savedColumnsPanelScroll;
     }
+    container.style.visibility = "";
     return sortableInstances2;
   }
   const sortableInstances = renderBoardColumns({
@@ -3060,6 +3062,7 @@ function renderBoard(options) {
   if (newBoard) {
     newBoard.scrollLeft = savedScrollLeft;
   }
+  container.style.visibility = "";
   return sortableInstances;
 }
 // src/plugin/view.ts
@@ -3159,7 +3162,7 @@ class VukiKanbanPlugin extends import_obsidian10.Plugin {
     const pluginInstance = this;
     this.uninstallMonkeyPatch = around(import_obsidian10.WorkspaceLeaf.prototype, {
       setViewState(original) {
-        return function(state, ...rest) {
+        return async function(state, ...rest) {
           if (state.type === "markdown" && state.state?.file) {
             const fileCache = pluginInstance.app.metadataCache.getCache(state.state.file);
             if (fileCache?.frontmatter?.["kanban-plugin"] === FRONTMATTER_KEY) {
