@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, setSystemTime } from "bun:test"
 
-import { formatDate, getNextMonday, toDateString } from "./date.utils"
+import {
+    formatDate,
+    getDayDifference,
+    getNextMonday,
+    getTomorrowDate,
+    toDateString,
+} from "./date.utils"
 
 describe("toDateString", () => {
     it("should format a date as YYYY-MM-DD", () => {
@@ -87,6 +93,63 @@ describe("getNextMonday", () => {
 
         expect(result.getDay()).toBe(1)
         expect(toDateString(result)).toBe("2026-02-23")
+    })
+})
+
+describe("getTomorrowDate", () => {
+    afterEach(() => {
+        setSystemTime()
+    })
+
+    it("should return tomorrow's date", () => {
+        setSystemTime(new Date(2026, 1, 22))
+        const result = getTomorrowDate()
+
+        expect(toDateString(result)).toBe("2026-02-23")
+    })
+
+    it("should handle month boundary", () => {
+        setSystemTime(new Date(2026, 1, 28))
+        const result = getTomorrowDate()
+
+        expect(toDateString(result)).toBe("2026-03-01")
+    })
+
+    it("should handle year boundary", () => {
+        setSystemTime(new Date(2025, 11, 31))
+        const result = getTomorrowDate()
+
+        expect(toDateString(result)).toBe("2026-01-01")
+    })
+})
+
+describe("getDayDifference", () => {
+    beforeEach(() => {
+        setSystemTime(new Date(2026, 1, 22))
+    })
+
+    afterEach(() => {
+        setSystemTime()
+    })
+
+    it("should return 0 for today", () => {
+        expect(getDayDifference("2026-02-22")).toBe(0)
+    })
+
+    it("should return 1 for tomorrow", () => {
+        expect(getDayDifference("2026-02-23")).toBe(1)
+    })
+
+    it("should return -1 for yesterday", () => {
+        expect(getDayDifference("2026-02-21")).toBe(-1)
+    })
+
+    it("should return negative for past dates", () => {
+        expect(getDayDifference("2026-02-19")).toBe(-3)
+    })
+
+    it("should return positive for future dates", () => {
+        expect(getDayDifference("2026-02-25")).toBe(3)
     })
 })
 

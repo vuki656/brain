@@ -1,6 +1,6 @@
 import { Menu, Notice, TFile } from "obsidian"
 
-import { getNextMonday, toDateString } from "../../shared"
+import { getNextMonday, getTomorrowDate, toDateString } from "../../shared"
 import { immutableSpliceCard, immutableUpdateCard } from "../card"
 import { showDatePicker } from "../date-picker"
 import { openQuickAddDialog } from "../quick-add"
@@ -129,9 +129,7 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
     menu.addSeparator()
 
     const todayDate = new Date()
-    const tomorrowDate = new Date()
-
-    tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+    const tomorrowDate = getTomorrowDate()
 
     menu.addItem((item) => {
         return item

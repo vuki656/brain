@@ -1,5 +1,5 @@
 import type { BoardType, CardType } from "../../shared"
-import { toDateString } from "../../shared"
+import { getDayDifference, toDateString } from "../../shared"
 import type { DateGroupType, TodayCardType } from "./today-view.types"
 
 function isCardVisibleInTodayFilter(card: CardType): boolean {
@@ -34,23 +34,17 @@ function sortCardsByOrder(cards: TodayCardType[], savedOrder: string[]): TodayCa
 }
 
 function formatDateGroupLabel(dateString: string): string {
-    const cardDate = new Date(`${dateString}T00:00:00`)
-    const today = new Date()
+    const dayDifference = getDayDifference(dateString)
 
-    today.setHours(0, 0, 0, 0)
-    cardDate.setHours(0, 0, 0, 0)
-
-    const differenceInDays = Math.round(
-        (cardDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-    )
-
-    if (differenceInDays === 1) {
+    if (dayDifference === 1) {
         return "Tomorrow"
     }
 
-    if (differenceInDays <= 7) {
-        return `In ${differenceInDays} days`
+    if (dayDifference <= 7) {
+        return `In ${dayDifference} days`
     }
+
+    const cardDate = new Date(`${dateString}T00:00:00`)
 
     return cardDate.toLocaleDateString("en-US", {
         day: "numeric",
@@ -64,17 +58,13 @@ function formatDateGroupSubtitle(dateKey: string): string {
         return ""
     }
 
-    const date = new Date(`${dateKey}T00:00:00`)
-    const today = new Date()
+    const dayDifference = getDayDifference(dateKey)
 
-    today.setHours(0, 0, 0, 0)
-    date.setHours(0, 0, 0, 0)
-
-    const differenceInDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (differenceInDays < 1 || differenceInDays > 7) {
+    if (dayDifference < 1 || dayDifference > 7) {
         return ""
     }
+
+    const date = new Date(`${dateKey}T00:00:00`)
 
     return date.toLocaleDateString("en-US", { day: "numeric", month: "short", weekday: "short" })
 }

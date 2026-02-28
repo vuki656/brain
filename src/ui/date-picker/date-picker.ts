@@ -1,3 +1,5 @@
+import { getDay, lastDayOfMonth, startOfMonth } from "date-fns"
+
 import { toDateString } from "../../shared"
 import { immutableUpdateCard } from "../card"
 import type { DatePickerOptionsType } from "./date-picker.types"
@@ -71,9 +73,9 @@ function renderCalendar(options: RenderCalendarOptionsType): CalendarNavigationR
         grid.append(cell)
     }
 
-    const firstDay = new Date(viewYear, viewMonth, 1)
-    const lastDay = new Date(viewYear, viewMonth + 1, 0)
-    const startDayOfWeek = (firstDay.getDay() + 6) % 7
+    const firstDay = startOfMonth(new Date(viewYear, viewMonth, 1))
+    const lastDay = lastDayOfMonth(firstDay)
+    const startDayOfWeek = (getDay(firstDay) + 6) % 7
     const todayString = toDateString(new Date())
 
     for (let padding = 0; padding < startDayOfWeek; padding++) {

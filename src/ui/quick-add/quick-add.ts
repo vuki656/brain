@@ -1,7 +1,7 @@
 import { setIcon } from "obsidian"
 
 import type { CardType, PriorityType } from "../../shared"
-import { generateId, getNextMonday, toDateString } from "../../shared"
+import { generateId, getNextMonday, getTomorrowDate, toDateString } from "../../shared"
 import { immutableSpliceCard, immutableUpdateCard } from "../card"
 import { showQuickAddDatePicker } from "../date-picker"
 import type { QuickAddDialogOptionsType } from "./quick-add.types"
@@ -113,9 +113,7 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
     dateButtons.className = "kanban-quick-add__dates"
 
     const today = new Date()
-    const tomorrow = new Date()
-
-    tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrow = getTomorrowDate()
 
     const dateOptions: { label: string; pickDate?: boolean; value: string | null }[] = [
         { label: "Today", value: toDateString(today) },

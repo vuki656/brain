@@ -1,49 +1,45 @@
-export function toDateString(date: Date): string {
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    const day = date.getDate()
+import { addDays, differenceInCalendarDays, format, nextMonday, startOfDay } from "date-fns"
 
-    return `${year}-${month < 10 ? "0" : ""}${month}-${day < 10 ? "0" : ""}${day}`
+export function toDateString(date: Date): string {
+    return format(date, "yyyy-MM-dd")
 }
 
 export function getNextMonday(): Date {
-    const date = new Date()
-    const daysUntilMonday = (8 - date.getDay()) % 7 || 7
+    return nextMonday(new Date())
+}
 
-    date.setDate(date.getDate() + daysUntilMonday)
+export function getTomorrowDate(): Date {
+    return addDays(new Date(), 1)
+}
 
-    return date
+export function getDayDifference(dateString: string): number {
+    const cardDate = startOfDay(new Date(`${dateString}T00:00:00`))
+    const today = startOfDay(new Date())
+
+    return differenceInCalendarDays(cardDate, today)
 }
 
 export function formatDate(dateString: string): string {
-    const cardDate = new Date(dateString)
-    const today = new Date()
+    const dayDifference = getDayDifference(dateString)
 
-    today.setHours(0, 0, 0, 0)
-    cardDate.setHours(0, 0, 0, 0)
-
-    const differenceInDays = Math.round(
-        (cardDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-    )
-
-    if (differenceInDays === 0) {
+    if (dayDifference === 0) {
         return "Today"
     }
 
-    if (differenceInDays === 1) {
+    if (dayDifference === 1) {
         return "Tomorrow"
     }
 
-    if (differenceInDays === -1) {
+    if (dayDifference === -1) {
         return "Yesterday"
     }
 
-    if (differenceInDays < -1) {
-        return `${Math.abs(differenceInDays)} days ago`
+    if (dayDifference < -1) {
+        return `${Math.abs(dayDifference)} days ago`
     }
 
-    if (differenceInDays <= 7) {
-        return `In ${differenceInDays} days`
+    if (dayDifference <= 7) {
+        return `In ${dayDifference} days`
     }
 
     return dateString

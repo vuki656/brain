@@ -1,7 +1,7 @@
 import { setIcon, TFile } from "obsidian"
 
 import type { BoardType, CardType } from "../../shared"
-import { formatDate, generateId, toDateString } from "../../shared"
+import { formatDate, generateId, getDayDifference, toDateString } from "../../shared"
 import { showCardContextMenu, showPriorityMenu } from "../context-menu"
 import { startInlineEdit } from "../inline-edit"
 import type { CardElementOptionsType } from "./card.types"
@@ -139,8 +139,7 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
     if (card.date && !projectPill) {
         const dateBadge = document.createElement("span")
         const isToday = card.date === toDateString(new Date())
-        const isOverdue =
-            new Date(card.date) < new Date(new Date().toDateString()) && !card.completed
+        const isOverdue = getDayDifference(card.date) < 0 && !card.completed
 
         dateBadge.className = isToday
             ? "kanban-card__badge kanban-card__badge--today"
