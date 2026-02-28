@@ -63,6 +63,12 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
 
     toolbarSpacer.className = "kanban-toolbar__spacer"
 
+    const pluginManifest = (app as any).plugins.plugins["obsidian-vuki-kanban"]?.manifest
+    const versionLabel = document.createElement("span")
+
+    versionLabel.className = "kanban-toolbar__version"
+    versionLabel.textContent = pluginManifest ? `v${pluginManifest.version}` : ""
+
     const updateButton = document.createElement("button")
 
     updateButton.className = "kanban-toolbar__button kanban-toolbar__button--update"
@@ -81,7 +87,7 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
         updateButton.disabled = false
     })
 
-    toolbar.append(addTaskButton, todayButton, hideCompletedButton, toolbarSpacer, updateButton)
+    toolbar.append(addTaskButton, todayButton, hideCompletedButton, toolbarSpacer, versionLabel, updateButton)
 
     return toolbar
 }

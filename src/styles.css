@@ -12,6 +12,7 @@
     display: flex;
     flex-shrink: 0;
     gap: 8px;
+    overflow-x: auto;
     padding: 10px 16px;
 }
 
@@ -27,6 +28,7 @@
     gap: 6px;
     padding: 6px 14px;
     transition: color 0.15s ease;
+    white-space: nowrap;
 }
 
 .kanban-toolbar__button-icon {
@@ -60,6 +62,14 @@
 
 .kanban-toolbar__spacer {
     flex: 1;
+    min-width: 8px;
+}
+
+.kanban-toolbar__version {
+    align-self: center;
+    color: var(--text-faint);
+    font-size: 11px;
+    white-space: nowrap;
 }
 
 .kanban-toolbar__button--update {
