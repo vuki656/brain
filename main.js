@@ -3070,6 +3070,14 @@ function openQuickAddDialog(options) {
     titleInput.value = editContext.card.linkedNote ?? editContext.card.title;
   }
   dialog.append(titleInput);
+  const descriptionInput = document.createElement("textarea");
+  descriptionInput.className = "kanban-quick-add__input kanban-quick-add__description";
+  descriptionInput.placeholder = "Description (optional)...";
+  descriptionInput.rows = 3;
+  if (isEditMode && editContext.card.description) {
+    descriptionInput.value = editContext.card.description;
+  }
+  dialog.append(descriptionInput);
   const columnRow = document.createElement("div");
   columnRow.className = "kanban-quick-add__row";
   const columnLabel = document.createElement("span");
@@ -3093,6 +3101,7 @@ function openQuickAddDialog(options) {
     if (chipIcon) {
       const chipIconSpan = document.createElement("span");
       chipIconSpan.className = "kanban-quick-add__chip-icon";
+      chipIconSpan.style.color = getColumnColor(column.title, loopColumnIndex, board);
       import_obsidian2.setIcon(chipIconSpan, chipIcon);
       chip.append(chipIconSpan);
     }
@@ -3184,14 +3193,6 @@ function openQuickAddDialog(options) {
   });
   priorityRow.append(priorityButton);
   dialog.append(priorityRow);
-  const descriptionInput = document.createElement("textarea");
-  descriptionInput.className = "kanban-quick-add__input kanban-quick-add__description";
-  descriptionInput.placeholder = "Description (optional)...";
-  descriptionInput.rows = 3;
-  if (isEditMode && editContext.card.description) {
-    descriptionInput.value = editContext.card.description;
-  }
-  dialog.append(descriptionInput);
   const submitButton = document.createElement("span");
   submitButton.className = "kanban-quick-add__submit";
   submitButton.textContent = isEditMode ? "Save task" : "Add task";
