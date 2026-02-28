@@ -1,10 +1,10 @@
 {
     "name": "obsidian-vuki-kanban",
-    "version": "2.18.2",
+    "version": "2.18.3",
     "description": "Custom Kanban board plugin for Obsidian",
     "main": "main.js",
     "scripts": {
-        "build": "tsc -noEmit -skipLibCheck && bun build.ts production",
+        "build": "tsc -noEmit && bun build.ts production",
         "dev": "bun --watch build.ts",
         "lint": "bun lint:eslint && bun lint:prettier && bun lint:stylelint && bun lint:cspell && bun lint:knip",
         "lint:cspell": "cspell --no-progress --no-summary --unique '**'",

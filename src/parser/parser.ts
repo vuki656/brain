@@ -31,7 +31,7 @@ function parseCard(line: string): CardType | null {
     const idMatch = ID_REGEX.exec(text)
 
     if (idMatch) {
-        id = idMatch[1]
+        id = idMatch[1] ?? null
         text = text.replace(ID_REGEX, "")
     }
 
@@ -49,7 +49,7 @@ function parseCard(line: string): CardType | null {
     const dateMatch = DATE_REGEX.exec(text)
 
     if (dateMatch) {
-        date = dateMatch[1]
+        date = dateMatch[1] ?? null
         text = text.replace(DATE_REGEX, "")
     }
 
@@ -67,7 +67,7 @@ function parseCard(line: string): CardType | null {
     const linkedNoteMatch = LINKED_NOTE_REGEX.exec(text)
 
     if (linkedNoteMatch) {
-        linkedNote = linkedNoteMatch[1]
+        linkedNote = linkedNoteMatch[1] ?? null
         text = text.replace(LINKED_NOTE_REGEX, "")
     }
 
@@ -97,7 +97,11 @@ function parseSettings(lines: string[]): KanbanSettingsType {
     let capturing = false
 
     for (let index = settingsStartIndex + 1; index < lines.length; index++) {
-        const line = lines[index].trim()
+        const rawLine = lines[index]
+
+        if (rawLine === undefined) continue
+
+        const line = rawLine.trim()
 
         if (line === "```" || line.startsWith("```")) {
             if (capturing) {
@@ -148,6 +152,8 @@ function collectDescription(lines: string[], cardLineIndex: number): string | nu
 
     for (let nextIndex = cardLineIndex + 1; nextIndex < lines.length; nextIndex++) {
         const nextLine = lines[nextIndex]
+
+        if (nextLine === undefined) break
 
         if (!nextLine.startsWith("  ") || nextLine.trim() === "") {
             break
@@ -206,7 +212,11 @@ export function parseBoard(markdown: string): BoardType {
     let inFrontmatter = false
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-        const trimmed = lines[lineIndex].trim()
+        const rawLine = lines[lineIndex]
+
+        if (rawLine === undefined) continue
+
+        const trimmed = rawLine.trim()
 
         if (!pastFrontmatter) {
             if (trimmed === "---" && !inFrontmatter) {
@@ -229,7 +239,7 @@ export function parseBoard(markdown: string): BoardType {
         const headingMatch = COLUMN_HEADING_REGEX.exec(trimmed)
 
         if (headingMatch) {
-            currentColumn = { cards: [], title: headingMatch[1] }
+            currentColumn = { cards: [], title: headingMatch[1] ?? "" }
             columns.push(currentColumn)
             continue
         }

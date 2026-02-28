@@ -272,7 +272,10 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
             })
 
             if (columnIndex !== editContext.columnIndex) {
-                const updatedCard = newColumns[editContext.columnIndex].cards[editContext.cardIndex]
+                const updatedColumn = newColumns[editContext.columnIndex]
+                const updatedCard = updatedColumn?.cards[editContext.cardIndex]
+
+                if (!updatedCard) return
 
                 newColumns = immutableSpliceCard({
                     cardIndex: editContext.cardIndex,

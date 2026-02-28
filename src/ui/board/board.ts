@@ -16,6 +16,9 @@ function renderBoardColumns(options: BoardColumnsOptionsType): Sortable[] {
 
     for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
         const column = board.columns[columnIndex]
+
+        if (!column) continue
+
         const columnElement = createColumnElement({
             board,
             column,
@@ -50,6 +53,8 @@ function renderBoardColumns(options: BoardColumnsOptionsType): Sortable[] {
 
             const newColumns = [...board.columns]
             const [moved] = newColumns.splice(oldIndex, 1)
+
+            if (!moved) return
 
             newColumns.splice(newIndex, 0, moved)
             onMutation({ ...board, columns: newColumns })

@@ -214,14 +214,16 @@ export function createColumnElement(options: ColumnElementOptionsType): HTMLElem
                 return index
             })
             .sort((indexA, indexB) => {
-                const completedA = column.cards[indexA].completed ? 1 : 0
-                const completedB = column.cards[indexB].completed ? 1 : 0
+                const completedA = (column.cards[indexA]?.completed ?? false) ? 1 : 0
+                const completedB = (column.cards[indexB]?.completed ?? false) ? 1 : 0
 
                 return completedA - completedB
             })
 
         for (const cardIndex of sortedCardIndices) {
             const card = column.cards[cardIndex]
+
+            if (!card) continue
 
             cardList.append(
                 createCardElement({

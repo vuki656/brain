@@ -1070,7 +1070,7 @@ function around1(obj, method, createWrapper) {
 }
 
 // src/plugin/plugin.ts
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 
 // src/shared/constants.ts
 var BRAT_REPO = "vuki656/brain";
@@ -1170,7 +1170,7 @@ class VukiKanbanSettingTab extends import_obsidian.PluginSettingTab {
 }
 
 // src/plugin/view.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/parser/parser.ts
 var TODAY_REGEX = /\s@today/g;
@@ -1196,7 +1196,7 @@ function parseCard(line) {
   let id2 = null;
   const idMatch = ID_REGEX.exec(text);
   if (idMatch) {
-    id2 = idMatch[1];
+    id2 = idMatch[1] ?? null;
     text = text.replace(ID_REGEX, "");
   }
   ID_REGEX.lastIndex = 0;
@@ -1208,7 +1208,7 @@ function parseCard(line) {
   TODAY_REGEX.lastIndex = 0;
   const dateMatch = DATE_REGEX.exec(text);
   if (dateMatch) {
-    date2 = dateMatch[1];
+    date2 = dateMatch[1] ?? null;
     text = text.replace(DATE_REGEX, "");
   }
   DATE_REGEX.lastIndex = 0;
@@ -1220,7 +1220,7 @@ function parseCard(line) {
   PRIORITY_IMPORTANT_REGEX.lastIndex = 0;
   const linkedNoteMatch = LINKED_NOTE_REGEX.exec(text);
   if (linkedNoteMatch) {
-    linkedNote = linkedNoteMatch[1];
+    linkedNote = linkedNoteMatch[1] ?? null;
     text = text.replace(LINKED_NOTE_REGEX, "");
   }
   LINKED_NOTE_REGEX.lastIndex = 0;
@@ -1244,7 +1244,10 @@ function parseSettings(lines) {
   const jsonLines = [];
   let capturing = false;
   for (let index = settingsStartIndex + 1;index < lines.length; index++) {
-    const line = lines[index].trim();
+    const rawLine = lines[index];
+    if (rawLine === undefined)
+      continue;
+    const line = rawLine.trim();
     if (line === "```" || line.startsWith("```")) {
       if (capturing) {
         break;
@@ -1284,6 +1287,8 @@ function collectDescription(lines, cardLineIndex) {
   const descriptionLines = [];
   for (let nextIndex = cardLineIndex + 1;nextIndex < lines.length; nextIndex++) {
     const nextLine = lines[nextIndex];
+    if (nextLine === undefined)
+      break;
     if (!nextLine.startsWith("  ") || nextLine.trim() === "") {
       break;
     }
@@ -1327,7 +1332,10 @@ function parseBoard(markdown) {
   let pastFrontmatter = false;
   let inFrontmatter = false;
   for (let lineIndex = 0;lineIndex < lines.length; lineIndex++) {
-    const trimmed = lines[lineIndex].trim();
+    const rawLine = lines[lineIndex];
+    if (rawLine === undefined)
+      continue;
+    const trimmed = rawLine.trim();
     if (!pastFrontmatter) {
       if (trimmed === "---" && !inFrontmatter) {
         inFrontmatter = true;
@@ -1344,7 +1352,7 @@ function parseBoard(markdown) {
     }
     const headingMatch = COLUMN_HEADING_REGEX.exec(trimmed);
     if (headingMatch) {
-      currentColumn = { cards: [], title: headingMatch[1] };
+      currentColumn = { cards: [], title: headingMatch[1] ?? "" };
       columns.push(currentColumn);
       continue;
     }
@@ -1728,7 +1736,10 @@ function openQuickAddDialog(options) {
         update
       });
       if (columnIndex !== editContext.columnIndex) {
-        const updatedCard = newColumns[editContext.columnIndex].cards[editContext.cardIndex];
+        const updatedColumn = newColumns[editContext.columnIndex];
+        const updatedCard = updatedColumn?.cards[editContext.cardIndex];
+        if (!updatedCard)
+          return;
         newColumns = immutableSpliceCard({
           cardIndex: editContext.cardIndex,
           columnIndex: editContext.columnIndex,
@@ -1933,7 +1944,10 @@ function showCardContextMenu(options) {
   if (!card.linkedNote) {
     menu.addItem((item) => {
       return item.setIcon("file-plus").setTitle("Create linked note").onClick(async () => {
-        const columnTitle = board.columns[columnIndex].title;
+        const column = board.columns[columnIndex];
+        if (!column)
+          return;
+        const columnTitle = column.title;
         const cardTitle = card.title;
         const notePath = `${pluginSettings.notePathPrefix}/${columnTitle}/Tasks/${cardTitle}.md`;
         const folderPath = notePath.slice(0, Math.max(0, notePath.lastIndexOf("/")));
@@ -2260,7 +2274,7 @@ function getColumnColor(columnTitle, columnIndex, board) {
   if (customColor) {
     return customColor;
   }
-  return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length];
+  return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length] ?? "var(--color-blue)";
 }
 
 // src/ui/column/column.ts
@@ -2404,12 +2418,14 @@ function createColumnElement(options) {
     const sortedCardIndices = column.cards.map((_card, index) => {
       return index;
     }).sort((indexA, indexB) => {
-      const completedA = column.cards[indexA].completed ? 1 : 0;
-      const completedB = column.cards[indexB].completed ? 1 : 0;
+      const completedA = column.cards[indexA]?.completed ?? false ? 1 : 0;
+      const completedB = column.cards[indexB]?.completed ?? false ? 1 : 0;
       return completedA - completedB;
     });
     for (const cardIndex of sortedCardIndices) {
       const card2 = column.cards[cardIndex];
+      if (!card2)
+        continue;
       cardList.append(createCardElement({
         board,
         card: card2,
@@ -2462,13 +2478,18 @@ function createColumnCardMoveHandler(board, onMutation) {
     if (!draggedCardId) {
       return;
     }
-    const sourceCardIndex = board.columns[fromColumnIndex].cards.findIndex((card3) => {
+    const sourceColumn = board.columns[fromColumnIndex];
+    if (!sourceColumn)
+      return;
+    const sourceCardIndex = sourceColumn.cards.findIndex((card3) => {
       return card3.id === draggedCardId;
     });
     if (sourceCardIndex === -1) {
       return;
     }
-    const card2 = board.columns[fromColumnIndex].cards[sourceCardIndex];
+    const card2 = sourceColumn.cards[sourceCardIndex];
+    if (!card2)
+      return;
     let newColumns = immutableSpliceCard({
       cardIndex: sourceCardIndex,
       columnIndex: fromColumnIndex,
@@ -2476,15 +2497,21 @@ function createColumnCardMoveHandler(board, onMutation) {
       deleteCount: 1
     });
     const targetCardElements = event.to.querySelectorAll(".kanban-card");
-    let insertIndex = newColumns[toColumnIndex].cards.length;
+    const targetColumn = newColumns[toColumnIndex];
+    if (!targetColumn)
+      return;
+    let insertIndex = targetColumn.cards.length;
     for (let domIndex = 0;domIndex < targetCardElements.length; domIndex++) {
-      if (targetCardElements[domIndex].dataset.cardId !== draggedCardId) {
+      const currentElement = targetCardElements[domIndex];
+      if (!currentElement)
+        continue;
+      if (currentElement.dataset.cardId !== draggedCardId) {
         continue;
       }
       const nextElement = targetCardElements[domIndex + 1];
       if (nextElement) {
         const nextCardId = nextElement.dataset.cardId;
-        const nextDataIndex = newColumns[toColumnIndex].cards.findIndex((searchCard) => {
+        const nextDataIndex = targetColumn.cards.findIndex((searchCard) => {
           return searchCard.id === nextCardId;
         });
         if (nextDataIndex !== -1) {
@@ -2577,8 +2604,12 @@ function collectCardsByDateGroup(board) {
   const futureBuckets = new Map;
   for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
     const column3 = board.columns[columnIndex];
+    if (!column3)
+      continue;
     for (let cardIndex = 0;cardIndex < column3.cards.length; cardIndex++) {
       const card2 = column3.cards[cardIndex];
+      if (!card2)
+        continue;
       if (!isCardVisibleInTodayFilter(card2)) {
         continue;
       }
@@ -2743,6 +2774,8 @@ function renderTodayView(options) {
   columnsPanel.className = "kanban-today-layout__columns";
   for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
     const column3 = board.columns[columnIndex];
+    if (!column3)
+      continue;
     const columnElement = createColumnElement({
       board,
       column: column3,
@@ -2797,7 +2830,7 @@ function renderTodayView(options) {
   return sortableInstances;
 }
 // src/ui/toolbar/toolbar.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 
 // src/plugin/self-update/self-update.ts
 var import_obsidian6 = require("obsidian");
@@ -2826,13 +2859,16 @@ async function selfUpdate(app) {
   await app.plugins.enablePlugin(PLUGIN_ID);
   new import_obsidian6.Notice(`Updated to ${latestVersion}. Plugin reloaded.`);
 }
-// src/ui/toolbar/toolbar.ts
+// src/ui/toolbar/toolbar.utils.ts
+var import_obsidian7 = require("obsidian");
 function setButtonContent(button, iconName, label) {
   button.empty();
   const iconSpan = button.createSpan({ cls: "kanban-toolbar__button-icon" });
   import_obsidian7.setIcon(iconSpan, iconName);
   button.createSpan({ text: label });
 }
+
+// src/ui/toolbar/toolbar.ts
 function createToolbar(options) {
   const { app, board, onMutation, onViewStateChange, viewState } = options;
   const toolbar = document.createElement("div");
@@ -2876,7 +2912,7 @@ function createToolbar(options) {
     try {
       await selfUpdate(app);
     } catch (error) {
-      new import_obsidian7.Notice(`Update failed: ${error}`);
+      new import_obsidian8.Notice(`Update failed: ${error}`);
     }
     setButtonContent(updateButton, "download", "Update");
     updateButton.disabled = false;
@@ -2892,6 +2928,8 @@ function renderBoardColumns(options) {
   container.append(boardElement);
   for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
     const column3 = board.columns[columnIndex];
+    if (!column3)
+      continue;
     const columnElement = createColumnElement({
       board,
       column: column3,
@@ -2920,6 +2958,8 @@ function renderBoardColumns(options) {
       }
       const newColumns = [...board.columns];
       const [moved] = newColumns.splice(oldIndex, 1);
+      if (!moved)
+        return;
       newColumns.splice(newIndex, 0, moved);
       onMutation({ ...board, columns: newColumns });
     }
@@ -2991,7 +3031,7 @@ function renderBoard(options) {
   return sortableInstances;
 }
 // src/plugin/view.ts
-class KanbanView extends import_obsidian8.TextFileView {
+class KanbanView extends import_obsidian9.TextFileView {
   board = {
     columns: [],
     settings: { collapsedColumns: [], columnColors: {}, todayOrder: {} }
@@ -3060,7 +3100,7 @@ class KanbanView extends import_obsidian8.TextFileView {
 }
 
 // src/plugin/plugin.ts
-class VukiKanbanPlugin extends import_obsidian9.Plugin {
+class VukiKanbanPlugin extends import_obsidian10.Plugin {
   settings = DEFAULT_PLUGIN_SETTINGS;
   uninstallMonkeyPatch = null;
   async loadSettings() {
@@ -3085,7 +3125,7 @@ class VukiKanbanPlugin extends import_obsidian9.Plugin {
   }
   patchWorkspaceLeaf() {
     const pluginInstance = this;
-    this.uninstallMonkeyPatch = around(import_obsidian9.WorkspaceLeaf.prototype, {
+    this.uninstallMonkeyPatch = around(import_obsidian10.WorkspaceLeaf.prototype, {
       setViewState(original) {
         return function(state, ...rest) {
           if (state.type === "markdown" && state.state?.file) {

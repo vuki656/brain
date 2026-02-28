@@ -37,7 +37,11 @@ export function createColumnCardMoveHandler(
             return
         }
 
-        const sourceCardIndex = board.columns[fromColumnIndex].cards.findIndex((card) => {
+        const sourceColumn = board.columns[fromColumnIndex]
+
+        if (!sourceColumn) return
+
+        const sourceCardIndex = sourceColumn.cards.findIndex((card) => {
             return card.id === draggedCardId
         })
 
@@ -45,7 +49,9 @@ export function createColumnCardMoveHandler(
             return
         }
 
-        const card = board.columns[fromColumnIndex].cards[sourceCardIndex]
+        const card = sourceColumn.cards[sourceCardIndex]
+
+        if (!card) return
         let newColumns = immutableSpliceCard({
             cardIndex: sourceCardIndex,
             columnIndex: fromColumnIndex,
@@ -54,10 +60,18 @@ export function createColumnCardMoveHandler(
         })
 
         const targetCardElements = event.to.querySelectorAll<HTMLElement>(".kanban-card")
-        let insertIndex = newColumns[toColumnIndex].cards.length
+        const targetColumn = newColumns[toColumnIndex]
+
+        if (!targetColumn) return
+
+        let insertIndex = targetColumn.cards.length
 
         for (let domIndex = 0; domIndex < targetCardElements.length; domIndex++) {
-            if (targetCardElements[domIndex].dataset.cardId !== draggedCardId) {
+            const currentElement = targetCardElements[domIndex]
+
+            if (!currentElement) continue
+
+            if (currentElement.dataset.cardId !== draggedCardId) {
                 continue
             }
 
@@ -65,7 +79,7 @@ export function createColumnCardMoveHandler(
 
             if (nextElement) {
                 const nextCardId = nextElement.dataset.cardId
-                const nextDataIndex = newColumns[toColumnIndex].cards.findIndex((searchCard) => {
+                const nextDataIndex = targetColumn.cards.findIndex((searchCard) => {
                     return searchCard.id === nextCardId
                 })
 

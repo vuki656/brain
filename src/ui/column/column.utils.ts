@@ -8,5 +8,5 @@ export function getColumnColor(columnTitle: string, columnIndex: number, board: 
         return customColor
     }
 
-    return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length]
+    return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length] ?? "var(--color-blue)"
 }

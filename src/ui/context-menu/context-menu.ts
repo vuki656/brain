@@ -209,7 +209,11 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                 .setIcon("file-plus")
                 .setTitle("Create linked note")
                 .onClick(async () => {
-                    const columnTitle = board.columns[columnIndex].title
+                    const column = board.columns[columnIndex]
+
+                    if (!column) return
+
+                    const columnTitle = column.title
                     const cardTitle = card.title
                     const notePath = `${pluginSettings.notePathPrefix}/${columnTitle}/Tasks/${cardTitle}.md`
 
