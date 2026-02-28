@@ -104,6 +104,7 @@
     border-bottom: none;
     flex-direction: column;
     gap: 8px;
+    max-height: none;
     padding: 12px 6px;
     text-orientation: mixed;
     writing-mode: vertical-rl;
