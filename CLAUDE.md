@@ -18,8 +18,7 @@ built-in self-update mechanism.
 ## Commands
 
 ```bash
-bun run build      # Type-check (tsc) then bundle (esbuild) for production
-bun run dev        # esbuild watch mode for development
+bun run build      # Type-check (tsc) then bundle with bun for production
 bun run test       # bun:test single run
 bun run test:watch # bun:test watch mode
 ```
@@ -35,7 +34,7 @@ explicit (e.g., `from "./types"`). Test files are excluded from barrels.
 
 ```
 src/
-  main.ts                              → Re-exports from plugin/plugin.ts (esbuild entry point)
+  main.ts                              → Re-exports from plugin/plugin.ts (bun entry point)
   styles.css                           → All styling (copied to root by build.ts)
 
   shared/                              → Cross-cutting utilities and types

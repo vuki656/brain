@@ -186,7 +186,7 @@ describe("collectCardsByDateGroup", () => {
         })
 
         expect(todayGroup).toBeDefined()
-        expect(todayGroup!.cards).toHaveLength(0)
+        expect(todayGroup?.cards).toHaveLength(0)
     })
 
     it("should group today's cards into 'Today'", () => {
@@ -205,8 +205,8 @@ describe("collectCardsByDateGroup", () => {
             return group.dateKey === "today"
         })
 
-        expect(todayGroup!.cards).toHaveLength(1)
-        expect(todayGroup!.cards[0].card.id).toBe("t1")
+        expect(todayGroup?.cards).toHaveLength(1)
+        expect(todayGroup?.cards[0].card.id).toBe("t1")
     })
 
     it("should group overdue cards into 'Overdue' before 'Today'", () => {
@@ -299,8 +299,8 @@ describe("collectCardsByDateGroup", () => {
             return group.dateKey === "today"
         })
 
-        expect(todayGroup!.cards[0].card.id).toBe("t2")
-        expect(todayGroup!.cards[1].card.id).toBe("t1")
+        expect(todayGroup?.cards[0].card.id).toBe("t2")
+        expect(todayGroup?.cards[1].card.id).toBe("t1")
     })
 
     it("should exclude completed cards", () => {
@@ -322,8 +322,8 @@ describe("collectCardsByDateGroup", () => {
             return group.dateKey === "today"
         })
 
-        expect(todayGroup!.cards).toHaveLength(1)
-        expect(todayGroup!.cards[0].card.id).toBe("open")
+        expect(todayGroup?.cards).toHaveLength(1)
+        expect(todayGroup?.cards[0].card.id).toBe("open")
     })
 
     it("should exclude cards without dates", () => {
@@ -362,11 +362,11 @@ describe("collectCardsByDateGroup", () => {
         const todayGroup = groups.find((group) => {
             return group.dateKey === "today"
         })
-        const todayCard = todayGroup!.cards[0]
+        const todayCard = todayGroup?.cards[0]
 
-        expect(todayCard.columnIndex).toBe(1)
-        expect(todayCard.cardIndex).toBe(0)
-        expect(todayCard.columnTitle).toBe("Second")
+        expect(todayCard?.columnIndex).toBe(1)
+        expect(todayCard?.cardIndex).toBe(0)
+        expect(todayCard?.columnTitle).toBe("Second")
     })
 
     it("should handle multiple columns with mixed dates", () => {
@@ -402,9 +402,9 @@ describe("collectCardsByDateGroup", () => {
             return group.dateKey === "2026-02-25"
         })
 
-        expect(overdueGroup!.cards).toHaveLength(1)
-        expect(todayGroup!.cards).toHaveLength(2)
-        expect(futureGroup!.cards).toHaveLength(1)
+        expect(overdueGroup?.cards).toHaveLength(1)
+        expect(todayGroup?.cards).toHaveLength(2)
+        expect(futureGroup?.cards).toHaveLength(1)
     })
 })
 
