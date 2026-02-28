@@ -479,6 +479,10 @@
     writing-mode: horizontal-tb;
 }
 
+.kanban-today-layout__columns .kanban-column--collapsed .kanban-column__title {
+    flex: 1;
+}
+
 .kanban-today-layout__columns .kanban-column--collapsed .kanban-column__count {
     writing-mode: horizontal-tb;
 }
