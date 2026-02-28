@@ -1070,7 +1070,7 @@ function around1(obj, method, createWrapper) {
 }
 
 // src/plugin/plugin.ts
-var import_obsidian10 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 
 // src/shared/constants.ts
 var BRAT_REPO = "vuki656/brain";
@@ -2645,7 +2645,7 @@ class VukiKanbanSettingTab extends import_obsidian.PluginSettingTab {
 }
 
 // src/plugin/view.ts
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 
 // src/parser/parser.ts
 var TODAY_REGEX = /\s@today/g;
@@ -2714,7 +2714,7 @@ function parseSettings(lines) {
     return line.trim() === SETTINGS_START;
   });
   if (settingsStartIndex === -1) {
-    return { collapsedColumns: [], columnColors: {}, todayOrder: {} };
+    return { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} };
   }
   const jsonLines = [];
   let capturing = false;
@@ -2741,7 +2741,7 @@ function parseSettings(lines) {
   const jsonString = jsonLines.join(`
 `);
   if (!jsonString) {
-    return { collapsedColumns: [], columnColors: {}, todayOrder: {} };
+    return { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} };
   }
   try {
     const parsed = JSON.parse(jsonString);
@@ -2753,10 +2753,11 @@ function parseSettings(lines) {
     return {
       collapsedColumns: parsed["collapsed-columns"] ?? [],
       columnColors: parsed["column-colors"] ?? {},
+      columnIcons: parsed["column-icons"] ?? {},
       todayOrder
     };
   } catch {
-    return { collapsedColumns: [], columnColors: {}, todayOrder: {} };
+    return { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} };
   }
 }
 function collectDescription(lines, cardLineIndex) {
@@ -2871,6 +2872,9 @@ function serializeBoard(board) {
   if (Object.keys(board.settings.columnColors).length > 0) {
     settingsObject["column-colors"] = board.settings.columnColors;
   }
+  if (Object.keys(board.settings.columnIcons).length > 0) {
+    settingsObject["column-icons"] = board.settings.columnIcons;
+  }
   lines.push("%% kanban:settings", "```json", JSON.stringify(settingsObject), "```", "%%");
   return lines.join(`
 `);
@@ -2879,7 +2883,7 @@ function serializeBoard(board) {
 var import_sortablejs2 = __toESM(require_Sortable_min(), 1);
 
 // src/ui/column/column.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/ui/card/card.ts
 var import_obsidian4 = require("obsidian");
@@ -3084,8 +3088,15 @@ function openQuickAddDialog(options) {
   for (const [loopColumnIndex, column] of board.columns.entries()) {
     const chip = document.createElement("span");
     chip.className = "kanban-quick-add__date-button";
-    chip.textContent = column.title;
     chip.dataset.columnValue = String(loopColumnIndex);
+    const chipIcon = getColumnIcon(column.title, board);
+    if (chipIcon) {
+      const chipIconSpan = document.createElement("span");
+      chipIconSpan.className = "kanban-quick-add__chip-icon";
+      import_obsidian2.setIcon(chipIconSpan, chipIcon);
+      chip.append(chipIconSpan);
+    }
+    chip.append(document.createTextNode(column.title));
     if (isEditMode && loopColumnIndex === editContext.columnIndex) {
       chip.classList.add("kanban-quick-add__date-button--active");
     }
@@ -3661,8 +3672,14 @@ function createCardElement(options) {
   if (projectPill) {
     const pillElement = document.createElement("span");
     pillElement.className = "kanban-card__project-pill";
-    pillElement.textContent = projectPill.title;
     pillElement.style.background = projectPill.color;
+    if (projectPill.icon) {
+      const pillIcon = document.createElement("span");
+      pillIcon.className = "kanban-pill-icon";
+      import_obsidian4.setIcon(pillIcon, projectPill.icon);
+      pillElement.append(pillIcon);
+    }
+    pillElement.append(document.createTextNode(projectPill.title));
     metaRow.append(pillElement);
   }
   if (card.date && !projectPill) {
@@ -3746,6 +3763,155 @@ function createAddCardForm(columnIndex, board, onMutation) {
   wrapper.append(button);
   return wrapper;
 }
+// src/ui/icon-picker/icon-picker.ts
+var import_obsidian5 = require("obsidian");
+
+// src/ui/icon-picker/icon-picker.constants.ts
+var ICON_PICKER_ICONS = [
+  "activity",
+  "anchor",
+  "archive",
+  "award",
+  "battery-charging",
+  "bell",
+  "bluetooth",
+  "book",
+  "bookmark",
+  "box",
+  "briefcase",
+  "bug",
+  "building",
+  "cake",
+  "camera",
+  "clipboard",
+  "clock",
+  "cloud",
+  "code",
+  "coffee",
+  "compass",
+  "cpu",
+  "crown",
+  "database",
+  "diamond",
+  "dollar-sign",
+  "download",
+  "droplet",
+  "feather",
+  "film",
+  "flag",
+  "flame",
+  "flask-conical",
+  "flower",
+  "folder",
+  "gamepad-2",
+  "gem",
+  "gift",
+  "globe",
+  "graduation-cap",
+  "hammer",
+  "headphones",
+  "heart",
+  "home",
+  "key",
+  "lamp",
+  "layers",
+  "leaf",
+  "lightbulb",
+  "link",
+  "lock",
+  "map",
+  "megaphone",
+  "message-circle",
+  "monitor",
+  "mountain",
+  "music",
+  "package",
+  "palette",
+  "pen-tool",
+  "plane",
+  "puzzle",
+  "rocket",
+  "scissors",
+  "server",
+  "shield",
+  "shopping-cart",
+  "smartphone",
+  "sparkles",
+  "star",
+  "sun",
+  "target",
+  "terminal",
+  "trophy",
+  "truck",
+  "umbrella",
+  "users",
+  "wand",
+  "wrench",
+  "zap"
+];
+
+// src/ui/icon-picker/icon-picker.ts
+function showIconPicker(options) {
+  const { currentIcon, onSelect } = options;
+  const overlay = document.createElement("div");
+  overlay.className = "kanban-icon-picker-overlay";
+  const modal = document.createElement("div");
+  modal.className = "kanban-icon-picker-modal";
+  const cleanup = () => {
+    overlay.remove();
+    modal.remove();
+  };
+  overlay.addEventListener("click", cleanup);
+  const searchInput = document.createElement("input");
+  searchInput.className = "kanban-icon-picker__search";
+  searchInput.type = "text";
+  searchInput.placeholder = "Search icons...";
+  modal.append(searchInput);
+  const grid = document.createElement("div");
+  grid.className = "kanban-icon-picker__grid";
+  modal.append(grid);
+  const renderGrid = (filter) => {
+    grid.empty();
+    const normalizedFilter = filter.toLowerCase();
+    const filteredIcons = normalizedFilter ? ICON_PICKER_ICONS.filter((iconName) => {
+      return iconName.includes(normalizedFilter);
+    }) : ICON_PICKER_ICONS;
+    for (const iconName of filteredIcons) {
+      const cell = document.createElement("div");
+      cell.className = "kanban-icon-picker__cell";
+      if (iconName === currentIcon) {
+        cell.classList.add("kanban-icon-picker__cell--active");
+      }
+      import_obsidian5.setIcon(cell, iconName);
+      cell.title = iconName;
+      cell.addEventListener("click", () => {
+        onSelect(iconName);
+        cleanup();
+      });
+      grid.append(cell);
+    }
+  };
+  renderGrid("");
+  searchInput.addEventListener("input", () => {
+    renderGrid(searchInput.value.trim());
+  });
+  const removeButton = document.createElement("div");
+  removeButton.className = "kanban-icon-picker__remove";
+  import_obsidian5.setIcon(removeButton, "rotate-ccw");
+  removeButton.append(document.createTextNode(" Remove icon"));
+  removeButton.addEventListener("click", () => {
+    onSelect(null);
+    cleanup();
+  });
+  modal.append(removeButton);
+  modal.addEventListener("keydown", (keyboardEvent) => {
+    if (keyboardEvent.key === "Escape") {
+      cleanup();
+    }
+  });
+  document.body.append(overlay, modal);
+  searchInput.focus();
+}
 // src/ui/column/column.utils.ts
 function getColumnColor(columnTitle, columnIndex, board) {
   const customColor = board.settings.columnColors[columnTitle];
@@ -3753,6 +3919,9 @@ function getColumnColor(columnTitle, columnIndex, board) {
     return customColor;
   }
   return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length] ?? "var(--color-blue)";
+}
+function getColumnIcon(columnTitle, board) {
+  return board.settings.columnIcons[columnTitle] ?? null;
 }
 
 // src/ui/column/column.ts
@@ -3806,14 +3975,22 @@ function createColumnElement(options) {
   countBadge.textContent = String(visibleCardCount);
   const dragHandle = document.createElement("span");
   dragHandle.className = "kanban-column__drag-handle";
-  import_obsidian5.setIcon(dragHandle, "grip-vertical");
+  import_obsidian6.setIcon(dragHandle, "grip-vertical");
   const colorDot = document.createElement("span");
   colorDot.className = "kanban-column__color-dot";
   colorDot.style.background = getColumnColor(column.title, columnIndex, board);
-  header.append(dragHandle, colorDot, titleElement, countBadge);
+  const columnIcon = getColumnIcon(column.title, board);
+  if (columnIcon) {
+    const iconSpan = document.createElement("span");
+    iconSpan.className = "kanban-column__icon";
+    import_obsidian6.setIcon(iconSpan, columnIcon);
+    header.append(dragHandle, colorDot, iconSpan, titleElement, countBadge);
+  } else {
+    header.append(dragHandle, colorDot, titleElement, countBadge);
+  }
   header.addEventListener("contextmenu", (headerEvent) => {
     headerEvent.preventDefault();
-    const menu = new import_obsidian5.Menu;
+    const menu = new import_obsidian6.Menu;
     menu.addItem((item) => {
       return item.setIcon("eye-off").setTitle("Hide column").onClick(() => {
         const newCollapsed = [...board.settings.collapsedColumns, column.title];
@@ -3825,7 +4002,7 @@ function createColumnElement(options) {
     });
     menu.addItem((item) => {
       return item.setIcon("palette").setTitle("Color").onClick((colorMenuEvent) => {
-        const colorMenu = new import_obsidian5.Menu;
+        const colorMenu = new import_obsidian6.Menu;
         for (const color of COLUMN_COLORS) {
           const label = COLUMN_COLOR_LABELS[color] ?? color;
           const isActive = board.settings.columnColors[column.title] === color;
@@ -3866,11 +4043,36 @@ function createColumnElement(options) {
         colorMenu.showAtMouseEvent(colorMenuEvent);
       });
     });
+    menu.addItem((item) => {
+      return item.setIcon("smile").setTitle("Icon").onClick(() => {
+        showIconPicker({
+          currentIcon: getColumnIcon(column.title, board),
+          onSelect: (iconName) => {
+            if (iconName === null) {
+              const { [column.title]: _removed, ...remainingIcons } = board.settings.columnIcons;
+              onMutation({
+                ...board,
+                settings: { ...board.settings, columnIcons: remainingIcons }
+              });
+            } else {
+              const newColumnIcons = {
+                ...board.settings.columnIcons,
+                [column.title]: iconName
+              };
+              onMutation({
+                ...board,
+                settings: { ...board.settings, columnIcons: newColumnIcons }
+              });
+            }
+          }
+        });
+      });
+    });
     menu.addSeparator();
     menu.addItem((item) => {
       return item.setIcon("trash-2").setTitle("Delete column").setWarning(true).onClick(() => {
         if (column.cards.length > 0) {
-          new import_obsidian5.Notice("Cannot delete a column that still has cards.");
+          new import_obsidian6.Notice("Cannot delete a column that still has cards.");
           return;
         }
         const newColumns = board.columns.filter((_column, index) => {
@@ -4222,6 +4424,7 @@ function renderTodayView(options) {
     for (const todayCard of group.cards) {
       const pill = {
         color: getColumnColor(todayCard.columnTitle, todayCard.columnIndex, board),
+        icon: getColumnIcon(todayCard.columnTitle, board),
         title: todayCard.columnTitle
       };
       const cardElement = createCardElement({
@@ -4310,26 +4513,26 @@ function renderTodayView(options) {
   return sortableInstances;
 }
 // src/ui/toolbar/toolbar.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/plugin/self-update/self-update.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 async function selfUpdate(app) {
   const pluginDirectory = `${app.vault.configDir}/plugins/${PLUGIN_ID}`;
   const files = ["main.js", "manifest.json", "styles.css"];
   const currentManifestResponse = await app.vault.adapter.read(`${pluginDirectory}/manifest.json`);
   const currentVersion = JSON.parse(currentManifestResponse).version;
-  const manifestResponse = await import_obsidian6.requestUrl({
+  const manifestResponse = await import_obsidian7.requestUrl({
     url: `https://github.com/${BRAT_REPO}/releases/latest/download/manifest.json?cb=${Date.now()}`
   });
   const latestVersion = JSON.parse(manifestResponse.text).version;
   if (currentVersion === latestVersion) {
-    new import_obsidian6.Notice(`Already on latest version (${currentVersion}).`);
+    new import_obsidian7.Notice(`Already on latest version (${currentVersion}).`);
     return;
   }
   const downloadBase = `https://github.com/${BRAT_REPO}/releases/download/${latestVersion}`;
   const downloads = await Promise.all(files.map(async (fileName) => {
-    const response = await import_obsidian6.requestUrl({ url: `${downloadBase}/${fileName}` });
+    const response = await import_obsidian7.requestUrl({ url: `${downloadBase}/${fileName}` });
     return { content: response.text, fileName };
   }));
   for (const download of downloads) {
@@ -4337,7 +4540,7 @@ async function selfUpdate(app) {
   }
   const kanbanFilePaths = [];
   app.workspace.iterateAllLeaves((leaf) => {
-    if (leaf.view.getViewType() === KANBAN_VIEW_TYPE && leaf.view instanceof import_obsidian6.TextFileView && leaf.view.file) {
+    if (leaf.view.getViewType() === KANBAN_VIEW_TYPE && leaf.view instanceof import_obsidian7.TextFileView && leaf.view.file) {
       kanbanFilePaths.push(leaf.view.file.path);
     }
   });
@@ -4346,7 +4549,7 @@ async function selfUpdate(app) {
   const leavesToRestore = [];
   for (const filePath of kanbanFilePaths) {
     app.workspace.iterateAllLeaves((leaf) => {
-      if (leaf.view instanceof import_obsidian6.MarkdownView && leaf.view.file?.path === filePath) {
+      if (leaf.view instanceof import_obsidian7.MarkdownView && leaf.view.file?.path === filePath) {
         leavesToRestore.push({ filePath, leaf });
       }
     });
@@ -4354,14 +4557,14 @@ async function selfUpdate(app) {
   for (const { filePath, leaf } of leavesToRestore) {
     await leaf.setViewState({ state: { file: filePath }, type: "markdown" });
   }
-  new import_obsidian6.Notice(`Updated to ${latestVersion}. Plugin reloaded.`);
+  new import_obsidian7.Notice(`Updated to ${latestVersion}. Plugin reloaded.`);
 }
 // src/ui/toolbar/toolbar.utils.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 function setButtonContent(button, iconName, label) {
   button.empty();
   const iconSpan = button.createSpan({ cls: "kanban-toolbar__button-icon" });
-  import_obsidian7.setIcon(iconSpan, iconName);
+  import_obsidian8.setIcon(iconSpan, iconName);
   button.createSpan({ text: label });
 }
 
@@ -4409,7 +4612,7 @@ function createToolbar(options) {
     try {
       await selfUpdate(app);
     } catch (error) {
-      new import_obsidian8.Notice(`Update failed: ${error}`);
+      new import_obsidian9.Notice(`Update failed: ${error}`);
     }
     setButtonContent(updateButton, "download", "Update");
     updateButton.disabled = false;
@@ -4533,10 +4736,10 @@ function renderBoard(options) {
   return sortableInstances;
 }
 // src/plugin/view.ts
-class KanbanView extends import_obsidian9.TextFileView {
+class KanbanView extends import_obsidian10.TextFileView {
   board = {
     columns: [],
-    settings: { collapsedColumns: [], columnColors: {}, todayOrder: {} }
+    settings: { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} }
   };
   boardContainer;
   plugin;
@@ -4550,7 +4753,7 @@ class KanbanView extends import_obsidian9.TextFileView {
   clear() {
     this.board = {
       columns: [],
-      settings: { collapsedColumns: [], columnColors: {}, todayOrder: {} }
+      settings: { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} }
     };
     this.boardContainer.empty();
   }
@@ -4602,7 +4805,7 @@ class KanbanView extends import_obsidian9.TextFileView {
 }
 
 // src/plugin/plugin.ts
-class VukiKanbanPlugin extends import_obsidian10.Plugin {
+class VukiKanbanPlugin extends import_obsidian11.Plugin {
   settings = DEFAULT_PLUGIN_SETTINGS;
   uninstallMonkeyPatch = null;
   async loadSettings() {
@@ -4627,7 +4830,7 @@ class VukiKanbanPlugin extends import_obsidian10.Plugin {
   }
   patchWorkspaceLeaf() {
     const pluginInstance = this;
-    this.uninstallMonkeyPatch = around(import_obsidian10.WorkspaceLeaf.prototype, {
+    this.uninstallMonkeyPatch = around(import_obsidian11.WorkspaceLeaf.prototype, {
       setViewState(original) {
         return async function(state, ...rest) {
           if (state.type === "markdown" && state.state?.file) {
