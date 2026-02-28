@@ -10,12 +10,12 @@ import { immutableSpliceCard, immutableUpdateCard } from "./card-mutations"
 type MutationHandlerType = (board: BoardType) => void
 
 export function createCardElement(options: CardElementOptionsType): HTMLElement {
-    const { board, card, cardIndex, columnIndex, onMutation, pluginSettings, projectPill, vault } =
+    const { board, card, cardIndex, onMutation, pluginSettings, projectIndex, projectPill, vault } =
         options
     const cardElement = document.createElement("div")
 
     cardElement.className = "kanban-card"
-    cardElement.dataset.columnIndex = String(columnIndex)
+    cardElement.dataset.projectIndex = String(projectIndex)
     cardElement.dataset.cardIndex = String(cardIndex)
     cardElement.dataset.cardId = card.id
 
@@ -37,13 +37,13 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
     checkbox.className = "kanban-card__checkbox task-list-item-checkbox"
     checkbox.checked = card.completed
     checkbox.addEventListener("change", () => {
-        const newColumns = immutableUpdateCard({
+        const newProjects = immutableUpdateCard({
             cardIndex,
-            columnIndex,
-            columns: board.columns,
+            projectIndex,
+            projects: board.projects,
             update: { completed: checkbox.checked },
         })
-        onMutation({ ...board, columns: newColumns })
+        onMutation({ ...board, projects: newProjects })
     })
 
     const titleElement = document.createElement("span")
@@ -75,13 +75,13 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
     titleElement.addEventListener("dblclick", () => {
         startInlineEdit(titleElement, card.linkedNote ?? card.title, (newValue) => {
             const update = card.linkedNote ? { linkedNote: newValue } : { title: newValue }
-            const newColumns = immutableUpdateCard({
+            const newProjects = immutableUpdateCard({
                 cardIndex,
-                columnIndex,
-                columns: board.columns,
+                projectIndex,
+                projects: board.projects,
                 update,
             })
-            onMutation({ ...board, columns: newColumns })
+            onMutation({ ...board, projects: newProjects })
         })
     })
 
@@ -106,9 +106,9 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
             board,
             card,
             cardIndex,
-            columnIndex,
             event: priorityClickEvent,
             onMutation,
+            projectIndex,
         })
     })
 
@@ -131,8 +131,18 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
         const pillElement = document.createElement("span")
 
         pillElement.className = "kanban-card__project-pill"
-        pillElement.textContent = projectPill.title
-        pillElement.style.background = projectPill.color
+        pillElement.style.borderColor = projectPill.color
+
+        if (projectPill.icon) {
+            const pillIcon = document.createElement("span")
+
+            pillIcon.className = "kanban-pill-icon"
+            pillIcon.style.color = projectPill.color
+            setIcon(pillIcon, projectPill.icon)
+            pillElement.append(pillIcon)
+        }
+
+        pillElement.append(document.createTextNode(projectPill.title))
         metaRow.append(pillElement)
     }
 
@@ -163,10 +173,10 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
             board,
             card,
             cardIndex,
-            columnIndex,
             event: contextMenuEvent,
             onMutation,
             pluginSettings,
+            projectIndex,
             vault,
         })
     })
@@ -175,7 +185,7 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
 }
 
 export function createAddCardForm(
-    columnIndex: number,
+    projectIndex: number,
     board: BoardType,
     onMutation: MutationHandlerType,
 ): HTMLElement {
@@ -210,14 +220,14 @@ export function createAddCardForm(
                     priority: null,
                     title: text,
                 }
-                const newColumns = immutableSpliceCard({
+                const newProjects = immutableSpliceCard({
                     cardIndex: 0,
-                    columnIndex,
-                    columns: board.columns,
                     deleteCount: 0,
                     insertCards: [newCard],
+                    projectIndex,
+                    projects: board.projects,
                 })
-                onMutation({ ...board, columns: newColumns })
+                onMutation({ ...board, projects: newProjects })
             }
 
             textarea.remove()

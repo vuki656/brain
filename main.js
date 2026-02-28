@@ -1075,7 +1075,7 @@ var import_obsidian11 = require("obsidian");
 // src/shared/constants.ts
 var BRAT_REPO = "vuki656/brain";
 var PLUGIN_ID = "obsidian-vuki-kanban";
-var COLUMN_COLORS = [
+var PROJECT_COLORS = [
   "#5b7a9d",
   "#7b68a8",
   "#5a9a6e",
@@ -1093,7 +1093,7 @@ var COLUMN_COLORS = [
   "#9a7a5a",
   "#5a8a7a"
 ];
-var COLUMN_COLOR_LABELS = {
+var PROJECT_COLOR_LABELS = {
   "#4a9a9a": "Teal",
   "#5a7a8a": "Steel",
   "#5a8a7a": "Sage",
@@ -2671,7 +2671,7 @@ var LINKED_NOTE_REGEX = /(?:^|\s)\[\[(.+?)]]/g;
 var ID_REGEX = /\s@id:([\da-z]+)/g;
 var CHECKBOX_UNCHECKED_REGEX = /^- \[ ] /;
 var CHECKBOX_CHECKED_REGEX = /^- \[x] /;
-var COLUMN_HEADING_REGEX = /^## (.+)$/;
+var PROJECT_HEADING_REGEX = /^## (.+)$/;
 var SETTINGS_START = "%% kanban:settings";
 var SETTINGS_END = "%%";
 function parseCard(line) {
@@ -2730,7 +2730,7 @@ function parseSettings(lines) {
     return line.trim() === SETTINGS_START;
   });
   if (settingsStartIndex === -1) {
-    return { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} };
+    return { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} };
   }
   const jsonLines = [];
   let capturing = false;
@@ -2757,7 +2757,7 @@ function parseSettings(lines) {
   const jsonString = jsonLines.join(`
 `);
   if (!jsonString) {
-    return { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} };
+    return { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} };
   }
   try {
     const parsed = JSON.parse(jsonString);
@@ -2767,13 +2767,13 @@ function parseSettings(lines) {
       todayOrder = rawTodayOrder;
     }
     return {
-      collapsedColumns: parsed["collapsed-columns"] ?? [],
-      columnColors: parsed["column-colors"] ?? {},
-      columnIcons: parsed["column-icons"] ?? {},
+      collapsedProjects: parsed["collapsed-projects"] ?? [],
+      projectColors: parsed["project-colors"] ?? {},
+      projectIcons: parsed["project-icons"] ?? {},
       todayOrder
     };
   } catch {
-    return { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} };
+    return { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} };
   }
 }
 function collectDescription(lines, cardLineIndex) {
@@ -2790,7 +2790,7 @@ function collectDescription(lines, cardLineIndex) {
     if (nextTrimmed.startsWith("- [ ] ") || nextTrimmed.startsWith("- [x] ")) {
       break;
     }
-    if (COLUMN_HEADING_REGEX.test(nextTrimmed)) {
+    if (PROJECT_HEADING_REGEX.test(nextTrimmed)) {
       break;
     }
     if (nextTrimmed === SETTINGS_START) {
@@ -2821,8 +2821,8 @@ function serializeCard(card) {
 function parseBoard(markdown) {
   const lines = markdown.split(`
 `);
-  const columns = [];
-  let currentColumn = null;
+  const projects = [];
+  let currentProject = null;
   let pastFrontmatter = false;
   let inFrontmatter = false;
   for (let lineIndex = 0;lineIndex < lines.length; lineIndex++) {
@@ -2845,28 +2845,28 @@ function parseBoard(markdown) {
     if (trimmed === SETTINGS_START) {
       break;
     }
-    const headingMatch = COLUMN_HEADING_REGEX.exec(trimmed);
+    const headingMatch = PROJECT_HEADING_REGEX.exec(trimmed);
     if (headingMatch) {
-      currentColumn = { cards: [], title: headingMatch[1] ?? "" };
-      columns.push(currentColumn);
+      currentProject = { cards: [], title: headingMatch[1] ?? "" };
+      projects.push(currentProject);
       continue;
     }
-    if (currentColumn && (trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] "))) {
+    if (currentProject && (trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] "))) {
       const card = parseCard(trimmed);
       if (card) {
         card.description = collectDescription(lines, lineIndex);
-        currentColumn.cards.push(card);
+        currentProject.cards.push(card);
       }
     }
   }
   const settings = parseSettings(lines);
-  return { columns, settings };
+  return { projects, settings };
 }
 function serializeBoard(board) {
   const lines = ["---", "", `kanban-plugin: ${FRONTMATTER_KEY}`, "", "---", ""];
-  for (const column of board.columns) {
-    lines.push(`## ${column.title}`, "");
-    for (const card of column.cards) {
+  for (const project of board.projects) {
+    lines.push(`## ${project.title}`, "");
+    for (const card of project.cards) {
       lines.push(serializeCard(card));
       if (card.description) {
         const indentedLines = card.description.split(`
@@ -2879,17 +2879,17 @@ function serializeBoard(board) {
     lines.push("", "");
   }
   const settingsObject = {};
-  if (board.settings.collapsedColumns.length > 0) {
-    settingsObject["collapsed-columns"] = board.settings.collapsedColumns;
+  if (board.settings.collapsedProjects.length > 0) {
+    settingsObject["collapsed-projects"] = board.settings.collapsedProjects;
   }
   if (Object.keys(board.settings.todayOrder).length > 0) {
     settingsObject["today-order"] = board.settings.todayOrder;
   }
-  if (Object.keys(board.settings.columnColors).length > 0) {
-    settingsObject["column-colors"] = board.settings.columnColors;
+  if (Object.keys(board.settings.projectColors).length > 0) {
+    settingsObject["project-colors"] = board.settings.projectColors;
   }
-  if (Object.keys(board.settings.columnIcons).length > 0) {
-    settingsObject["column-icons"] = board.settings.columnIcons;
+  if (Object.keys(board.settings.projectIcons).length > 0) {
+    settingsObject["project-icons"] = board.settings.projectIcons;
   }
   lines.push("%% kanban:settings", "```json", JSON.stringify(settingsObject), "```", "%%");
   return lines.join(`
@@ -2898,7 +2898,7 @@ function serializeBoard(board) {
 // src/ui/board/board.ts
 var import_sortablejs2 = __toESM(require_Sortable_min(), 1);
 
-// src/ui/column/column.ts
+// src/ui/project/project.ts
 var import_obsidian6 = require("obsidian");
 
 // src/ui/card/card.ts
@@ -3006,7 +3006,7 @@ function createCalendarWithNavigation(options) {
   rerender();
 }
 function showDatePicker(options) {
-  const { board, card, cardIndex, columnIndex, onMutation } = options;
+  const { board, card, cardIndex, onMutation, projectIndex } = options;
   const selectedDate = card.date ? new Date(`${card.date}T00:00:00`) : new Date;
   const overlay = document.createElement("div");
   overlay.className = "kanban-date-picker-overlay";
@@ -3021,13 +3021,13 @@ function showDatePicker(options) {
     currentSelectedDate: card.date,
     modal,
     onSelect: (dateString) => {
-      const newColumns = immutableUpdateCard({
+      const newProjects = immutableUpdateCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
+        projectIndex,
+        projects: board.projects,
         update: { date: dateString }
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
       cleanup();
     },
     viewMonth: selectedDate.getMonth(),
@@ -3094,46 +3094,46 @@ function openQuickAddDialog(options) {
     descriptionInput.value = editContext.card.description;
   }
   dialog.append(descriptionInput);
-  const columnRow = document.createElement("div");
-  columnRow.className = "kanban-quick-add__row";
-  const columnLabel = document.createElement("span");
-  columnLabel.className = "kanban-quick-add__label";
-  columnLabel.textContent = "Project";
-  columnRow.append(columnLabel);
-  let selectedColumnIndex = isEditMode ? editContext.columnIndex : null;
-  const columnChips = document.createElement("div");
-  columnChips.className = "kanban-quick-add__dates";
-  const updateColumnChipStates = () => {
-    for (const chip of Array.from(columnChips.querySelectorAll(".kanban-quick-add__date-button"))) {
-      const chipValue = chip.dataset.columnValue;
-      chip.classList.toggle("kanban-quick-add__date-button--active", chipValue !== undefined && Number(chipValue) === selectedColumnIndex);
+  const projectRow = document.createElement("div");
+  projectRow.className = "kanban-quick-add__row";
+  const projectLabel = document.createElement("span");
+  projectLabel.className = "kanban-quick-add__label";
+  projectLabel.textContent = "Project";
+  projectRow.append(projectLabel);
+  let selectedProjectIndex = isEditMode ? editContext.projectIndex : null;
+  const projectChips = document.createElement("div");
+  projectChips.className = "kanban-quick-add__dates";
+  const updateProjectChipStates = () => {
+    for (const chip of Array.from(projectChips.querySelectorAll(".kanban-quick-add__date-button"))) {
+      const chipValue = chip.dataset.projectValue;
+      chip.classList.toggle("kanban-quick-add__date-button--active", chipValue !== undefined && Number(chipValue) === selectedProjectIndex);
     }
   };
-  for (const [loopColumnIndex, column] of board.columns.entries()) {
+  for (const [loopProjectIndex, project] of board.projects.entries()) {
     const chip = document.createElement("span");
     chip.className = "kanban-quick-add__date-button";
-    chip.dataset.columnValue = String(loopColumnIndex);
-    const chipIcon = getColumnIcon(column.title, board);
+    chip.dataset.projectValue = String(loopProjectIndex);
+    const chipIcon = getProjectIcon(project.title, board);
     if (chipIcon) {
       const chipIconSpan = document.createElement("span");
       chipIconSpan.className = "kanban-quick-add__chip-icon";
-      chipIconSpan.style.color = getColumnColor(column.title, loopColumnIndex, board);
+      chipIconSpan.style.color = getProjectColor(project.title, loopProjectIndex, board);
       import_obsidian2.setIcon(chipIconSpan, chipIcon);
       chip.append(chipIconSpan);
     }
-    chip.append(document.createTextNode(column.title));
-    if (isEditMode && loopColumnIndex === editContext.columnIndex) {
+    chip.append(document.createTextNode(project.title));
+    if (isEditMode && loopProjectIndex === editContext.projectIndex) {
       chip.classList.add("kanban-quick-add__date-button--active");
     }
-    const capturedColumnIndex = loopColumnIndex;
+    const capturedProjectIndex = loopProjectIndex;
     chip.addEventListener("click", () => {
-      selectedColumnIndex = selectedColumnIndex === capturedColumnIndex ? null : capturedColumnIndex;
-      updateColumnChipStates();
+      selectedProjectIndex = selectedProjectIndex === capturedProjectIndex ? null : capturedProjectIndex;
+      updateProjectChipStates();
     });
-    columnChips.append(chip);
+    projectChips.append(chip);
   }
-  columnRow.append(columnChips);
-  dialog.append(columnRow);
+  projectRow.append(projectChips);
+  dialog.append(projectRow);
   const dateRow = document.createElement("div");
   dateRow.className = "kanban-quick-add__row";
   const dateLabel = document.createElement("span");
@@ -3218,10 +3218,10 @@ function openQuickAddDialog(options) {
       titleInput.focus();
       return;
     }
-    if (selectedColumnIndex === null) {
+    if (selectedProjectIndex === null) {
       return;
     }
-    const columnIndex = selectedColumnIndex;
+    const projectIndex = selectedProjectIndex;
     const descriptionValue = descriptionInput.value.trim() || null;
     if (isEditMode) {
       const update = {
@@ -3234,33 +3234,33 @@ function openQuickAddDialog(options) {
       } else {
         update.title = title;
       }
-      let newColumns = immutableUpdateCard({
+      let newProjects = immutableUpdateCard({
         cardIndex: editContext.cardIndex,
-        columnIndex: editContext.columnIndex,
-        columns: board.columns,
+        projectIndex: editContext.projectIndex,
+        projects: board.projects,
         update
       });
-      if (columnIndex !== editContext.columnIndex) {
-        const updatedColumn = newColumns[editContext.columnIndex];
-        const updatedCard = updatedColumn?.cards[editContext.cardIndex];
+      if (projectIndex !== editContext.projectIndex) {
+        const updatedProject = newProjects[editContext.projectIndex];
+        const updatedCard = updatedProject?.cards[editContext.cardIndex];
         if (!updatedCard) {
           return;
         }
-        newColumns = immutableSpliceCard({
+        newProjects = immutableSpliceCard({
           cardIndex: editContext.cardIndex,
-          columnIndex: editContext.columnIndex,
-          columns: newColumns,
-          deleteCount: 1
+          deleteCount: 1,
+          projectIndex: editContext.projectIndex,
+          projects: newProjects
         });
-        newColumns = immutableSpliceCard({
+        newProjects = immutableSpliceCard({
           cardIndex: 0,
-          columnIndex,
-          columns: newColumns,
           deleteCount: 0,
-          insertCards: [updatedCard]
+          insertCards: [updatedCard],
+          projectIndex,
+          projects: newProjects
         });
       }
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     } else {
       const newCard = {
         completed: false,
@@ -3271,14 +3271,14 @@ function openQuickAddDialog(options) {
         priority: selectedPriority,
         title
       };
-      const newColumns = immutableSpliceCard({
+      const newProjects = immutableSpliceCard({
         cardIndex: 0,
-        columnIndex,
-        columns: board.columns,
         deleteCount: 0,
-        insertCards: [newCard]
+        insertCards: [newCard],
+        projectIndex,
+        projects: board.projects
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     }
     cleanup();
   };
@@ -3304,58 +3304,58 @@ function openQuickAddDialog(options) {
 }
 // src/ui/context-menu/context-menu.ts
 function showPriorityMenu(options) {
-  const { board, cardIndex, columnIndex, event, onMutation } = options;
+  const { board, cardIndex, event, onMutation, projectIndex } = options;
   const menu = new import_obsidian3.Menu;
   menu.addItem((item) => {
     return item.setIcon("circle").setTitle("None").onClick(() => {
-      const newColumns = immutableUpdateCard({
+      const newProjects = immutableUpdateCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
+        projectIndex,
+        projects: board.projects,
         update: { priority: null }
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     });
   });
   menu.addItem((item) => {
     return item.setIcon("alert-circle").setTitle("Important").onClick(() => {
-      const newColumns = immutableUpdateCard({
+      const newProjects = immutableUpdateCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
+        projectIndex,
+        projects: board.projects,
         update: { priority: "important" }
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     });
   });
   menu.showAtMouseEvent(event);
 }
 function showCardContextMenu(options) {
-  const { board, card, cardIndex, columnIndex, event, onMutation, pluginSettings, vault } = options;
+  const { board, card, cardIndex, event, onMutation, pluginSettings, projectIndex, vault } = options;
   const menu = new import_obsidian3.Menu;
   const todayString = toDateString(new Date);
   if (card.date === todayString) {
     menu.addItem((item) => {
       return item.setIcon("sun-dim").setTitle("Remove from today").onClick(() => {
-        const newColumns = immutableUpdateCard({
+        const newProjects = immutableUpdateCard({
           cardIndex,
-          columnIndex,
-          columns: board.columns,
+          projectIndex,
+          projects: board.projects,
           update: { date: null }
         });
-        onMutation({ ...board, columns: newColumns });
+        onMutation({ ...board, projects: newProjects });
       });
     });
   } else {
     menu.addItem((item) => {
       return item.setIcon("sun").setTitle("Add to today").onClick(() => {
-        const newColumns = immutableUpdateCard({
+        const newProjects = immutableUpdateCard({
           cardIndex,
-          columnIndex,
-          columns: board.columns,
+          projectIndex,
+          projects: board.projects,
           update: { date: todayString }
         });
-        onMutation({ ...board, columns: newColumns });
+        onMutation({ ...board, projects: newProjects });
       });
     });
   }
@@ -3363,7 +3363,7 @@ function showCardContextMenu(options) {
     return item.setIcon("pencil").setTitle("Edit").onClick(() => {
       openQuickAddDialog({
         board,
-        editContext: { card, cardIndex, columnIndex },
+        editContext: { card, cardIndex, projectIndex },
         onMutation
       });
     });
@@ -3371,24 +3371,24 @@ function showCardContextMenu(options) {
   menu.addSeparator();
   menu.addItem((item) => {
     return item.setIcon("circle").setTitle("Priority: None").onClick(() => {
-      const newColumns = immutableUpdateCard({
+      const newProjects = immutableUpdateCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
+        projectIndex,
+        projects: board.projects,
         update: { priority: null }
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     });
   });
   menu.addItem((item) => {
     return item.setIcon("alert-circle").setTitle("Priority: Important").onClick(() => {
-      const newColumns = immutableUpdateCard({
+      const newProjects = immutableUpdateCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
+        projectIndex,
+        projects: board.projects,
         update: { priority: "important" }
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     });
   });
   menu.addSeparator();
@@ -3396,52 +3396,52 @@ function showCardContextMenu(options) {
   const tomorrowDate = getTomorrowDate();
   menu.addItem((item) => {
     return item.setIcon("calendar").setTitle("Date: Today").onClick(() => {
-      const newColumns = immutableUpdateCard({
+      const newProjects = immutableUpdateCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
+        projectIndex,
+        projects: board.projects,
         update: { date: toDateString(todayDate) }
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     });
   });
   menu.addItem((item) => {
     return item.setIcon("calendar-plus").setTitle("Date: Tomorrow").onClick(() => {
-      const newColumns = immutableUpdateCard({
+      const newProjects = immutableUpdateCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
+        projectIndex,
+        projects: board.projects,
         update: { date: toDateString(tomorrowDate) }
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     });
   });
   menu.addItem((item) => {
     return item.setIcon("calendar-range").setTitle("Date: Next Monday").onClick(() => {
-      const newColumns = immutableUpdateCard({
+      const newProjects = immutableUpdateCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
+        projectIndex,
+        projects: board.projects,
         update: { date: toDateString(getNextMonday()) }
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     });
   });
   menu.addItem((item) => {
     return item.setIcon("calendar-search").setTitle("Date: Pick...").onClick(() => {
-      showDatePicker({ board, card, cardIndex, columnIndex, onMutation });
+      showDatePicker({ board, card, cardIndex, onMutation, projectIndex });
     });
   });
   if (card.date) {
     menu.addItem((item) => {
       return item.setIcon("calendar-x").setTitle("Date: Remove").onClick(() => {
-        const newColumns = immutableUpdateCard({
+        const newProjects = immutableUpdateCard({
           cardIndex,
-          columnIndex,
-          columns: board.columns,
+          projectIndex,
+          projects: board.projects,
           update: { date: null }
         });
-        onMutation({ ...board, columns: newColumns });
+        onMutation({ ...board, projects: newProjects });
       });
     });
   }
@@ -3449,13 +3449,13 @@ function showCardContextMenu(options) {
   if (!card.linkedNote) {
     menu.addItem((item) => {
       return item.setIcon("file-plus").setTitle("Create linked note").onClick(async () => {
-        const column = board.columns[columnIndex];
-        if (!column) {
+        const project = board.projects[projectIndex];
+        if (!project) {
           return;
         }
-        const columnTitle = column.title;
+        const projectTitle = project.title;
         const cardTitle = card.title;
-        const notePath = `${pluginSettings.notePathPrefix}/${columnTitle}/Tasks/${cardTitle}.md`;
+        const notePath = `${pluginSettings.notePathPrefix}/${projectTitle}/Tasks/${cardTitle}.md`;
         const folderPath = notePath.slice(0, Math.max(0, notePath.lastIndexOf("/")));
         try {
           if (!vault.getAbstractFileByPath(folderPath)) {
@@ -3463,16 +3463,16 @@ function showCardContextMenu(options) {
           }
           await vault.create(notePath, `# ${cardTitle}
 `);
-          const newColumns = immutableUpdateCard({
+          const newProjects = immutableUpdateCard({
             cardIndex,
-            columnIndex,
-            columns: board.columns,
+            projectIndex,
+            projects: board.projects,
             update: {
-              linkedNote: `${pluginSettings.notePathPrefix}/${columnTitle}/Tasks/${cardTitle}`,
+              linkedNote: `${pluginSettings.notePathPrefix}/${projectTitle}/Tasks/${cardTitle}`,
               title: ""
             }
           });
-          onMutation({ ...board, columns: newColumns });
+          onMutation({ ...board, projects: newProjects });
           new import_obsidian3.Notice(`Created note: ${notePath}`);
         } catch (error) {
           new import_obsidian3.Notice(`Failed to create note: ${error}`);
@@ -3489,16 +3489,16 @@ function showCardContextMenu(options) {
             await vault.trash(file, true);
             const linkedNote = card.linkedNote;
             const noteName = linkedNote ? linkedNote.split("/").pop() ?? linkedNote : "";
-            const newColumns = immutableUpdateCard({
+            const newProjects = immutableUpdateCard({
               cardIndex,
-              columnIndex,
-              columns: board.columns,
+              projectIndex,
+              projects: board.projects,
               update: {
                 linkedNote: null,
                 title: noteName
               }
             });
-            onMutation({ ...board, columns: newColumns });
+            onMutation({ ...board, projects: newProjects });
             new import_obsidian3.Notice(`Deleted note: ${notePath}`);
           } catch (error) {
             new import_obsidian3.Notice(`Failed to delete note: ${error}`);
@@ -3512,13 +3512,13 @@ function showCardContextMenu(options) {
   menu.addSeparator();
   menu.addItem((item) => {
     return item.setIcon("trash-2").setTitle("Delete card").setWarning(true).onClick(() => {
-      const newColumns = immutableSpliceCard({
+      const newProjects = immutableSpliceCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
-        deleteCount: 1
+        deleteCount: 1,
+        projectIndex,
+        projects: board.projects
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     });
   });
   menu.showAtMouseEvent(event);
@@ -3566,25 +3566,25 @@ function startInlineEdit(element, currentValue, onConfirm) {
 }
 // src/ui/card/card-mutations.ts
 function immutableSpliceCard(options) {
-  const { cardIndex, columnIndex, columns, deleteCount, insertCards = [] } = options;
-  return columns.map((column, index) => {
-    if (index !== columnIndex) {
-      return column;
+  const { cardIndex, deleteCount, insertCards = [], projectIndex, projects } = options;
+  return projects.map((project, index) => {
+    if (index !== projectIndex) {
+      return project;
     }
-    const newCards = [...column.cards];
+    const newCards = [...project.cards];
     newCards.splice(cardIndex, deleteCount, ...insertCards);
-    return { ...column, cards: newCards };
+    return { ...project, cards: newCards };
   });
 }
 function immutableUpdateCard(options) {
-  const { cardIndex, columnIndex, columns, update } = options;
-  return columns.map((column, colIndex) => {
-    if (colIndex !== columnIndex) {
-      return column;
+  const { cardIndex, projectIndex, projects, update } = options;
+  return projects.map((project, projIndex) => {
+    if (projIndex !== projectIndex) {
+      return project;
     }
     return {
-      ...column,
-      cards: column.cards.map((card, cIndex) => {
+      ...project,
+      cards: project.cards.map((card, cIndex) => {
         if (cIndex !== cardIndex) {
           return card;
         }
@@ -3596,10 +3596,10 @@ function immutableUpdateCard(options) {
 
 // src/ui/card/card.ts
 function createCardElement(options) {
-  const { board, card, cardIndex, columnIndex, onMutation, pluginSettings, projectPill, vault } = options;
+  const { board, card, cardIndex, onMutation, pluginSettings, projectIndex, projectPill, vault } = options;
   const cardElement = document.createElement("div");
   cardElement.className = "kanban-card";
-  cardElement.dataset.columnIndex = String(columnIndex);
+  cardElement.dataset.projectIndex = String(projectIndex);
   cardElement.dataset.cardIndex = String(cardIndex);
   cardElement.dataset.cardId = card.id;
   if (card.completed) {
@@ -3615,13 +3615,13 @@ function createCardElement(options) {
   checkbox.className = "kanban-card__checkbox task-list-item-checkbox";
   checkbox.checked = card.completed;
   checkbox.addEventListener("change", () => {
-    const newColumns = immutableUpdateCard({
+    const newProjects = immutableUpdateCard({
       cardIndex,
-      columnIndex,
-      columns: board.columns,
+      projectIndex,
+      projects: board.projects,
       update: { completed: checkbox.checked }
     });
-    onMutation({ ...board, columns: newColumns });
+    onMutation({ ...board, projects: newProjects });
   });
   const titleElement = document.createElement("span");
   titleElement.className = "kanban-card__title";
@@ -3645,13 +3645,13 @@ function createCardElement(options) {
   titleElement.addEventListener("dblclick", () => {
     startInlineEdit(titleElement, card.linkedNote ?? card.title, (newValue) => {
       const update = card.linkedNote ? { linkedNote: newValue } : { title: newValue };
-      const newColumns = immutableUpdateCard({
+      const newProjects = immutableUpdateCard({
         cardIndex,
-        columnIndex,
-        columns: board.columns,
+        projectIndex,
+        projects: board.projects,
         update
       });
-      onMutation({ ...board, columns: newColumns });
+      onMutation({ ...board, projects: newProjects });
     });
   });
   const dragHandle = document.createElement("span");
@@ -3671,9 +3671,9 @@ function createCardElement(options) {
       board,
       card,
       cardIndex,
-      columnIndex,
       event: priorityClickEvent,
-      onMutation
+      onMutation,
+      projectIndex
     });
   });
   cardContent.append(priorityButton);
@@ -3720,16 +3720,16 @@ function createCardElement(options) {
       board,
       card,
       cardIndex,
-      columnIndex,
       event: contextMenuEvent,
       onMutation,
       pluginSettings,
+      projectIndex,
       vault
     });
   });
   return cardElement;
 }
-function createAddCardForm(columnIndex, board, onMutation) {
+function createAddCardForm(projectIndex, board, onMutation) {
   const wrapper = document.createElement("div");
   wrapper.className = "kanban-add-card";
   const button = document.createElement("button");
@@ -3754,14 +3754,14 @@ function createAddCardForm(columnIndex, board, onMutation) {
           priority: null,
           title: text
         };
-        const newColumns = immutableSpliceCard({
+        const newProjects = immutableSpliceCard({
           cardIndex: 0,
-          columnIndex,
-          columns: board.columns,
           deleteCount: 0,
-          insertCards: [newCard]
+          insertCards: [newCard],
+          projectIndex,
+          projects: board.projects
         });
-        onMutation({ ...board, columns: newColumns });
+        onMutation({ ...board, projects: newProjects });
       }
       textarea.remove();
       button.style.display = "";
@@ -3930,78 +3930,78 @@ function showIconPicker(options) {
   document.body.append(overlay, modal);
   searchInput.focus();
 }
-// src/ui/column/column.utils.ts
-function getColumnColor(columnTitle, columnIndex, board) {
-  const customColor = board.settings.columnColors[columnTitle];
+// src/ui/project/project.utils.ts
+function getProjectColor(projectTitle, projectIndex, board) {
+  const customColor = board.settings.projectColors[projectTitle];
   if (customColor) {
     return customColor;
   }
-  return COLUMN_COLORS[columnIndex % COLUMN_COLORS.length] ?? "var(--color-blue)";
+  return PROJECT_COLORS[projectIndex % PROJECT_COLORS.length] ?? "var(--color-blue)";
 }
-function getColumnIcon(columnTitle, board) {
-  return board.settings.columnIcons[columnTitle] ?? null;
+function getProjectIcon(projectTitle, board) {
+  return board.settings.projectIcons[projectTitle] ?? null;
 }
 
-// src/ui/column/column.ts
-function createColumnElement(options) {
-  const { board, column, columnIndex, onMutation, pluginSettings, vault, viewState } = options;
-  const isCollapsed = board.settings.collapsedColumns.includes(column.title);
-  const columnElement = document.createElement("div");
-  columnElement.className = "kanban-column";
-  columnElement.dataset.columnIndex = String(columnIndex);
+// src/ui/project/project.ts
+function createProjectElement(options) {
+  const { board, onMutation, pluginSettings, project, projectIndex, vault, viewState } = options;
+  const isCollapsed = board.settings.collapsedProjects.includes(project.title);
+  const projectElement = document.createElement("div");
+  projectElement.className = "kanban-project";
+  projectElement.dataset.projectIndex = String(projectIndex);
   if (isCollapsed) {
-    columnElement.classList.add("kanban-column--collapsed");
-    columnElement.addEventListener("click", () => {
-      const newCollapsed = board.settings.collapsedColumns.filter((name) => {
-        return name !== column.title;
+    projectElement.classList.add("kanban-project--collapsed");
+    projectElement.addEventListener("click", () => {
+      const newCollapsed = board.settings.collapsedProjects.filter((name) => {
+        return name !== project.title;
       });
       onMutation({
         ...board,
-        settings: { ...board.settings, collapsedColumns: newCollapsed }
+        settings: { ...board.settings, collapsedProjects: newCollapsed }
       });
     });
   }
   const header = document.createElement("div");
-  header.className = "kanban-column__header";
+  header.className = "kanban-project__header";
   const titleElement = document.createElement("div");
-  titleElement.className = "kanban-column__title";
-  titleElement.textContent = column.title;
+  titleElement.className = "kanban-project__title";
+  titleElement.textContent = project.title;
   titleElement.addEventListener("dblclick", () => {
-    startInlineEdit(titleElement, column.title, (newTitle) => {
-      const wasCollapsed = board.settings.collapsedColumns.includes(column.title);
-      const newColumns = board.columns.map((col, index) => {
-        return index === columnIndex ? { ...col, title: newTitle } : col;
+    startInlineEdit(titleElement, project.title, (newTitle) => {
+      const wasCollapsed = board.settings.collapsedProjects.includes(project.title);
+      const newProjects = board.projects.map((proj, index) => {
+        return index === projectIndex ? { ...proj, title: newTitle } : proj;
       });
-      let newCollapsedColumns = [...board.settings.collapsedColumns];
+      let newCollapsedProjects = [...board.settings.collapsedProjects];
       if (wasCollapsed) {
-        newCollapsedColumns = newCollapsedColumns.map((name) => {
-          return name === column.title ? newTitle : name;
+        newCollapsedProjects = newCollapsedProjects.map((name) => {
+          return name === project.title ? newTitle : name;
         });
       }
       onMutation({
         ...board,
-        columns: newColumns,
-        settings: { ...board.settings, collapsedColumns: newCollapsedColumns }
+        projects: newProjects,
+        settings: { ...board.settings, collapsedProjects: newCollapsedProjects }
       });
     });
   });
-  const visibleCardCount = viewState.hideCompletedActive ? column.cards.filter((card2) => {
+  const visibleCardCount = viewState.hideCompletedActive ? project.cards.filter((card2) => {
     return !card2.completed;
-  }).length : column.cards.length;
+  }).length : project.cards.length;
   const countBadge = document.createElement("span");
-  countBadge.className = "kanban-column__count";
+  countBadge.className = "kanban-project__count";
   countBadge.textContent = String(visibleCardCount);
   const dragHandle = document.createElement("span");
-  dragHandle.className = "kanban-column__drag-handle";
+  dragHandle.className = "kanban-project__drag-handle";
   import_obsidian6.setIcon(dragHandle, "grip-vertical");
   const colorDot = document.createElement("span");
-  colorDot.className = "kanban-column__color-dot";
-  colorDot.style.background = getColumnColor(column.title, columnIndex, board);
-  const columnIcon = getColumnIcon(column.title, board);
-  if (columnIcon) {
+  colorDot.className = "kanban-project__color-dot";
+  colorDot.style.background = getProjectColor(project.title, projectIndex, board);
+  const projectIcon = getProjectIcon(project.title, board);
+  if (projectIcon) {
     const iconSpan = document.createElement("span");
-    iconSpan.className = "kanban-column__icon";
-    import_obsidian6.setIcon(iconSpan, columnIcon);
+    iconSpan.className = "kanban-project__icon";
+    import_obsidian6.setIcon(iconSpan, projectIcon);
     header.append(dragHandle, colorDot, iconSpan, titleElement, countBadge);
   } else {
     header.append(dragHandle, colorDot, titleElement, countBadge);
@@ -4010,20 +4010,20 @@ function createColumnElement(options) {
     headerEvent.preventDefault();
     const menu = new import_obsidian6.Menu;
     menu.addItem((item) => {
-      return item.setIcon("eye-off").setTitle("Hide column").onClick(() => {
-        const newCollapsed = [...board.settings.collapsedColumns, column.title];
+      return item.setIcon("eye-off").setTitle("Hide project").onClick(() => {
+        const newCollapsed = [...board.settings.collapsedProjects, project.title];
         onMutation({
           ...board,
-          settings: { ...board.settings, collapsedColumns: newCollapsed }
+          settings: { ...board.settings, collapsedProjects: newCollapsed }
         });
       });
     });
     menu.addItem((item) => {
       return item.setIcon("palette").setTitle("Color").onClick((colorMenuEvent) => {
         const colorMenu = new import_obsidian6.Menu;
-        for (const color of COLUMN_COLORS) {
-          const label = COLUMN_COLOR_LABELS[color] ?? color;
-          const isActive = board.settings.columnColors[column.title] === color;
+        for (const color of PROJECT_COLORS) {
+          const label = PROJECT_COLOR_LABELS[color] ?? color;
+          const isActive = board.settings.projectColors[project.title] === color;
           colorMenu.addItem((colorItem) => {
             const fragment = document.createDocumentFragment();
             const dot = document.createElement("span");
@@ -4037,13 +4037,16 @@ function createColumnElement(options) {
               colorItem.setChecked(true);
             }
             colorItem.onClick(() => {
-              const newColumnColors = {
-                ...board.settings.columnColors,
-                [column.title]: color
+              const newProjectColors = {
+                ...board.settings.projectColors,
+                [project.title]: color
               };
               onMutation({
                 ...board,
-                settings: { ...board.settings, columnColors: newColumnColors }
+                settings: {
+                  ...board.settings,
+                  projectColors: newProjectColors
+                }
               });
             });
           });
@@ -4051,10 +4054,10 @@ function createColumnElement(options) {
         colorMenu.addSeparator();
         colorMenu.addItem((colorItem) => {
           return colorItem.setIcon("rotate-ccw").setTitle("Reset color").onClick(() => {
-            const { [column.title]: _removedColor, ...remainingColors } = board.settings.columnColors;
+            const { [project.title]: _removedColor, ...remainingColors } = board.settings.projectColors;
             onMutation({
               ...board,
-              settings: { ...board.settings, columnColors: remainingColors }
+              settings: { ...board.settings, projectColors: remainingColors }
             });
           });
         });
@@ -4064,22 +4067,22 @@ function createColumnElement(options) {
     menu.addItem((item) => {
       return item.setIcon("smile").setTitle("Icon").onClick(() => {
         showIconPicker({
-          currentIcon: getColumnIcon(column.title, board),
+          currentIcon: getProjectIcon(project.title, board),
           onSelect: (iconName) => {
             if (iconName === null) {
-              const { [column.title]: _removed, ...remainingIcons } = board.settings.columnIcons;
+              const { [project.title]: _removed, ...remainingIcons } = board.settings.projectIcons;
               onMutation({
                 ...board,
-                settings: { ...board.settings, columnIcons: remainingIcons }
+                settings: { ...board.settings, projectIcons: remainingIcons }
               });
             } else {
-              const newColumnIcons = {
-                ...board.settings.columnIcons,
-                [column.title]: iconName
+              const newProjectIcons = {
+                ...board.settings.projectIcons,
+                [project.title]: iconName
               };
               onMutation({
                 ...board,
-                settings: { ...board.settings, columnIcons: newColumnIcons }
+                settings: { ...board.settings, projectIcons: newProjectIcons }
               });
             }
           }
@@ -4088,40 +4091,40 @@ function createColumnElement(options) {
     });
     menu.addSeparator();
     menu.addItem((item) => {
-      return item.setIcon("trash-2").setTitle("Delete column").setWarning(true).onClick(() => {
-        if (column.cards.length > 0) {
-          new import_obsidian6.Notice("Cannot delete a column that still has cards.");
+      return item.setIcon("trash-2").setTitle("Delete project").setWarning(true).onClick(() => {
+        if (project.cards.length > 0) {
+          new import_obsidian6.Notice("Cannot delete a project that still has cards.");
           return;
         }
-        const newColumns = board.columns.filter((_column, index) => {
-          return index !== columnIndex;
+        const newProjects = board.projects.filter((_project, index) => {
+          return index !== projectIndex;
         });
-        const newCollapsed = board.settings.collapsedColumns.filter((name) => {
-          return name !== column.title;
+        const newCollapsed = board.settings.collapsedProjects.filter((name) => {
+          return name !== project.title;
         });
         onMutation({
           ...board,
-          columns: newColumns,
-          settings: { ...board.settings, collapsedColumns: newCollapsed }
+          projects: newProjects,
+          settings: { ...board.settings, collapsedProjects: newCollapsed }
         });
       });
     });
     menu.showAtMouseEvent(headerEvent);
   });
-  columnElement.append(header);
+  projectElement.append(header);
   if (!isCollapsed) {
     const cardList = document.createElement("div");
-    cardList.className = "kanban-column__cards";
-    cardList.dataset.columnIndex = String(columnIndex);
-    const sortedCardIndices = column.cards.map((_card, index) => {
+    cardList.className = "kanban-project__cards";
+    cardList.dataset.projectIndex = String(projectIndex);
+    const sortedCardIndices = project.cards.map((_card, index) => {
       return index;
     }).sort((indexA, indexB) => {
-      const completedA = column.cards[indexA]?.completed ?? false ? 1 : 0;
-      const completedB = column.cards[indexB]?.completed ?? false ? 1 : 0;
+      const completedA = project.cards[indexA]?.completed ?? false ? 1 : 0;
+      const completedB = project.cards[indexB]?.completed ?? false ? 1 : 0;
       return completedA - completedB;
     });
     for (const cardIndex of sortedCardIndices) {
-      const card2 = column.cards[cardIndex];
+      const card2 = project.cards[cardIndex];
       if (!card2) {
         continue;
       }
@@ -4129,28 +4132,28 @@ function createColumnElement(options) {
         board,
         card: card2,
         cardIndex,
-        columnIndex,
         onMutation,
         pluginSettings,
+        projectIndex,
         projectPill: null,
         vault
       }));
     }
-    columnElement.append(cardList);
-    columnElement.append(createAddCardForm(columnIndex, board, onMutation));
+    projectElement.append(cardList);
+    projectElement.append(createAddCardForm(projectIndex, board, onMutation));
   }
-  return columnElement;
+  return projectElement;
 }
-function createAddColumnButton(board, onMutation) {
+function createAddProjectButton(board, onMutation) {
   const button = document.createElement("button");
-  button.className = "kanban-add-column__button";
-  button.textContent = "+ Add column";
+  button.className = "kanban-add-project__button";
+  button.textContent = "+ Add project";
   button.addEventListener("click", () => {
-    const name = "New Column";
-    const newColumn = { cards: [], title: name };
+    const name = "New Project";
+    const newProject = { cards: [], title: name };
     onMutation({
       ...board,
-      columns: [...board.columns, newColumn]
+      projects: [...board.projects, newProject]
     });
   });
   return button;
@@ -4169,40 +4172,40 @@ function createCardSortableOptions(onEnd, group) {
     onEnd
   };
 }
-function createColumnCardMoveHandler(board, onMutation) {
+function createProjectCardMoveHandler(board, onMutation) {
   return (event) => {
-    const fromColumnIndex = Number(event.from.dataset.columnIndex);
-    const toColumnIndex = Number(event.to.dataset.columnIndex);
+    const fromProjectIndex = Number(event.from.dataset.projectIndex);
+    const toProjectIndex = Number(event.to.dataset.projectIndex);
     const draggedCardId = event.item.dataset.cardId;
     if (!draggedCardId) {
       return;
     }
-    const sourceColumn = board.columns[fromColumnIndex];
-    if (!sourceColumn) {
+    const sourceProject = board.projects[fromProjectIndex];
+    if (!sourceProject) {
       return;
     }
-    const sourceCardIndex = sourceColumn.cards.findIndex((card3) => {
+    const sourceCardIndex = sourceProject.cards.findIndex((card3) => {
       return card3.id === draggedCardId;
     });
     if (sourceCardIndex === -1) {
       return;
     }
-    const card2 = sourceColumn.cards[sourceCardIndex];
+    const card2 = sourceProject.cards[sourceCardIndex];
     if (!card2) {
       return;
     }
-    let newColumns = immutableSpliceCard({
+    let newProjects = immutableSpliceCard({
       cardIndex: sourceCardIndex,
-      columnIndex: fromColumnIndex,
-      columns: board.columns,
-      deleteCount: 1
+      deleteCount: 1,
+      projectIndex: fromProjectIndex,
+      projects: board.projects
     });
     const targetCardElements = event.to.querySelectorAll(".kanban-card");
-    const targetColumn = newColumns[toColumnIndex];
-    if (!targetColumn) {
+    const targetProject = newProjects[toProjectIndex];
+    if (!targetProject) {
       return;
     }
-    let insertIndex = targetColumn.cards.length;
+    let insertIndex = targetProject.cards.length;
     for (let domIndex = 0;domIndex < targetCardElements.length; domIndex++) {
       const currentElement = targetCardElements[domIndex];
       if (!currentElement) {
@@ -4214,7 +4217,7 @@ function createColumnCardMoveHandler(board, onMutation) {
       const nextElement = targetCardElements[domIndex + 1];
       if (nextElement) {
         const nextCardId = nextElement.dataset.cardId;
-        const nextDataIndex = targetColumn.cards.findIndex((searchCard) => {
+        const nextDataIndex = targetProject.cards.findIndex((searchCard) => {
           return searchCard.id === nextCardId;
         });
         if (nextDataIndex !== -1) {
@@ -4223,14 +4226,14 @@ function createColumnCardMoveHandler(board, onMutation) {
       }
       break;
     }
-    newColumns = immutableSpliceCard({
+    newProjects = immutableSpliceCard({
       cardIndex: insertIndex,
-      columnIndex: toColumnIndex,
-      columns: newColumns,
       deleteCount: 0,
-      insertCards: [card2]
+      insertCards: [card2],
+      projectIndex: toProjectIndex,
+      projects: newProjects
     });
-    onMutation({ ...board, columns: newColumns });
+    onMutation({ ...board, projects: newProjects });
   };
 }
 // src/ui/today-view/today-view.ts
@@ -4299,13 +4302,13 @@ function collectCardsByDateGroup(board) {
   const overdueCards = [];
   const todayCards = [];
   const futureBuckets = new Map;
-  for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
-    const column3 = board.columns[columnIndex];
-    if (!column3) {
+  for (let projectIndex = 0;projectIndex < board.projects.length; projectIndex++) {
+    const project3 = board.projects[projectIndex];
+    if (!project3) {
       continue;
     }
-    for (let cardIndex = 0;cardIndex < column3.cards.length; cardIndex++) {
-      const card2 = column3.cards[cardIndex];
+    for (let cardIndex = 0;cardIndex < project3.cards.length; cardIndex++) {
+      const card2 = project3.cards[cardIndex];
       if (!card2) {
         continue;
       }
@@ -4318,8 +4321,8 @@ function collectCardsByDateGroup(board) {
       const todayCard = {
         card: card2,
         cardIndex,
-        columnIndex,
-        columnTitle: column3.title
+        projectIndex,
+        projectTitle: project3.title
       };
       if (card2.date.localeCompare(todayString) < 0) {
         overdueCards.push(todayCard);
@@ -4441,17 +4444,17 @@ function renderTodayView(options) {
     cardListElement.dataset.dateKey = group.dateKey;
     for (const todayCard of group.cards) {
       const pill = {
-        color: getColumnColor(todayCard.columnTitle, todayCard.columnIndex, board),
-        icon: getColumnIcon(todayCard.columnTitle, board),
-        title: todayCard.columnTitle
+        color: getProjectColor(todayCard.projectTitle, todayCard.projectIndex, board),
+        icon: getProjectIcon(todayCard.projectTitle, board),
+        title: todayCard.projectTitle
       };
       const cardElement = createCardElement({
         board,
         card: todayCard.card,
         cardIndex: todayCard.cardIndex,
-        columnIndex: todayCard.columnIndex,
         onMutation,
         pluginSettings,
+        projectIndex: todayCard.projectIndex,
         projectPill: pill,
         vault
       });
@@ -4470,25 +4473,25 @@ function renderTodayView(options) {
   const layout = document.createElement("div");
   layout.className = "kanban-today-layout";
   layout.append(todayPanel);
-  const columnsPanel = document.createElement("div");
-  columnsPanel.className = "kanban-today-layout__columns";
-  for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
-    const column3 = board.columns[columnIndex];
-    if (!column3) {
+  const projectsPanel = document.createElement("div");
+  projectsPanel.className = "kanban-today-layout__projects";
+  for (let projectIndex = 0;projectIndex < board.projects.length; projectIndex++) {
+    const project3 = board.projects[projectIndex];
+    if (!project3) {
       continue;
     }
-    const columnElement = createColumnElement({
+    const projectElement = createProjectElement({
       board,
-      column: column3,
-      columnIndex,
       onMutation,
       pluginSettings,
+      project: project3,
+      projectIndex,
       vault,
       viewState
     });
-    columnsPanel.append(columnElement);
+    projectsPanel.append(projectElement);
   }
-  layout.append(columnsPanel);
+  layout.append(projectsPanel);
   container.append(layout);
   for (const { element: cardListElement } of sectionCardLists) {
     const sectionSortable = import_sortablejs.default.create(cardListElement, createCardSortableOptions((sortableEvent) => {
@@ -4496,20 +4499,20 @@ function renderTodayView(options) {
       const sourceDateKey = sortableEvent.from.dataset.dateKey;
       const cardId = sortableEvent.item.dataset.cardId;
       const movedCardIndex = Number(sortableEvent.item.dataset.cardIndex);
-      const movedColumnIndex = Number(sortableEvent.item.dataset.columnIndex);
+      const movedProjectIndex = Number(sortableEvent.item.dataset.projectIndex);
       if (cardId && targetDateKey && sourceDateKey !== targetDateKey) {
         const targetDate = getDateForSection(targetDateKey);
         if (targetDate) {
-          const newColumns = immutableUpdateCard({
+          const newProjects = immutableUpdateCard({
             cardIndex: movedCardIndex,
-            columnIndex: movedColumnIndex,
-            columns: board.columns,
+            projectIndex: movedProjectIndex,
+            projects: board.projects,
             update: { date: targetDate }
           });
           const newTodayOrder2 = collectTodayOrderFromSections(sectionCardLists);
           onMutation({
             ...board,
-            columns: newColumns,
+            projects: newProjects,
             settings: { ...board.settings, todayOrder: newTodayOrder2 }
           });
           return;
@@ -4523,9 +4526,9 @@ function renderTodayView(options) {
     }, "kanban-today-cards"));
     sortableInstances.push(sectionSortable);
   }
-  const cardLists = columnsPanel.querySelectorAll(".kanban-column__cards");
+  const cardLists = projectsPanel.querySelectorAll(".kanban-project__cards");
   for (const cardList of Array.from(cardLists)) {
-    const instance = import_sortablejs.default.create(cardList, createCardSortableOptions(createColumnCardMoveHandler(board, onMutation)));
+    const instance = import_sortablejs.default.create(cardList, createCardSortableOptions(createProjectCardMoveHandler(board, onMutation)));
     sortableInstances.push(instance);
   }
   return sortableInstances;
@@ -4639,55 +4642,55 @@ function createToolbar(options) {
   return toolbar;
 }
 // src/ui/board/board.ts
-function renderBoardColumns(options) {
+function renderBoardProjects(options) {
   const { board, container, onMutation, pluginSettings, vault, viewState } = options;
   const boardElement = document.createElement("div");
   boardElement.className = "kanban-board";
   container.append(boardElement);
-  for (let columnIndex = 0;columnIndex < board.columns.length; columnIndex++) {
-    const column3 = board.columns[columnIndex];
-    if (!column3) {
+  for (let projectIndex = 0;projectIndex < board.projects.length; projectIndex++) {
+    const project3 = board.projects[projectIndex];
+    if (!project3) {
       continue;
     }
-    const columnElement = createColumnElement({
+    const projectElement = createProjectElement({
       board,
-      column: column3,
-      columnIndex,
       onMutation,
       pluginSettings,
+      project: project3,
+      projectIndex,
       vault,
       viewState
     });
-    boardElement.append(columnElement);
+    boardElement.append(projectElement);
   }
-  boardElement.append(createAddColumnButton(board, onMutation));
+  boardElement.append(createAddProjectButton(board, onMutation));
   const sortableInstances = [];
-  const columnSortable = import_sortablejs2.default.create(boardElement, {
+  const projectSortable = import_sortablejs2.default.create(boardElement, {
     animation: 150,
-    draggable: ".kanban-column",
-    fallbackClass: "kanban-column--dragging",
+    draggable: ".kanban-project",
+    fallbackClass: "kanban-project--dragging",
     fallbackOnBody: true,
     forceFallback: true,
-    ghostClass: "kanban-column--ghost",
-    handle: ".kanban-column__drag-handle",
+    ghostClass: "kanban-project--ghost",
+    handle: ".kanban-project__drag-handle",
     onEnd: (sortableEvent) => {
       const { newIndex, oldIndex } = sortableEvent;
       if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) {
         return;
       }
-      const newColumns = [...board.columns];
-      const [moved] = newColumns.splice(oldIndex, 1);
+      const newProjects = [...board.projects];
+      const [moved] = newProjects.splice(oldIndex, 1);
       if (!moved) {
         return;
       }
-      newColumns.splice(newIndex, 0, moved);
-      onMutation({ ...board, columns: newColumns });
+      newProjects.splice(newIndex, 0, moved);
+      onMutation({ ...board, projects: newProjects });
     }
   });
-  sortableInstances.push(columnSortable);
-  const cardLists = boardElement.querySelectorAll(".kanban-column__cards");
+  sortableInstances.push(projectSortable);
+  const cardLists = boardElement.querySelectorAll(".kanban-project__cards");
   for (const cardList of Array.from(cardLists)) {
-    const instance = import_sortablejs2.default.create(cardList, createCardSortableOptions(createColumnCardMoveHandler(board, onMutation)));
+    const instance = import_sortablejs2.default.create(cardList, createCardSortableOptions(createProjectCardMoveHandler(board, onMutation)));
     sortableInstances.push(instance);
   }
   return sortableInstances;
@@ -4707,8 +4710,8 @@ function renderBoard(options) {
   const savedScrollLeft = previousBoard ? previousBoard.scrollLeft : 0;
   const previousTodayList = container.querySelector(".kanban-today");
   const savedTodayScroll = previousTodayList ? previousTodayList.scrollTop : 0;
-  const previousColumnsPanel = container.querySelector(".kanban-today-layout__columns");
-  const savedColumnsPanelScroll = previousColumnsPanel ? previousColumnsPanel.scrollTop : 0;
+  const previousProjectsPanel = container.querySelector(".kanban-today-layout__projects");
+  const savedProjectsPanelScroll = previousProjectsPanel ? previousProjectsPanel.scrollTop : 0;
   container.style.visibility = "hidden";
   container.empty();
   if (viewState.hideCompletedActive) {
@@ -4728,17 +4731,17 @@ function renderBoard(options) {
       viewState
     });
     const newTodayList = container.querySelector(".kanban-today");
-    const newColumnsPanel = container.querySelector(".kanban-today-layout__columns");
+    const newProjectsPanel = container.querySelector(".kanban-today-layout__projects");
     if (newTodayList) {
       newTodayList.scrollTop = savedTodayScroll;
     }
-    if (newColumnsPanel) {
-      newColumnsPanel.scrollTop = savedColumnsPanelScroll;
+    if (newProjectsPanel) {
+      newProjectsPanel.scrollTop = savedProjectsPanelScroll;
     }
     container.style.visibility = "";
     return sortableInstances2;
   }
-  const sortableInstances = renderBoardColumns({
+  const sortableInstances = renderBoardProjects({
     board,
     container,
     onMutation,
@@ -4756,8 +4759,8 @@ function renderBoard(options) {
 // src/plugin/view.ts
 class KanbanView extends import_obsidian10.TextFileView {
   board = {
-    columns: [],
-    settings: { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} }
+    projects: [],
+    settings: { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} }
   };
   boardContainer;
   plugin;
@@ -4770,8 +4773,13 @@ class KanbanView extends import_obsidian10.TextFileView {
   }
   clear() {
     this.board = {
-      columns: [],
-      settings: { collapsedColumns: [], columnColors: {}, columnIcons: {}, todayOrder: {} }
+      projects: [],
+      settings: {
+        collapsedProjects: [],
+        projectColors: {},
+        projectIcons: {},
+        todayOrder: {}
+      }
     };
     this.boardContainer.empty();
   }

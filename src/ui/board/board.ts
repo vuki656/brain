@@ -1,51 +1,51 @@
 // eslint-disable-next-line import-x/no-named-as-default -- SortableJS exports Sortable as both default and named
 import Sortable, { type SortableEvent } from "sortablejs"
 
-import { createAddColumnButton, createColumnElement } from "../column"
-import { createCardSortableOptions, createColumnCardMoveHandler } from "../sortable"
+import { createAddProjectButton, createProjectElement } from "../project"
+import { createCardSortableOptions, createProjectCardMoveHandler } from "../sortable"
 import { renderTodayView } from "../today-view"
 import { createToolbar } from "../toolbar"
-import type { BoardColumnsOptionsType, RenderBoardOptionsType } from "./board.types"
+import type { BoardProjectsOptionsType, RenderBoardOptionsType } from "./board.types"
 
-function renderBoardColumns(options: BoardColumnsOptionsType): Sortable[] {
+function renderBoardProjects(options: BoardProjectsOptionsType): Sortable[] {
     const { board, container, onMutation, pluginSettings, vault, viewState } = options
     const boardElement = document.createElement("div")
 
     boardElement.className = "kanban-board"
     container.append(boardElement)
 
-    for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
-        const column = board.columns[columnIndex]
+    for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
+        const project = board.projects[projectIndex]
 
-        if (!column) {
+        if (!project) {
             continue
         }
 
-        const columnElement = createColumnElement({
+        const projectElement = createProjectElement({
             board,
-            column,
-            columnIndex,
             onMutation,
             pluginSettings,
+            project,
+            projectIndex,
             vault,
             viewState,
         })
 
-        boardElement.append(columnElement)
+        boardElement.append(projectElement)
     }
 
-    boardElement.append(createAddColumnButton(board, onMutation))
+    boardElement.append(createAddProjectButton(board, onMutation))
 
     const sortableInstances: Sortable[] = []
 
-    const columnSortable = Sortable.create(boardElement, {
+    const projectSortable = Sortable.create(boardElement, {
         animation: 150,
-        draggable: ".kanban-column",
-        fallbackClass: "kanban-column--dragging",
+        draggable: ".kanban-project",
+        fallbackClass: "kanban-project--dragging",
         fallbackOnBody: true,
         forceFallback: true,
-        ghostClass: "kanban-column--ghost",
-        handle: ".kanban-column__drag-handle",
+        ghostClass: "kanban-project--ghost",
+        handle: ".kanban-project__drag-handle",
         onEnd: (sortableEvent: SortableEvent) => {
             const { newIndex, oldIndex } = sortableEvent
 
@@ -53,26 +53,26 @@ function renderBoardColumns(options: BoardColumnsOptionsType): Sortable[] {
                 return
             }
 
-            const newColumns = [...board.columns]
-            const [moved] = newColumns.splice(oldIndex, 1)
+            const newProjects = [...board.projects]
+            const [moved] = newProjects.splice(oldIndex, 1)
 
             if (!moved) {
                 return
             }
 
-            newColumns.splice(newIndex, 0, moved)
-            onMutation({ ...board, columns: newColumns })
+            newProjects.splice(newIndex, 0, moved)
+            onMutation({ ...board, projects: newProjects })
         },
     })
 
-    sortableInstances.push(columnSortable)
+    sortableInstances.push(projectSortable)
 
-    const cardLists = boardElement.querySelectorAll<HTMLElement>(".kanban-column__cards")
+    const cardLists = boardElement.querySelectorAll<HTMLElement>(".kanban-project__cards")
 
     for (const cardList of Array.from(cardLists)) {
         const instance = Sortable.create(
             cardList,
-            createCardSortableOptions(createColumnCardMoveHandler(board, onMutation)),
+            createCardSortableOptions(createProjectCardMoveHandler(board, onMutation)),
         )
 
         sortableInstances.push(instance)
@@ -98,8 +98,8 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
     const previousTodayList = container.querySelector(".kanban-today")
     const savedTodayScroll = previousTodayList ? previousTodayList.scrollTop : 0
 
-    const previousColumnsPanel = container.querySelector(".kanban-today-layout__columns")
-    const savedColumnsPanelScroll = previousColumnsPanel ? previousColumnsPanel.scrollTop : 0
+    const previousProjectsPanel = container.querySelector(".kanban-today-layout__projects")
+    const savedProjectsPanelScroll = previousProjectsPanel ? previousProjectsPanel.scrollTop : 0
 
     container.style.visibility = "hidden"
     container.empty()
@@ -124,14 +124,14 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
             viewState,
         })
         const newTodayList = container.querySelector(".kanban-today")
-        const newColumnsPanel = container.querySelector(".kanban-today-layout__columns")
+        const newProjectsPanel = container.querySelector(".kanban-today-layout__projects")
 
         if (newTodayList) {
             newTodayList.scrollTop = savedTodayScroll
         }
 
-        if (newColumnsPanel) {
-            newColumnsPanel.scrollTop = savedColumnsPanelScroll
+        if (newProjectsPanel) {
+            newProjectsPanel.scrollTop = savedProjectsPanelScroll
         }
 
         container.style.visibility = ""
@@ -139,7 +139,7 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
         return sortableInstances
     }
 
-    const sortableInstances = renderBoardColumns({
+    const sortableInstances = renderBoardProjects({
         board,
         container,
         onMutation,

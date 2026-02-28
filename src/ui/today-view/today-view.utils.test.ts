@@ -177,7 +177,7 @@ describe("collectCardsByDateGroup", () => {
     it("should always include 'Today' group even when empty", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [{ cards: [], title: "Col" }],
+            projects: [{ cards: [], title: "Col" }],
         })
 
         const groups = collectCardsByDateGroup(board)
@@ -192,7 +192,7 @@ describe("collectCardsByDateGroup", () => {
     it("should group today's cards into 'Today'", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [
+            projects: [
                 {
                     cards: [makeCard({ date: "2026-02-22", id: "t1" })],
                     title: "Col",
@@ -212,7 +212,7 @@ describe("collectCardsByDateGroup", () => {
     it("should group overdue cards into 'Overdue' before 'Today'", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [
+            projects: [
                 {
                     cards: [
                         makeCard({ date: "2026-02-20", id: "od1" }),
@@ -233,7 +233,7 @@ describe("collectCardsByDateGroup", () => {
     it("should not include 'Overdue' group when no overdue cards", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [
+            projects: [
                 {
                     cards: [makeCard({ date: "2026-02-22", id: "t1" })],
                     title: "Col",
@@ -254,7 +254,7 @@ describe("collectCardsByDateGroup", () => {
     it("should group future cards by date sorted chronologically", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [
+            projects: [
                 {
                     cards: [
                         makeCard({ date: "2026-02-25", id: "f2" }),
@@ -278,7 +278,7 @@ describe("collectCardsByDateGroup", () => {
     it("should apply savedOrder sorting within groups", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [
+            projects: [
                 {
                     cards: [
                         makeCard({ date: "2026-02-22", id: "t1" }),
@@ -288,8 +288,9 @@ describe("collectCardsByDateGroup", () => {
                 },
             ],
             settings: {
-                collapsedColumns: [],
-                columnColors: {},
+                collapsedProjects: [],
+                projectColors: {},
+                projectIcons: {},
                 todayOrder: { today: ["t2", "t1"] },
             },
         })
@@ -306,7 +307,7 @@ describe("collectCardsByDateGroup", () => {
     it("should exclude completed cards", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [
+            projects: [
                 {
                     cards: [
                         makeCard({ completed: true, date: "2026-02-22", id: "done" }),
@@ -329,7 +330,7 @@ describe("collectCardsByDateGroup", () => {
     it("should exclude cards without dates", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [
+            projects: [
                 {
                     cards: [
                         makeCard({ id: "nodate" }),
@@ -349,10 +350,10 @@ describe("collectCardsByDateGroup", () => {
         expect(allCards[0].card.id).toBe("hasdate")
     })
 
-    it("should preserve columnIndex, cardIndex, and columnTitle in TodayCard", () => {
+    it("should preserve projectIndex, cardIndex, and projectTitle in TodayCard", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [
+            projects: [
                 { cards: [makeCard({ id: "skip" })], title: "First" },
                 { cards: [makeCard({ date: "2026-02-22", id: "target" })], title: "Second" },
             ],
@@ -364,15 +365,15 @@ describe("collectCardsByDateGroup", () => {
         })
         const todayCard = todayGroup?.cards[0]
 
-        expect(todayCard?.columnIndex).toBe(1)
+        expect(todayCard?.projectIndex).toBe(1)
         expect(todayCard?.cardIndex).toBe(0)
-        expect(todayCard?.columnTitle).toBe("Second")
+        expect(todayCard?.projectTitle).toBe("Second")
     })
 
-    it("should handle multiple columns with mixed dates", () => {
+    it("should handle multiple projects with mixed dates", () => {
         setSystemTime(new Date(2026, 1, 22))
         const board = makeBoard({
-            columns: [
+            projects: [
                 {
                     cards: [
                         makeCard({ date: "2026-02-22", id: "a1" }),

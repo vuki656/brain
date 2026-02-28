@@ -24,26 +24,26 @@ export function createCardSortableOptions(
     }
 }
 
-export function createColumnCardMoveHandler(
+export function createProjectCardMoveHandler(
     board: BoardType,
     onMutation: MutationHandlerType,
 ): (event: SortableEvent) => void {
     return (event: SortableEvent) => {
-        const fromColumnIndex = Number(event.from.dataset.columnIndex)
-        const toColumnIndex = Number(event.to.dataset.columnIndex)
+        const fromProjectIndex = Number(event.from.dataset.projectIndex)
+        const toProjectIndex = Number(event.to.dataset.projectIndex)
         const draggedCardId = event.item.dataset.cardId
 
         if (!draggedCardId) {
             return
         }
 
-        const sourceColumn = board.columns[fromColumnIndex]
+        const sourceProject = board.projects[fromProjectIndex]
 
-        if (!sourceColumn) {
+        if (!sourceProject) {
             return
         }
 
-        const sourceCardIndex = sourceColumn.cards.findIndex((card) => {
+        const sourceCardIndex = sourceProject.cards.findIndex((card) => {
             return card.id === draggedCardId
         })
 
@@ -51,27 +51,27 @@ export function createColumnCardMoveHandler(
             return
         }
 
-        const card = sourceColumn.cards[sourceCardIndex]
+        const card = sourceProject.cards[sourceCardIndex]
 
         if (!card) {
             return
         }
 
-        let newColumns = immutableSpliceCard({
+        let newProjects = immutableSpliceCard({
             cardIndex: sourceCardIndex,
-            columnIndex: fromColumnIndex,
-            columns: board.columns,
             deleteCount: 1,
+            projectIndex: fromProjectIndex,
+            projects: board.projects,
         })
 
         const targetCardElements = event.to.querySelectorAll<HTMLElement>(".kanban-card")
-        const targetColumn = newColumns[toColumnIndex]
+        const targetProject = newProjects[toProjectIndex]
 
-        if (!targetColumn) {
+        if (!targetProject) {
             return
         }
 
-        let insertIndex = targetColumn.cards.length
+        let insertIndex = targetProject.cards.length
 
         for (let domIndex = 0; domIndex < targetCardElements.length; domIndex++) {
             const currentElement = targetCardElements[domIndex]
@@ -88,7 +88,7 @@ export function createColumnCardMoveHandler(
 
             if (nextElement) {
                 const nextCardId = nextElement.dataset.cardId
-                const nextDataIndex = targetColumn.cards.findIndex((searchCard) => {
+                const nextDataIndex = targetProject.cards.findIndex((searchCard) => {
                     return searchCard.id === nextCardId
                 })
 
@@ -100,14 +100,14 @@ export function createColumnCardMoveHandler(
             break
         }
 
-        newColumns = immutableSpliceCard({
+        newProjects = immutableSpliceCard({
             cardIndex: insertIndex,
-            columnIndex: toColumnIndex,
-            columns: newColumns,
             deleteCount: 0,
             insertCards: [card],
+            projectIndex: toProjectIndex,
+            projects: newProjects,
         })
 
-        onMutation({ ...board, columns: newColumns })
+        onMutation({ ...board, projects: newProjects })
     }
 }

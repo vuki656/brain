@@ -7,7 +7,7 @@ import { openQuickAddDialog } from "../quick-add"
 import type { CardContextMenuOptionsType, PriorityMenuOptionsType } from "./context-menu.types"
 
 export function showPriorityMenu(options: PriorityMenuOptionsType): void {
-    const { board, cardIndex, columnIndex, event, onMutation } = options
+    const { board, cardIndex, event, onMutation, projectIndex } = options
     const menu = new Menu()
 
     menu.addItem((item) => {
@@ -15,13 +15,13 @@ export function showPriorityMenu(options: PriorityMenuOptionsType): void {
             .setIcon("circle")
             .setTitle("None")
             .onClick(() => {
-                const newColumns = immutableUpdateCard({
+                const newProjects = immutableUpdateCard({
                     cardIndex,
-                    columnIndex,
-                    columns: board.columns,
+                    projectIndex,
+                    projects: board.projects,
                     update: { priority: null },
                 })
-                onMutation({ ...board, columns: newColumns })
+                onMutation({ ...board, projects: newProjects })
             })
     })
 
@@ -30,13 +30,13 @@ export function showPriorityMenu(options: PriorityMenuOptionsType): void {
             .setIcon("alert-circle")
             .setTitle("Important")
             .onClick(() => {
-                const newColumns = immutableUpdateCard({
+                const newProjects = immutableUpdateCard({
                     cardIndex,
-                    columnIndex,
-                    columns: board.columns,
+                    projectIndex,
+                    projects: board.projects,
                     update: { priority: "important" },
                 })
-                onMutation({ ...board, columns: newColumns })
+                onMutation({ ...board, projects: newProjects })
             })
     })
 
@@ -44,7 +44,7 @@ export function showPriorityMenu(options: PriorityMenuOptionsType): void {
 }
 
 export function showCardContextMenu(options: CardContextMenuOptionsType): void {
-    const { board, card, cardIndex, columnIndex, event, onMutation, pluginSettings, vault } =
+    const { board, card, cardIndex, event, onMutation, pluginSettings, projectIndex, vault } =
         options
     const menu = new Menu()
 
@@ -56,13 +56,13 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                 .setIcon("sun-dim")
                 .setTitle("Remove from today")
                 .onClick(() => {
-                    const newColumns = immutableUpdateCard({
+                    const newProjects = immutableUpdateCard({
                         cardIndex,
-                        columnIndex,
-                        columns: board.columns,
+                        projectIndex,
+                        projects: board.projects,
                         update: { date: null },
                     })
-                    onMutation({ ...board, columns: newColumns })
+                    onMutation({ ...board, projects: newProjects })
                 })
         })
     } else {
@@ -71,13 +71,13 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                 .setIcon("sun")
                 .setTitle("Add to today")
                 .onClick(() => {
-                    const newColumns = immutableUpdateCard({
+                    const newProjects = immutableUpdateCard({
                         cardIndex,
-                        columnIndex,
-                        columns: board.columns,
+                        projectIndex,
+                        projects: board.projects,
                         update: { date: todayString },
                     })
-                    onMutation({ ...board, columns: newColumns })
+                    onMutation({ ...board, projects: newProjects })
                 })
         })
     }
@@ -89,7 +89,7 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .onClick(() => {
                 openQuickAddDialog({
                     board,
-                    editContext: { card, cardIndex, columnIndex },
+                    editContext: { card, cardIndex, projectIndex },
                     onMutation,
                 })
             })
@@ -102,13 +102,13 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setIcon("circle")
             .setTitle("Priority: None")
             .onClick(() => {
-                const newColumns = immutableUpdateCard({
+                const newProjects = immutableUpdateCard({
                     cardIndex,
-                    columnIndex,
-                    columns: board.columns,
+                    projectIndex,
+                    projects: board.projects,
                     update: { priority: null },
                 })
-                onMutation({ ...board, columns: newColumns })
+                onMutation({ ...board, projects: newProjects })
             })
     })
     menu.addItem((item) => {
@@ -116,13 +116,13 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setIcon("alert-circle")
             .setTitle("Priority: Important")
             .onClick(() => {
-                const newColumns = immutableUpdateCard({
+                const newProjects = immutableUpdateCard({
                     cardIndex,
-                    columnIndex,
-                    columns: board.columns,
+                    projectIndex,
+                    projects: board.projects,
                     update: { priority: "important" },
                 })
-                onMutation({ ...board, columns: newColumns })
+                onMutation({ ...board, projects: newProjects })
             })
     })
 
@@ -136,13 +136,13 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setIcon("calendar")
             .setTitle("Date: Today")
             .onClick(() => {
-                const newColumns = immutableUpdateCard({
+                const newProjects = immutableUpdateCard({
                     cardIndex,
-                    columnIndex,
-                    columns: board.columns,
+                    projectIndex,
+                    projects: board.projects,
                     update: { date: toDateString(todayDate) },
                 })
-                onMutation({ ...board, columns: newColumns })
+                onMutation({ ...board, projects: newProjects })
             })
     })
     menu.addItem((item) => {
@@ -150,13 +150,13 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setIcon("calendar-plus")
             .setTitle("Date: Tomorrow")
             .onClick(() => {
-                const newColumns = immutableUpdateCard({
+                const newProjects = immutableUpdateCard({
                     cardIndex,
-                    columnIndex,
-                    columns: board.columns,
+                    projectIndex,
+                    projects: board.projects,
                     update: { date: toDateString(tomorrowDate) },
                 })
-                onMutation({ ...board, columns: newColumns })
+                onMutation({ ...board, projects: newProjects })
             })
     })
     menu.addItem((item) => {
@@ -164,13 +164,13 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setIcon("calendar-range")
             .setTitle("Date: Next Monday")
             .onClick(() => {
-                const newColumns = immutableUpdateCard({
+                const newProjects = immutableUpdateCard({
                     cardIndex,
-                    columnIndex,
-                    columns: board.columns,
+                    projectIndex,
+                    projects: board.projects,
                     update: { date: toDateString(getNextMonday()) },
                 })
-                onMutation({ ...board, columns: newColumns })
+                onMutation({ ...board, projects: newProjects })
             })
     })
     menu.addItem((item) => {
@@ -178,7 +178,7 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setIcon("calendar-search")
             .setTitle("Date: Pick...")
             .onClick(() => {
-                showDatePicker({ board, card, cardIndex, columnIndex, onMutation })
+                showDatePicker({ board, card, cardIndex, onMutation, projectIndex })
             })
     })
 
@@ -188,13 +188,13 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                 .setIcon("calendar-x")
                 .setTitle("Date: Remove")
                 .onClick(() => {
-                    const newColumns = immutableUpdateCard({
+                    const newProjects = immutableUpdateCard({
                         cardIndex,
-                        columnIndex,
-                        columns: board.columns,
+                        projectIndex,
+                        projects: board.projects,
                         update: { date: null },
                     })
-                    onMutation({ ...board, columns: newColumns })
+                    onMutation({ ...board, projects: newProjects })
                 })
         })
     }
@@ -207,15 +207,15 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                 .setIcon("file-plus")
                 .setTitle("Create linked note")
                 .onClick(async () => {
-                    const column = board.columns[columnIndex]
+                    const project = board.projects[projectIndex]
 
-                    if (!column) {
+                    if (!project) {
                         return
                     }
 
-                    const columnTitle = column.title
+                    const projectTitle = project.title
                     const cardTitle = card.title
-                    const notePath = `${pluginSettings.notePathPrefix}/${columnTitle}/Tasks/${cardTitle}.md`
+                    const notePath = `${pluginSettings.notePathPrefix}/${projectTitle}/Tasks/${cardTitle}.md`
 
                     const folderPath = notePath.slice(0, Math.max(0, notePath.lastIndexOf("/")))
 
@@ -226,16 +226,16 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
 
                         await vault.create(notePath, `# ${cardTitle}\n`)
 
-                        const newColumns = immutableUpdateCard({
+                        const newProjects = immutableUpdateCard({
                             cardIndex,
-                            columnIndex,
-                            columns: board.columns,
+                            projectIndex,
+                            projects: board.projects,
                             update: {
-                                linkedNote: `${pluginSettings.notePathPrefix}/${columnTitle}/Tasks/${cardTitle}`,
+                                linkedNote: `${pluginSettings.notePathPrefix}/${projectTitle}/Tasks/${cardTitle}`,
                                 title: "",
                             },
                         })
-                        onMutation({ ...board, columns: newColumns })
+                        onMutation({ ...board, projects: newProjects })
 
                         new Notice(`Created note: ${notePath}`)
                     } catch (error) {
@@ -261,16 +261,16 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                             const noteName = linkedNote
                                 ? (linkedNote.split("/").pop() ?? linkedNote)
                                 : ""
-                            const newColumns = immutableUpdateCard({
+                            const newProjects = immutableUpdateCard({
                                 cardIndex,
-                                columnIndex,
-                                columns: board.columns,
+                                projectIndex,
+                                projects: board.projects,
                                 update: {
                                     linkedNote: null,
                                     title: noteName,
                                 },
                             })
-                            onMutation({ ...board, columns: newColumns })
+                            onMutation({ ...board, projects: newProjects })
 
                             new Notice(`Deleted note: ${notePath}`)
                         } catch (error) {
@@ -291,13 +291,13 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setTitle("Delete card")
             .setWarning(true)
             .onClick(() => {
-                const newColumns = immutableSpliceCard({
+                const newProjects = immutableSpliceCard({
                     cardIndex,
-                    columnIndex,
-                    columns: board.columns,
                     deleteCount: 1,
+                    projectIndex,
+                    projects: board.projects,
                 })
-                onMutation({ ...board, columns: newColumns })
+                onMutation({ ...board, projects: newProjects })
             })
     })
 

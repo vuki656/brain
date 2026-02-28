@@ -8,18 +8,18 @@ export type PriorityMenuOptionsType = {
     board: BoardType
     card: CardType
     cardIndex: number
-    columnIndex: number
     event: MouseEvent
     onMutation: MutationHandlerType
+    projectIndex: number
 }
 
 export type CardContextMenuOptionsType = {
     board: BoardType
     card: CardType
     cardIndex: number
-    columnIndex: number
     event: MouseEvent
     onMutation: MutationHandlerType
     pluginSettings: { notePathPrefix: string }
+    projectIndex: number
     vault: Vault
 }

@@ -1,4 +1,4 @@
-import type { BoardType, CardType, ColumnType, KanbanSettingsType, PriorityType } from "../shared"
+import type { BoardType, CardType, KanbanSettingsType, PriorityType, ProjectType } from "../shared"
 import { FRONTMATTER_KEY, generateId, toDateString } from "../shared"
 
 const TODAY_REGEX = /\s@today/g
@@ -9,7 +9,7 @@ const LINKED_NOTE_REGEX = /(?:^|\s)\[\[(.+?)]]/g
 const ID_REGEX = /\s@id:([\da-z]+)/g
 const CHECKBOX_UNCHECKED_REGEX = /^- \[ ] /
 const CHECKBOX_CHECKED_REGEX = /^- \[x] /
-const COLUMN_HEADING_REGEX = /^## (.+)$/
+const PROJECT_HEADING_REGEX = /^## (.+)$/
 const SETTINGS_START = "%% kanban:settings"
 const SETTINGS_END = "%%"
 
@@ -90,7 +90,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
     })
 
     if (settingsStartIndex === -1) {
-        return { collapsedColumns: [], columnColors: {}, todayOrder: {} }
+        return { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} }
     }
 
     const jsonLines: string[] = []
@@ -126,7 +126,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
     const jsonString = jsonLines.join("\n")
 
     if (!jsonString) {
-        return { collapsedColumns: [], columnColors: {}, todayOrder: {} }
+        return { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} }
     }
 
     try {
@@ -140,12 +140,13 @@ function parseSettings(lines: string[]): KanbanSettingsType {
         }
 
         return {
-            collapsedColumns: parsed["collapsed-columns"] ?? [],
-            columnColors: parsed["column-colors"] ?? {},
+            collapsedProjects: parsed["collapsed-projects"] ?? [],
+            projectColors: parsed["project-colors"] ?? {},
+            projectIcons: parsed["project-icons"] ?? {},
             todayOrder,
         }
     } catch {
-        return { collapsedColumns: [], columnColors: {}, todayOrder: {} }
+        return { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} }
     }
 }
 
@@ -169,7 +170,7 @@ function collectDescription(lines: string[], cardLineIndex: number): string | nu
             break
         }
 
-        if (COLUMN_HEADING_REGEX.test(nextTrimmed)) {
+        if (PROJECT_HEADING_REGEX.test(nextTrimmed)) {
             break
         }
 
@@ -210,8 +211,8 @@ function serializeCard(card: CardType): string {
 
 export function parseBoard(markdown: string): BoardType {
     const lines = markdown.split("\n")
-    const columns: ColumnType[] = []
-    let currentColumn: ColumnType | null = null
+    const projects: ProjectType[] = []
+    let currentProject: ProjectType | null = null
     let pastFrontmatter = false
     let inFrontmatter = false
 
@@ -242,36 +243,36 @@ export function parseBoard(markdown: string): BoardType {
             break
         }
 
-        const headingMatch = COLUMN_HEADING_REGEX.exec(trimmed)
+        const headingMatch = PROJECT_HEADING_REGEX.exec(trimmed)
 
         if (headingMatch) {
-            currentColumn = { cards: [], title: headingMatch[1] ?? "" }
-            columns.push(currentColumn)
+            currentProject = { cards: [], title: headingMatch[1] ?? "" }
+            projects.push(currentProject)
             continue
         }
 
-        if (currentColumn && (trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] "))) {
+        if (currentProject && (trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] "))) {
             const card = parseCard(trimmed)
 
             if (card) {
                 card.description = collectDescription(lines, lineIndex)
-                currentColumn.cards.push(card)
+                currentProject.cards.push(card)
             }
         }
     }
 
     const settings = parseSettings(lines)
 
-    return { columns, settings }
+    return { projects, settings }
 }
 
 export function serializeBoard(board: BoardType): string {
     const lines: string[] = ["---", "", `kanban-plugin: ${FRONTMATTER_KEY}`, "", "---", ""]
 
-    for (const column of board.columns) {
-        lines.push(`## ${column.title}`, "")
+    for (const project of board.projects) {
+        lines.push(`## ${project.title}`, "")
 
-        for (const card of column.cards) {
+        for (const card of project.cards) {
             lines.push(serializeCard(card))
 
             if (card.description) {
@@ -288,16 +289,20 @@ export function serializeBoard(board: BoardType): string {
 
     const settingsObject: Record<string, unknown> = {}
 
-    if (board.settings.collapsedColumns.length > 0) {
-        settingsObject["collapsed-columns"] = board.settings.collapsedColumns
+    if (board.settings.collapsedProjects.length > 0) {
+        settingsObject["collapsed-projects"] = board.settings.collapsedProjects
     }
 
     if (Object.keys(board.settings.todayOrder).length > 0) {
         settingsObject["today-order"] = board.settings.todayOrder
     }
 
-    if (Object.keys(board.settings.columnColors).length > 0) {
-        settingsObject["column-colors"] = board.settings.columnColors
+    if (Object.keys(board.settings.projectColors).length > 0) {
+        settingsObject["project-colors"] = board.settings.projectColors
+    }
+
+    if (Object.keys(board.settings.projectIcons).length > 0) {
+        settingsObject["project-icons"] = board.settings.projectIcons
     }
 
     lines.push("%% kanban:settings", "```json", JSON.stringify(settingsObject), "```", "%%")

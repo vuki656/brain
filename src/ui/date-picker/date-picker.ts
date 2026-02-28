@@ -158,7 +158,7 @@ function createCalendarWithNavigation(options: {
 }
 
 export function showDatePicker(options: DatePickerOptionsType): void {
-    const { board, card, cardIndex, columnIndex, onMutation } = options
+    const { board, card, cardIndex, onMutation, projectIndex } = options
     const selectedDate = card.date ? new Date(`${card.date}T00:00:00`) : new Date()
 
     const overlay = document.createElement("div")
@@ -180,14 +180,14 @@ export function showDatePicker(options: DatePickerOptionsType): void {
         currentSelectedDate: card.date,
         modal,
         onSelect: (dateString) => {
-            const newColumns = immutableUpdateCard({
+            const newProjects = immutableUpdateCard({
                 cardIndex,
-                columnIndex,
-                columns: board.columns,
+                projectIndex,
+                projects: board.projects,
                 update: { date: dateString },
             })
 
-            onMutation({ ...board, columns: newColumns })
+            onMutation({ ...board, projects: newProjects })
             cleanup()
         },
         viewMonth: selectedDate.getMonth(),

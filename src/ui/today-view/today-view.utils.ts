@@ -89,15 +89,15 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
     const todayCards: TodayCardType[] = []
     const futureBuckets = new Map<string, TodayCardType[]>()
 
-    for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
-        const column = board.columns[columnIndex]
+    for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
+        const project = board.projects[projectIndex]
 
-        if (!column) {
+        if (!project) {
             continue
         }
 
-        for (let cardIndex = 0; cardIndex < column.cards.length; cardIndex++) {
-            const card = column.cards[cardIndex]
+        for (let cardIndex = 0; cardIndex < project.cards.length; cardIndex++) {
+            const card = project.cards[cardIndex]
 
             if (!card) {
                 continue
@@ -114,8 +114,8 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
             const todayCard: TodayCardType = {
                 card,
                 cardIndex,
-                columnIndex,
-                columnTitle: column.title,
+                projectIndex,
+                projectTitle: project.title,
             }
 
             if (card.date.localeCompare(todayString) < 0) {

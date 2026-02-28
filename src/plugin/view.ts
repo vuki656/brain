@@ -10,8 +10,8 @@ import type VukiKanbanPlugin from "./plugin"
 
 export class KanbanView extends TextFileView {
     private board: BoardType = {
-        columns: [],
-        settings: { collapsedColumns: [], columnColors: {}, todayOrder: {} },
+        projects: [],
+        settings: { collapsedProjects: [], projectColors: {}, projectIcons: {}, todayOrder: {} },
     }
 
     private readonly boardContainer: HTMLElement
@@ -30,8 +30,13 @@ export class KanbanView extends TextFileView {
 
     public clear(): void {
         this.board = {
-            columns: [],
-            settings: { collapsedColumns: [], columnColors: {}, todayOrder: {} },
+            projects: [],
+            settings: {
+                collapsedProjects: [],
+                projectColors: {},
+                projectIcons: {},
+                todayOrder: {},
+            },
         }
         this.boardContainer.empty()
     }

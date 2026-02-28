@@ -6,6 +6,6 @@ export type DatePickerOptionsType = {
     board: BoardType
     card: CardType
     cardIndex: number
-    columnIndex: number
     onMutation: MutationHandlerType
+    projectIndex: number
 }

@@ -4,7 +4,7 @@ import type { BoardType, ViewStateType } from "../../shared"
 
 type MutationHandlerType = (board: BoardType) => void
 
-export type BoardColumnsOptionsType = {
+export type BoardProjectsOptionsType = {
     board: BoardType
     container: HTMLElement
     onMutation: MutationHandlerType

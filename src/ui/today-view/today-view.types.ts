@@ -7,8 +7,8 @@ type MutationHandlerType = (board: BoardType) => void
 export type TodayCardType = {
     card: CardType
     cardIndex: number
-    columnIndex: number
-    columnTitle: string
+    projectIndex: number
+    projectTitle: string
 }
 
 export type DateGroupType = {

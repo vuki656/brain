@@ -9,6 +9,9 @@ mock.module("obsidian", () => {
         Notice: class {},
         TFile: class {},
         Vault: class {},
+        getIconIds: () => {
+            return []
+        },
         requestUrl: async () => {
             return { text: "" }
         },

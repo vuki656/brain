@@ -1,15 +1,15 @@
 import type { Vault } from "obsidian"
 
-import type { BoardType, ColumnType, ViewStateType } from "../../shared"
+import type { BoardType, ProjectType, ViewStateType } from "../../shared"
 
 type MutationHandlerType = (board: BoardType) => void
 
-export type ColumnElementOptionsType = {
+export type ProjectElementOptionsType = {
     board: BoardType
-    column: ColumnType
-    columnIndex: number
     onMutation: MutationHandlerType
     pluginSettings: { notePathPrefix: string }
+    project: ProjectType
+    projectIndex: number
     vault: Vault
     viewState: ViewStateType
 }

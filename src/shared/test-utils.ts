@@ -1,10 +1,10 @@
-import type { BoardType, CardType, ColumnType, KanbanSettingsType } from "./types"
+import type { BoardType, CardType, KanbanSettingsType, ProjectType } from "./types"
 
 type MakeTodayCardOptionsType = {
     card?: Partial<CardType>
     cardIndex?: number
-    columnIndex?: number
-    columnTitle?: string
+    projectIndex?: number
+    projectTitle?: string
 }
 
 export function makeCard(overrides: Partial<CardType> = {}): CardType {
@@ -19,7 +19,7 @@ export function makeCard(overrides: Partial<CardType> = {}): CardType {
     }
 }
 
-export function makeColumns(): ColumnType[] {
+export function makeProjects(): ProjectType[] {
     return [
         {
             cards: [
@@ -37,13 +37,14 @@ export function makeColumns(): ColumnType[] {
 
 export function makeBoard(overrides: Partial<BoardType> = {}): BoardType {
     const defaultSettings: KanbanSettingsType = {
-        collapsedColumns: [],
-        columnColors: {},
+        collapsedProjects: [],
+        projectColors: {},
+        projectIcons: {},
         todayOrder: {},
     }
 
     return {
-        columns: overrides.columns ?? makeColumns(),
+        projects: overrides.projects ?? makeProjects(),
         settings: overrides.settings ?? defaultSettings,
     }
 }
@@ -52,7 +53,7 @@ export function makeTodayCard(options: MakeTodayCardOptionsType = {}) {
     return {
         card: makeCard(options.card),
         cardIndex: options.cardIndex ?? 0,
-        columnIndex: options.columnIndex ?? 0,
-        columnTitle: options.columnTitle ?? "Todo",
+        projectIndex: options.projectIndex ?? 0,
+        projectTitle: options.projectTitle ?? "Todo",
     }
 }

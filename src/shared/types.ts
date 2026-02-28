@@ -10,19 +10,20 @@ export type CardType = {
     title: string
 }
 
-export type ColumnType = {
+export type ProjectType = {
     cards: CardType[]
     title: string
 }
 
 export type KanbanSettingsType = {
-    collapsedColumns: string[]
-    columnColors: Record<string, string>
+    collapsedProjects: string[]
+    projectColors: Record<string, string>
+    projectIcons: Record<string, string>
     todayOrder: Partial<Record<string, string[]>>
 }
 
 export type BoardType = {
-    columns: ColumnType[]
+    projects: ProjectType[]
     settings: KanbanSettingsType
 }
 

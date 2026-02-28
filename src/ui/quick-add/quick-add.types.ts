@@ -5,7 +5,7 @@ type MutationHandlerType = (board: BoardType) => void
 type EditContextType = {
     card: CardType
     cardIndex: number
-    columnIndex: number
+    projectIndex: number
 }
 
 export type QuickAddDialogOptionsType = {

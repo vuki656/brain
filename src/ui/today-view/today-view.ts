@@ -2,9 +2,9 @@
 import Sortable, { type SortableEvent } from "sortablejs"
 
 import { createCardElement, immutableUpdateCard } from "../card"
-import { createColumnElement, getColumnColor } from "../column"
+import { createProjectElement, getProjectColor, getProjectIcon } from "../project"
 import { openQuickAddDialog } from "../quick-add"
-import { createCardSortableOptions, createColumnCardMoveHandler } from "../sortable"
+import { createCardSortableOptions, createProjectCardMoveHandler } from "../sortable"
 import type { TodayViewOptionsType } from "./today-view.types"
 import {
     collectCardsByDateGroup,
@@ -87,17 +87,18 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
 
         for (const todayCard of group.cards) {
             const pill = {
-                color: getColumnColor(todayCard.columnTitle, todayCard.columnIndex, board),
-                title: todayCard.columnTitle,
+                color: getProjectColor(todayCard.projectTitle, todayCard.projectIndex, board),
+                icon: getProjectIcon(todayCard.projectTitle, board),
+                title: todayCard.projectTitle,
             }
 
             const cardElement = createCardElement({
                 board,
                 card: todayCard.card,
                 cardIndex: todayCard.cardIndex,
-                columnIndex: todayCard.columnIndex,
                 onMutation,
                 pluginSettings,
+                projectIndex: todayCard.projectIndex,
                 projectPill: pill,
                 vault,
             })
@@ -123,31 +124,31 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
     layout.className = "kanban-today-layout"
     layout.append(todayPanel)
 
-    const columnsPanel = document.createElement("div")
+    const projectsPanel = document.createElement("div")
 
-    columnsPanel.className = "kanban-today-layout__columns"
+    projectsPanel.className = "kanban-today-layout__projects"
 
-    for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
-        const column = board.columns[columnIndex]
+    for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
+        const project = board.projects[projectIndex]
 
-        if (!column) {
+        if (!project) {
             continue
         }
 
-        const columnElement = createColumnElement({
+        const projectElement = createProjectElement({
             board,
-            column,
-            columnIndex,
             onMutation,
             pluginSettings,
+            project,
+            projectIndex,
             vault,
             viewState,
         })
 
-        columnsPanel.append(columnElement)
+        projectsPanel.append(projectElement)
     }
 
-    layout.append(columnsPanel)
+    layout.append(projectsPanel)
     container.append(layout)
 
     for (const { element: cardListElement } of sectionCardLists) {
@@ -158,16 +159,16 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
                 const sourceDateKey = sortableEvent.from.dataset.dateKey
                 const cardId = sortableEvent.item.dataset.cardId
                 const movedCardIndex = Number(sortableEvent.item.dataset.cardIndex)
-                const movedColumnIndex = Number(sortableEvent.item.dataset.columnIndex)
+                const movedProjectIndex = Number(sortableEvent.item.dataset.projectIndex)
 
                 if (cardId && targetDateKey && sourceDateKey !== targetDateKey) {
                     const targetDate = getDateForSection(targetDateKey)
 
                     if (targetDate) {
-                        const newColumns = immutableUpdateCard({
+                        const newProjects = immutableUpdateCard({
                             cardIndex: movedCardIndex,
-                            columnIndex: movedColumnIndex,
-                            columns: board.columns,
+                            projectIndex: movedProjectIndex,
+                            projects: board.projects,
                             update: { date: targetDate },
                         })
 
@@ -175,7 +176,7 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
 
                         onMutation({
                             ...board,
-                            columns: newColumns,
+                            projects: newProjects,
                             settings: { ...board.settings, todayOrder: newTodayOrder },
                         })
 
@@ -195,12 +196,12 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
         sortableInstances.push(sectionSortable)
     }
 
-    const cardLists = columnsPanel.querySelectorAll<HTMLElement>(".kanban-column__cards")
+    const cardLists = projectsPanel.querySelectorAll<HTMLElement>(".kanban-project__cards")
 
     for (const cardList of Array.from(cardLists)) {
         const instance = Sortable.create(
             cardList,
-            createCardSortableOptions(createColumnCardMoveHandler(board, onMutation)),
+            createCardSortableOptions(createProjectCardMoveHandler(board, onMutation)),
         )
 
         sortableInstances.push(instance)

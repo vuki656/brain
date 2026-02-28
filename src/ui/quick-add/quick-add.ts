@@ -4,6 +4,7 @@ import type { CardType, PriorityType } from "../../shared"
 import { generateId, getNextMonday, getTomorrowDate, toDateString } from "../../shared"
 import { immutableSpliceCard, immutableUpdateCard } from "../card"
 import { showQuickAddDatePicker } from "../date-picker"
+import { getProjectColor, getProjectIcon } from "../project"
 import type { QuickAddDialogOptionsType } from "./quick-add.types"
 
 function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
@@ -43,60 +44,84 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
 
     dialog.append(titleInput)
 
-    const columnRow = document.createElement("div")
+    const descriptionInput = document.createElement("textarea")
 
-    columnRow.className = "kanban-quick-add__row"
+    descriptionInput.className = "kanban-quick-add__input kanban-quick-add__description"
+    descriptionInput.placeholder = "Description (optional)..."
+    descriptionInput.rows = 3
 
-    const columnLabel = document.createElement("span")
+    if (isEditMode && editContext.card.description) {
+        descriptionInput.value = editContext.card.description
+    }
 
-    columnLabel.className = "kanban-quick-add__label"
-    columnLabel.textContent = "Project"
-    columnRow.append(columnLabel)
+    dialog.append(descriptionInput)
 
-    let selectedColumnIndex: number | null = isEditMode ? editContext.columnIndex : null
+    const projectRow = document.createElement("div")
 
-    const columnChips = document.createElement("div")
+    projectRow.className = "kanban-quick-add__row"
 
-    columnChips.className = "kanban-quick-add__dates"
+    const projectLabel = document.createElement("span")
 
-    const updateColumnChipStates = () => {
+    projectLabel.className = "kanban-quick-add__label"
+    projectLabel.textContent = "Project"
+    projectRow.append(projectLabel)
+
+    let selectedProjectIndex: number | null = isEditMode ? editContext.projectIndex : null
+
+    const projectChips = document.createElement("div")
+
+    projectChips.className = "kanban-quick-add__dates"
+
+    const updateProjectChipStates = () => {
         for (const chip of Array.from(
-            columnChips.querySelectorAll(".kanban-quick-add__date-button"),
+            projectChips.querySelectorAll(".kanban-quick-add__date-button"),
         )) {
-            const chipValue = (chip as HTMLElement).dataset.columnValue
+            const chipValue = (chip as HTMLElement).dataset.projectValue
 
             chip.classList.toggle(
                 "kanban-quick-add__date-button--active",
-                chipValue !== undefined && Number(chipValue) === selectedColumnIndex,
+                chipValue !== undefined && Number(chipValue) === selectedProjectIndex,
             )
         }
     }
 
-    for (const [loopColumnIndex, column] of board.columns.entries()) {
+    for (const [loopProjectIndex, project] of board.projects.entries()) {
         const chip = document.createElement("span")
 
         chip.className = "kanban-quick-add__date-button"
-        chip.textContent = column.title
-        chip.dataset.columnValue = String(loopColumnIndex)
+        chip.dataset.projectValue = String(loopProjectIndex)
 
-        if (isEditMode && loopColumnIndex === editContext.columnIndex) {
+        const chipIcon = getProjectIcon(project.title, board)
+
+        if (chipIcon) {
+            const chipIconSpan = document.createElement("span")
+
+            chipIconSpan.className = "kanban-quick-add__chip-icon"
+            chipIconSpan.style.color = getProjectColor(project.title, loopProjectIndex, board)
+            setIcon(chipIconSpan, chipIcon)
+            chip.append(chipIconSpan)
+        }
+
+        chip.append(document.createTextNode(project.title))
+
+        if (isEditMode && loopProjectIndex === editContext.projectIndex) {
             chip.classList.add("kanban-quick-add__date-button--active")
         }
 
-        const capturedColumnIndex = loopColumnIndex
+        const capturedProjectIndex = loopProjectIndex
 
         // eslint-disable-next-line @typescript-eslint/no-loop-func -- intentional shared mutable state for toggle behavior
         chip.addEventListener("click", () => {
-            selectedColumnIndex =
-                selectedColumnIndex === capturedColumnIndex ? null : capturedColumnIndex
-            updateColumnChipStates()
+            selectedProjectIndex =
+                selectedProjectIndex === capturedProjectIndex ? null : capturedProjectIndex
+            updateProjectChipStates()
         })
 
-        columnChips.append(chip)
+        projectChips.append(chip)
     }
 
-    columnRow.append(columnChips)
-    dialog.append(columnRow)
+    projectRow.append(projectChips)
+    dialog.append(projectRow)
 
     const dateRow = document.createElement("div")
 
@@ -216,18 +241,6 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
     priorityRow.append(priorityButton)
     dialog.append(priorityRow)
 
-    const descriptionInput = document.createElement("textarea")
-
-    descriptionInput.className = "kanban-quick-add__input kanban-quick-add__description"
-    descriptionInput.placeholder = "Description (optional)..."
-    descriptionInput.rows = 3
-
-    if (isEditMode && editContext.card.description) {
-        descriptionInput.value = editContext.card.description
-    }
-
-    dialog.append(descriptionInput)
-
     const submitButton = document.createElement("span")
 
     submitButton.className = "kanban-quick-add__submit"
@@ -242,11 +255,11 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
             return
         }
 
-        if (selectedColumnIndex === null) {
+        if (selectedProjectIndex === null) {
             return
         }
 
-        const columnIndex = selectedColumnIndex
+        const projectIndex = selectedProjectIndex
         const descriptionValue = descriptionInput.value.trim() || null
 
         if (isEditMode) {
@@ -262,37 +275,37 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
                 update.title = title
             }
 
-            let newColumns = immutableUpdateCard({
+            let newProjects = immutableUpdateCard({
                 cardIndex: editContext.cardIndex,
-                columnIndex: editContext.columnIndex,
-                columns: board.columns,
+                projectIndex: editContext.projectIndex,
+                projects: board.projects,
                 update,
             })
 
-            if (columnIndex !== editContext.columnIndex) {
-                const updatedColumn = newColumns[editContext.columnIndex]
-                const updatedCard = updatedColumn?.cards[editContext.cardIndex]
+            if (projectIndex !== editContext.projectIndex) {
+                const updatedProject = newProjects[editContext.projectIndex]
+                const updatedCard = updatedProject?.cards[editContext.cardIndex]
 
                 if (!updatedCard) {
                     return
                 }
 
-                newColumns = immutableSpliceCard({
+                newProjects = immutableSpliceCard({
                     cardIndex: editContext.cardIndex,
-                    columnIndex: editContext.columnIndex,
-                    columns: newColumns,
                     deleteCount: 1,
+                    projectIndex: editContext.projectIndex,
+                    projects: newProjects,
                 })
-                newColumns = immutableSpliceCard({
+                newProjects = immutableSpliceCard({
                     cardIndex: 0,
-                    columnIndex,
-                    columns: newColumns,
                     deleteCount: 0,
                     insertCards: [updatedCard],
+                    projectIndex,
+                    projects: newProjects,
                 })
             }
 
-            onMutation({ ...board, columns: newColumns })
+            onMutation({ ...board, projects: newProjects })
         } else {
             const newCard: CardType = {
                 completed: false,
@@ -303,15 +316,15 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
                 priority: selectedPriority,
                 title,
             }
-            const newColumns = immutableSpliceCard({
+            const newProjects = immutableSpliceCard({
                 cardIndex: 0,
-                columnIndex,
-                columns: board.columns,
                 deleteCount: 0,
                 insertCards: [newCard],
+                projectIndex,
+                projects: board.projects,
             })
 
-            onMutation({ ...board, columns: newColumns })
+            onMutation({ ...board, projects: newProjects })
         }
 
         cleanup()

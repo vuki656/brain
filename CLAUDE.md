@@ -39,12 +39,12 @@ src/
 
   shared/                              → Cross-cutting utilities and types
     index.ts                           → Barrel (re-exports types, plugin.types, constants, date.utils, id.utils)
-    types.ts                           → CardType, ColumnType, BoardType, KanbanSettingsType, ViewStateType
+    types.ts                           → CardType, ProjectType, BoardType, KanbanSettingsType, ViewStateType
     plugin.types.ts                    → PluginSettingsType, DEFAULT_PLUGIN_SETTINGS, KANBAN_VIEW_TYPE
-    constants.ts                       → COLUMN_COLORS, COLUMN_COLOR_LABELS, BRAT_REPO, PLUGIN_ID
+    constants.ts                       → PROJECT_COLORS, PROJECT_COLOR_LABELS, BRAT_REPO, PLUGIN_ID
     date.utils.ts                      → toDateString, getNextMonday, formatDate
     id.utils.ts                        → generateId
-    test-utils.ts                      → makeCard, makeColumns, makeBoard, makeTodayCard (NOT in barrel)
+    test-utils.ts                      → makeCard, makeProjects, makeBoard, makeTodayCard (NOT in barrel)
     test-mock-obsidian.ts              → Obsidian module mock (preloaded via bunfig.toml, NOT in barrel)
 
   parser/                              → parseBoard(markdown) → Board, serializeBoard(board) → markdown
@@ -53,19 +53,19 @@ src/
     parser.test.ts
 
   ui/                                  → All DOM rendering
-    board/board.ts                     → renderBoard orchestrator + renderBoardColumns
+    board/board.ts                     → renderBoard orchestrator + renderBoardProjects
     card/                              → Card rendering and mutations
       card.ts                          → createCardElement, createAddCardForm
       card-mutations.ts                → immutableSpliceCard, immutableUpdateCard
-    column/                            → Column rendering
-      column.ts                        → createColumnElement, createAddColumnButton
-      column.utils.ts                  → getColumnColor
+    project/                           → Project rendering
+      project.ts                       → createProjectElement, createAddProjectButton
+      project.utils.ts                 → getProjectColor
     toolbar/toolbar.ts                 → createToolbar, setButtonContent
     context-menu/context-menu.ts       → showCardContextMenu, showPriorityMenu
     quick-add/quick-add.ts             → openQuickAddDialog
     date-picker/date-picker.ts         → showDatePicker, showQuickAddDatePicker
     inline-edit/inline-edit.ts         → startInlineEdit
-    sortable/sortable.ts               → createCardSortableOptions, createColumnCardMoveHandler
+    sortable/sortable.ts               → createCardSortableOptions, createProjectCardMoveHandler
     today-view/                        → Today filter view
       today-view.ts                    → renderTodayView
       today-view.utils.ts              → collectCardsByDateGroup, sortCardsByOrder, formatDateGroupLabel, etc.
@@ -86,7 +86,7 @@ via `requestSave()`.
 
 ## Key Patterns
 
-- **No semantic HTML elements** for column headers/buttons — Obsidian injects styles on `h3`,
+- **No semantic HTML elements** for project headers/buttons — Obsidian injects styles on `h3`,
   `button`, etc. differently on mobile/tablet. Use `div` and `span` exclusively.
 - **Immutable board mutations** — `immutableSpliceCard()` and `immutableUpdateCard()` in
   `ui/card/card-mutations.ts`. Never mutate Board directly.

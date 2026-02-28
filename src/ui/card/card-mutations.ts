@@ -1,46 +1,46 @@
-import type { CardType, ColumnType } from "../../shared"
+import type { CardType, ProjectType } from "../../shared"
 
 type SpliceCardOptionsType = {
     cardIndex: number
-    columnIndex: number
-    columns: ColumnType[]
     deleteCount: number
     insertCards?: CardType[]
+    projectIndex: number
+    projects: ProjectType[]
 }
 
 type UpdateCardOptionsType = {
     cardIndex: number
-    columnIndex: number
-    columns: ColumnType[]
+    projectIndex: number
+    projects: ProjectType[]
     update: Partial<CardType>
 }
 
-export function immutableSpliceCard(options: SpliceCardOptionsType): ColumnType[] {
-    const { cardIndex, columnIndex, columns, deleteCount, insertCards = [] } = options
+export function immutableSpliceCard(options: SpliceCardOptionsType): ProjectType[] {
+    const { cardIndex, deleteCount, insertCards = [], projectIndex, projects } = options
 
-    return columns.map((column, index) => {
-        if (index !== columnIndex) {
-            return column
+    return projects.map((project, index) => {
+        if (index !== projectIndex) {
+            return project
         }
 
-        const newCards = [...column.cards]
+        const newCards = [...project.cards]
         newCards.splice(cardIndex, deleteCount, ...insertCards)
 
-        return { ...column, cards: newCards }
+        return { ...project, cards: newCards }
     })
 }
 
-export function immutableUpdateCard(options: UpdateCardOptionsType): ColumnType[] {
-    const { cardIndex, columnIndex, columns, update } = options
+export function immutableUpdateCard(options: UpdateCardOptionsType): ProjectType[] {
+    const { cardIndex, projectIndex, projects, update } = options
 
-    return columns.map((column, colIndex) => {
-        if (colIndex !== columnIndex) {
-            return column
+    return projects.map((project, projIndex) => {
+        if (projIndex !== projectIndex) {
+            return project
         }
 
         return {
-            ...column,
-            cards: column.cards.map((card, cIndex) => {
+            ...project,
+            cards: project.cards.map((card, cIndex) => {
                 if (cIndex !== cardIndex) {
                     return card
                 }

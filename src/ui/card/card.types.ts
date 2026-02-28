@@ -8,9 +8,9 @@ export type CardElementOptionsType = {
     board: BoardType
     card: CardType
     cardIndex: number
-    columnIndex: number
     onMutation: MutationHandlerType
     pluginSettings: { notePathPrefix: string }
-    projectPill: { color: string; title: string } | null
+    projectIndex: number
+    projectPill: { color: string; icon: string | null; title: string } | null
     vault: Vault
 }

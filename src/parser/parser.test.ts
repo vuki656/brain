@@ -26,7 +26,7 @@ kanban-plugin: vuki-kanban
 
 %% kanban:settings
 \`\`\`json
-{"collapsed-columns":["Completed"]}
+{"collapsed-projects":["Completed"]}
 \`\`\`
 %%`
 
@@ -48,17 +48,17 @@ kanban-plugin: vuki-kanban
 %%`
 
 describe("parseBoard", () => {
-    it("should parse columns from headings", () => {
+    it("should parse projects from headings", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        expect(board.columns).toHaveLength(2)
-        expect(board.columns[0].title).toBe("Backlog")
-        expect(board.columns[1].title).toBe("In Progress")
+        expect(board.projects).toHaveLength(2)
+        expect(board.projects[0].title).toBe("Backlog")
+        expect(board.projects[1].title).toBe("In Progress")
     })
 
     it("should parse card completion state", () => {
         const board = parseBoard(SAMPLE_BOARD)
-        const general = board.columns[0]
+        const general = board.projects[0]
 
         expect(general.cards[0].completed).toBe(false)
         expect(general.cards[3].completed).toBe(true)
@@ -67,46 +67,46 @@ describe("parseBoard", () => {
     it("should parse @today token as today's date", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        expect(board.columns[0].cards[1].date).toBe(TODAY_STRING)
-        expect(board.columns[0].cards[1].title).toBe("Schedule weekly standup")
-        expect(board.columns[1].cards[0].date).toBe(TODAY_STRING)
+        expect(board.projects[0].cards[1].date).toBe(TODAY_STRING)
+        expect(board.projects[0].cards[1].title).toBe("Schedule weekly standup")
+        expect(board.projects[1].cards[0].date).toBe(TODAY_STRING)
     })
 
     it("should parse priority tokens", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        expect(board.columns[0].cards[2].priority).toBe("important")
-        expect(board.columns[0].cards[2].title).toBe("Design system tokens")
-        expect(board.columns[1].cards[0].priority).toBe("important")
+        expect(board.projects[0].cards[2].priority).toBe("important")
+        expect(board.projects[0].cards[2].title).toBe("Design system tokens")
+        expect(board.projects[1].cards[0].priority).toBe("important")
     })
 
     it("should parse date tokens", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        expect(board.columns[0].cards[2].date).toBe("2026-02-25")
-        expect(board.columns[1].cards[1].date).toBe("2026-02-18")
+        expect(board.projects[0].cards[2].date).toBe("2026-02-25")
+        expect(board.projects[1].cards[1].date).toBe("2026-02-18")
     })
 
     it("should parse @id token", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        expect(board.columns[0].cards[0].id).toBe("aaa111")
-        expect(board.columns[0].cards[1].id).toBe("bbb222")
-        expect(board.columns[1].cards[0].id).toBe("eee555")
+        expect(board.projects[0].cards[0].id).toBe("aaa111")
+        expect(board.projects[0].cards[1].id).toBe("bbb222")
+        expect(board.projects[1].cards[0].id).toBe("eee555")
     })
 
     it("should generate id when missing", () => {
         const board = parseBoard(SAMPLE_BOARD_NO_IDS)
 
-        expect(board.columns[0].cards[0].id).toMatch(/^[\da-z]{6}$/)
-        expect(board.columns[0].cards[1].id).toMatch(/^[\da-z]{6}$/)
-        expect(board.columns[0].cards[0].id).not.toBe(board.columns[0].cards[1].id)
+        expect(board.projects[0].cards[0].id).toMatch(/^[\da-z]{6}$/)
+        expect(board.projects[0].cards[1].id).toMatch(/^[\da-z]{6}$/)
+        expect(board.projects[0].cards[0].id).not.toBe(board.projects[0].cards[1].id)
     })
 
-    it("should parse collapsed columns from settings", () => {
+    it("should parse collapsed projects from settings", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        expect(board.settings.collapsedColumns).toEqual(["Completed"])
+        expect(board.settings.collapsedProjects).toEqual(["Completed"])
     })
 
     it("should parse today order record from settings", () => {
@@ -134,7 +134,7 @@ kanban-plugin: vuki-kanban
         })
     })
 
-    it("should parse column colors from settings", () => {
+    it("should parse project colors from settings", () => {
         const markdown = `---
 
 kanban-plugin: vuki-kanban
@@ -147,15 +147,40 @@ kanban-plugin: vuki-kanban
 
 %% kanban:settings
 \`\`\`json
-{"column-colors":{"Backlog":"var(--color-red)","In Progress":"var(--color-green)"}}
+{"project-colors":{"Backlog":"var(--color-red)","In Progress":"var(--color-green)"}}
 \`\`\`
 %%`
 
         const board = parseBoard(markdown)
 
-        expect(board.settings.columnColors).toEqual({
+        expect(board.settings.projectColors).toEqual({
             Backlog: "var(--color-red)",
             "In Progress": "var(--color-green)",
+        })
+    })
+
+    it("should parse project icons from settings", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## General
+
+- [ ] Task one @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{"project-icons":{"Backlog":"rocket","In Progress":"code"}}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+
+        expect(board.settings.projectIcons).toEqual({
+            Backlog: "rocket",
+            "In Progress": "code",
         })
     })
 
@@ -179,9 +204,9 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].linkedNote).toBe("Raspberry Pi setup notes")
-        expect(board.columns[0].cards[0].title).toBe("")
-        expect(board.columns[0].cards[1].linkedNote).toBeNull()
+        expect(board.projects[0].cards[0].linkedNote).toBe("Raspberry Pi setup notes")
+        expect(board.projects[0].cards[0].title).toBe("")
+        expect(board.projects[0].cards[1].linkedNote).toBeNull()
     })
 
     it("should handle cards with @all without treating it as a token", () => {
@@ -202,20 +227,20 @@ kanban-plugin: vuki-kanban
 %%`
 
         const board = parseBoard(markdown)
-        const card = board.columns[0].cards[0]
+        const card = board.projects[0].cards[0]
 
         expect(card.title).toContain("@all")
         expect(card.date).toBeNull()
     })
 
-    it("should handle empty columns", () => {
+    it("should handle empty projects", () => {
         const markdown = `---
 
 kanban-plugin: vuki-kanban
 
 ---
 
-## Empty Column
+## Empty Project
 
 ## Another Empty
 
@@ -227,9 +252,9 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns).toHaveLength(2)
-        expect(board.columns[0].cards).toEqual([])
-        expect(board.columns[1].cards).toEqual([])
+        expect(board.projects).toHaveLength(2)
+        expect(board.projects[0].cards).toEqual([])
+        expect(board.projects[1].cards).toEqual([])
     })
 
     it("should parse a card with all tokens combined", () => {
@@ -250,7 +275,7 @@ kanban-plugin: vuki-kanban
 %%`
 
         const board = parseBoard(markdown)
-        const card = board.columns[0].cards[0]
+        const card = board.projects[0].cards[0]
 
         expect(card.linkedNote).toBe("MyNote")
         expect(card.priority).toBe("important")
@@ -277,13 +302,14 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns).toHaveLength(1)
-        expect(board.settings.collapsedColumns).toEqual([])
+        expect(board.projects).toHaveLength(1)
+        expect(board.settings.collapsedProjects).toEqual([])
+        expect(board.settings.projectColors).toEqual({})
+        expect(board.settings.projectIcons).toEqual({})
         expect(board.settings.todayOrder).toEqual({})
-        expect(board.settings.columnColors).toEqual({})
     })
 
-    it("should handle markdown with no columns", () => {
+    it("should handle markdown with no projects", () => {
         const markdown = `---
 
 kanban-plugin: vuki-kanban
@@ -298,7 +324,7 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns).toEqual([])
+        expect(board.projects).toEqual([])
     })
 })
 
@@ -328,7 +354,7 @@ describe("serializeBoard", () => {
         const serialized = serializeBoard(board)
 
         expect(serialized).toContain("%% kanban:settings")
-        expect(serialized).toContain('"collapsed-columns":["Completed"]')
+        expect(serialized).toContain('"collapsed-projects":["Completed"]')
         expect(serialized).toContain("%%")
     })
 
@@ -344,24 +370,44 @@ describe("serializeBoard", () => {
         )
     })
 
-    it("should serialize column colors in settings", () => {
+    it("should serialize project colors in settings", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        board.settings.columnColors = { General: "var(--color-red)" }
+        board.settings.projectColors = { General: "var(--color-red)" }
 
         const serialized = serializeBoard(board)
 
-        expect(serialized).toContain('"column-colors":{"General":"var(--color-red)"}')
+        expect(serialized).toContain('"project-colors":{"General":"var(--color-red)"}')
     })
 
-    it("should not include column-colors key when columnColors is empty", () => {
+    it("should serialize project icons in settings", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        board.settings.columnColors = {}
+        board.settings.projectIcons = { Backlog: "rocket" }
 
         const serialized = serializeBoard(board)
 
-        expect(serialized).not.toContain("column-colors")
+        expect(serialized).toContain('"project-icons":{"Backlog":"rocket"}')
+    })
+
+    it("should not include project-icons key when projectIcons is empty", () => {
+        const board = parseBoard(SAMPLE_BOARD)
+
+        board.settings.projectIcons = {}
+
+        const serialized = serializeBoard(board)
+
+        expect(serialized).not.toContain("project-icons")
+    })
+
+    it("should not include project-colors key when projectColors is empty", () => {
+        const board = parseBoard(SAMPLE_BOARD)
+
+        board.settings.projectColors = {}
+
+        const serialized = serializeBoard(board)
+
+        expect(serialized).not.toContain("project-colors")
     })
 
     it("should not include today-order key when todayOrder is empty", () => {
@@ -396,7 +442,7 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].description).toBe("This is a description")
+        expect(board.projects[0].cards[0].description).toBe("This is a description")
     })
 
     it("should parse a card with a multi-line description", () => {
@@ -421,13 +467,13 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].description).toBe("Line one\nLine two\nLine three")
+        expect(board.projects[0].cards[0].description).toBe("Line one\nLine two\nLine three")
     })
 
     it("should return null description for cards without descriptions", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        expect(board.columns[0].cards[0].description).toBeNull()
+        expect(board.projects[0].cards[0].description).toBeNull()
     })
 
     it("should stop description at next card line", () => {
@@ -451,11 +497,11 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].description).toBe("Description for task one")
-        expect(board.columns[0].cards[1].description).toBeNull()
+        expect(board.projects[0].cards[0].description).toBe("Description for task one")
+        expect(board.projects[0].cards[1].description).toBeNull()
     })
 
-    it("should stop description at column heading", () => {
+    it("should stop description at project heading", () => {
         const markdown = `---
 
 kanban-plugin: vuki-kanban
@@ -477,7 +523,7 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].description).toBe("Some description")
+        expect(board.projects[0].cards[0].description).toBe("Some description")
     })
 
     it("should not parse tokens inside descriptions", () => {
@@ -500,14 +546,14 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].description).toBe("Contains @today and !important tokens")
-        expect(board.columns[0].cards[0].date).toBeNull()
+        expect(board.projects[0].cards[0].description).toBe("Contains @today and !important tokens")
+        expect(board.projects[0].cards[0].date).toBeNull()
     })
 
     it("should serialize card with description as indented lines", () => {
         const board = parseBoard(SAMPLE_BOARD)
 
-        board.columns[0].cards[0].description = "My description\nSecond line"
+        board.projects[0].cards[0].description = "My description\nSecond line"
 
         const serialized = serializeBoard(board)
 
@@ -542,9 +588,9 @@ kanban-plugin: vuki-kanban
         const serialized = serializeBoard(board)
         const reparsed = parseBoard(serialized)
 
-        expect(reparsed.columns[0].cards[0].description).toBe("First description\nWith two lines")
-        expect(reparsed.columns[0].cards[1].description).toBeNull()
-        expect(reparsed.columns[0].cards[2].description).toBe("Completed description")
+        expect(reparsed.projects[0].cards[0].description).toBe("First description\nWith two lines")
+        expect(reparsed.projects[0].cards[1].description).toBeNull()
+        expect(reparsed.projects[0].cards[2].description).toBe("Completed description")
     })
 })
 
@@ -568,8 +614,8 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].date).toBeNull()
-        expect(board.columns[0].cards[0].title).toContain("@{invalid}")
+        expect(board.projects[0].cards[0].date).toBeNull()
+        expect(board.projects[0].cards[0].title).toContain("@{invalid}")
     })
 
     it("should accept impossible calendar date as string passthrough", () => {
@@ -591,7 +637,7 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].date).toBe("2026-13-45")
+        expect(board.projects[0].cards[0].date).toBe("2026-13-45")
     })
 
     it("should capture first linked note and remove all from title", () => {
@@ -613,8 +659,8 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].linkedNote).toBe("First Note")
-        expect(board.columns[0].cards[0].title).not.toContain("[[")
+        expect(board.projects[0].cards[0].linkedNote).toBe("First Note")
+        expect(board.projects[0].cards[0].title).not.toContain("[[")
     })
 
     it("should handle empty title after all tokens stripped", () => {
@@ -636,10 +682,10 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].title).toBe("Do stuff")
-        expect(board.columns[0].cards[0].date).toBe(TODAY_STRING)
-        expect(board.columns[0].cards[0].priority).toBe("important")
-        expect(board.columns[0].cards[0].id).toBe("abc123")
+        expect(board.projects[0].cards[0].title).toBe("Do stuff")
+        expect(board.projects[0].cards[0].date).toBe(TODAY_STRING)
+        expect(board.projects[0].cards[0].priority).toBe("important")
+        expect(board.projects[0].cards[0].id).toBe("abc123")
     })
 
     it("should let explicit @{date} overwrite @today", () => {
@@ -661,7 +707,7 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].date).toBe("2026-03-01")
+        expect(board.projects[0].cards[0].date).toBe("2026-03-01")
     })
 
     it("should not parse @id: at start of card line (regex requires leading whitespace)", () => {
@@ -683,9 +729,9 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].id).not.toBe("xyz789")
-        expect(board.columns[0].cards[0].id).toMatch(/^[\da-z]{6}$/)
-        expect(board.columns[0].cards[0].title).toContain("@id:xyz789")
+        expect(board.projects[0].cards[0].id).not.toBe("xyz789")
+        expect(board.projects[0].cards[0].id).toMatch(/^[\da-z]{6}$/)
+        expect(board.projects[0].cards[0].title).toContain("@id:xyz789")
     })
 })
 
@@ -712,7 +758,7 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].description).toBe("Description line")
+        expect(board.projects[0].cards[0].description).toBe("Description line")
     })
 
     it("should stop description at indented checkbox line", () => {
@@ -737,7 +783,7 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns[0].cards[0].description).toBe("Description here")
+        expect(board.projects[0].cards[0].description).toBe("Description here")
     })
 })
 
@@ -759,7 +805,7 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
-        expect(board.columns).toEqual([])
+        expect(board.projects).toEqual([])
     })
 })
 
@@ -786,7 +832,7 @@ kanban-plugin: vuki-kanban
         const board = parseBoard(markdown)
         const serialized = serializeBoard(board)
         const reparsed = parseBoard(serialized)
-        const card = reparsed.columns[0].cards[0]
+        const card = reparsed.projects[0].cards[0]
 
         expect(card.linkedNote).toBe("MyNote")
         expect(card.priority).toBe("important")
@@ -817,18 +863,18 @@ describe("round-trip", () => {
         const serialized = serializeBoard(board)
         const reparsed = parseBoard(serialized)
 
-        expect(reparsed.columns).toHaveLength(board.columns.length)
+        expect(reparsed.projects).toHaveLength(board.projects.length)
 
-        for (let columnIndex = 0; columnIndex < board.columns.length; columnIndex++) {
-            const originalColumn = board.columns[columnIndex]
-            const reparsedColumn = reparsed.columns[columnIndex]
+        for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
+            const originalProject = board.projects[projectIndex]
+            const reparsedProject = reparsed.projects[projectIndex]
 
-            expect(reparsedColumn.title).toBe(originalColumn.title)
-            expect(reparsedColumn.cards).toHaveLength(originalColumn.cards.length)
+            expect(reparsedProject.title).toBe(originalProject.title)
+            expect(reparsedProject.cards).toHaveLength(originalProject.cards.length)
 
-            for (let cardIndex = 0; cardIndex < originalColumn.cards.length; cardIndex++) {
-                const originalCard = originalColumn.cards[cardIndex]
-                const reparsedCard = reparsedColumn.cards[cardIndex]
+            for (let cardIndex = 0; cardIndex < originalProject.cards.length; cardIndex++) {
+                const originalCard = originalProject.cards[cardIndex]
+                const reparsedCard = reparsedProject.cards[cardIndex]
 
                 expect(reparsedCard.title).toBe(originalCard.title)
                 expect(reparsedCard.completed).toBe(originalCard.completed)
@@ -840,7 +886,7 @@ describe("round-trip", () => {
             }
         }
 
-        expect(reparsed.settings.collapsedColumns).toEqual(board.settings.collapsedColumns)
+        expect(reparsed.settings.collapsedProjects).toEqual(board.settings.collapsedProjects)
     })
 
     it("should be idempotent on second serialize", () => {
