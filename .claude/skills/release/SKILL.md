@@ -54,7 +54,7 @@ bun run build
 ### 5. Commit and push
 
 ```bash
-git add manifest.json package.json versions.json main.js styles.css
+git add -A
 git commit -m "chore: bump version to <new-version>"
 git push origin main
 ```

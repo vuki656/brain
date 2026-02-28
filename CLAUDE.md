@@ -35,7 +35,7 @@ explicit (e.g., `from "./types"`). Test files are excluded from barrels.
 ```
 src/
   main.ts                              → Re-exports from plugin/plugin.ts (bun entry point)
-  styles.css                           → All styling (copied to root by build.ts)
+  styles.css                           → All styling (build copies to root)
 
   shared/                              → Cross-cutting utilities and types
     index.ts                           → Barrel (re-exports types, plugin.types, constants, date.utils, id.utils)
@@ -98,8 +98,8 @@ via `requestSave()`.
 - **Parser tests** are the primary test surface — round-trip idempotency
   (`serializeBoard(parseBoard(raw))`) is critical.
 - **Test data** — Always use randomized/fictional data in tests, never real data from actual notes.
-- **styles.css is a build output** — source lives at `src/styles.css`, copied to root by `build.ts`.
-  Root `styles.css` is in `.gitignore`.
+- **styles.css** — source lives at `src/styles.css`, copied to root by `build.ts`. Both root
+  `styles.css` and `main.js` are build outputs in `.gitignore`, uploaded as release assets only.
 
 ## Release Workflow
 
