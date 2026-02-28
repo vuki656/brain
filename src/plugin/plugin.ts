@@ -49,7 +49,7 @@ export default class VukiKanbanPlugin extends Plugin {
         this.uninstallMonkeyPatch = around(WorkspaceLeaf.prototype, {
             setViewState(original) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, func-names -- monkey-around API requires anonymous function with untyped args
-                return function (this: WorkspaceLeaf, state: any, ...rest: any[]) {
+                return async function (this: WorkspaceLeaf, state: any, ...rest: any[]) {
                     if (state.type === "markdown" && state.state?.file) {
                         const fileCache = pluginInstance.app.metadataCache.getCache(
                             state.state.file,

@@ -101,6 +101,7 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
     const previousColumnsPanel = container.querySelector(".kanban-today-layout__columns")
     const savedColumnsPanelScroll = previousColumnsPanel ? previousColumnsPanel.scrollTop : 0
 
+    container.style.visibility = "hidden"
     container.empty()
 
     if (viewState.hideCompletedActive) {
@@ -133,6 +134,8 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
             newColumnsPanel.scrollTop = savedColumnsPanelScroll
         }
 
+        container.style.visibility = ""
+
         return sortableInstances
     }
 
@@ -149,6 +152,8 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
     if (newBoard) {
         newBoard.scrollLeft = savedScrollLeft
     }
+
+    container.style.visibility = ""
 
     return sortableInstances
 }

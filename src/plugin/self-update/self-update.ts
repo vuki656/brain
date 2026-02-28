@@ -1,4 +1,11 @@
-import { type App, MarkdownView, Notice, requestUrl, TextFileView, type WorkspaceLeaf } from "obsidian"
+import {
+    type App,
+    MarkdownView,
+    Notice,
+    requestUrl,
+    TextFileView,
+    type WorkspaceLeaf,
+} from "obsidian"
 
 import { BRAT_REPO, KANBAN_VIEW_TYPE, PLUGIN_ID } from "../../shared"
 
@@ -38,7 +45,11 @@ export async function selfUpdate(app: App): Promise<void> {
     const kanbanFilePaths: string[] = []
 
     app.workspace.iterateAllLeaves((leaf) => {
-        if (leaf.view.getViewType() === KANBAN_VIEW_TYPE && leaf.view instanceof TextFileView && leaf.view.file) {
+        if (
+            leaf.view.getViewType() === KANBAN_VIEW_TYPE &&
+            leaf.view instanceof TextFileView &&
+            leaf.view.file
+        ) {
             kanbanFilePaths.push(leaf.view.file.path)
         }
     })
