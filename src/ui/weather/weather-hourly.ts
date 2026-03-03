@@ -18,7 +18,7 @@ export function createHourlyWeatherRow(hourlyData: HourlyForecastType[]): HTMLEl
     const label = document.createElement("div")
 
     label.className = "kanban-weather__row-label"
-    label.textContent = "Today"
+    label.textContent = "Hourly"
     row.append(label)
 
     const scrollContainer = document.createElement("div")

@@ -19,9 +19,6 @@ export async function fetchWeatherFromApi(location: WeatherLocationType): Promis
 
     const hourly: WeatherDataType["hourly"] = []
     const now = new Date()
-    const endOfDay = new Date(now)
-
-    endOfDay.setHours(23, 59, 59, 999)
 
     for (let index = 0; index < data.hourly.time.length; index++) {
         const time = data.hourly.time[index] as string
@@ -31,7 +28,7 @@ export async function fetchWeatherFromApi(location: WeatherLocationType): Promis
             continue
         }
 
-        if (forecastTime > endOfDay) {
+        if (hourly.length >= 24) {
             break
         }
 
