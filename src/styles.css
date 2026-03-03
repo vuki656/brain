@@ -1099,17 +1099,13 @@
 .kanban-weather__scroll-container {
     display: flex;
     gap: 2px;
+    -ms-overflow-style: none;
     overflow-x: auto;
-    padding-bottom: 4px;
+    scrollbar-width: none;
 }
 
 .kanban-weather__scroll-container::-webkit-scrollbar {
-    height: 4px;
-}
-
-.kanban-weather__scroll-container::-webkit-scrollbar-thumb {
-    background: var(--background-modifier-border);
-    border-radius: 2px;
+    display: none;
 }
 
 .kanban-weather__hourly-item,
