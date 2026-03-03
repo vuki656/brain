@@ -1,7 +1,7 @@
 import { setIcon } from "obsidian"
 
 import type { DailyForecastType } from "./weather.types"
-import { mapWeatherCodeToLucideIcon } from "./weather-icons"
+import { getWeatherIconColor, mapWeatherCodeToLucideIcon } from "./weather-icons"
 
 function formatDayName(isoDate: string): string {
     const date = new Date(`${isoDate}T00:00:00`)
@@ -51,19 +51,29 @@ export function createDailyWeatherRow(dailyData: DailyForecastType[]): HTMLEleme
         const iconContainer = document.createElement("span")
 
         iconContainer.className = "kanban-weather__icon"
+        iconContainer.style.color = getWeatherIconColor(forecast.weatherCode)
         setIcon(iconContainer, mapWeatherCodeToLucideIcon(forecast.weatherCode, true))
 
-        const temperature = document.createElement("span")
+        const highTemporary = document.createElement("span")
 
-        temperature.className = "kanban-weather__temp"
-        temperature.textContent = `${forecast.temperatureMax}° / ${forecast.temperatureMin}°`
+        highTemporary.className = "kanban-weather__temp"
+        highTemporary.textContent = `${forecast.temperatureMax}°`
 
-        const precipitation = document.createElement("span")
+        const lowTemporary = document.createElement("span")
 
-        precipitation.className = "kanban-weather__detail"
-        precipitation.textContent = `${forecast.precipitationProbabilityMax}%`
+        lowTemporary.className = "kanban-weather__temp-low"
+        lowTemporary.textContent = `${forecast.temperatureMin}°`
 
-        item.append(dayLabel, iconContainer, temperature, precipitation)
+        item.append(dayLabel, iconContainer, highTemporary, lowTemporary)
+
+        if (forecast.precipitationProbabilityMax > 0) {
+            const precipitation = document.createElement("span")
+
+            precipitation.className = "kanban-weather__detail"
+            precipitation.textContent = `${forecast.precipitationProbabilityMax}%`
+            item.append(precipitation)
+        }
+
         scrollContainer.append(item)
     }
 

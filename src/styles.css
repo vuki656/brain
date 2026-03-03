@@ -1032,9 +1032,46 @@
 .kanban-weather {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
+/* Current conditions banner */
+.kanban-weather__current {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+}
+
+.kanban-weather__current-icon {
+    align-items: center;
+    display: flex;
+}
+
+.kanban-weather__current-icon svg {
+    height: 28px;
+    width: 28px;
+}
+
+.kanban-weather__current-temp {
+    color: var(--text-normal);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.kanban-weather__current-desc {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.kanban-weather__current-range {
+    color: var(--text-faint);
+    font-size: 12px;
+    margin-left: auto;
+}
+
+/* Weather rows */
 .kanban-weather__row {
     display: flex;
     flex-direction: column;
@@ -1064,8 +1101,7 @@
     border-radius: 2px;
 }
 
-.kanban-weather__hourly-item,
-.kanban-weather__daily-item {
+.kanban-weather__hourly-item {
     align-items: center;
     background: var(--background-secondary);
     border-radius: 6px;
@@ -1076,6 +1112,18 @@
     padding: 6px 8px;
 }
 
+.kanban-weather__daily-item {
+    align-items: center;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 2px;
+    min-width: 56px;
+    padding: 8px 10px;
+}
+
 .kanban-weather__label {
     color: var(--text-muted);
     font-size: 10px;
@@ -1084,19 +1132,24 @@
 
 .kanban-weather__icon {
     align-items: center;
-    color: var(--text-muted);
     display: flex;
 }
 
 .kanban-weather__icon svg {
-    height: 16px;
-    width: 16px;
+    height: 18px;
+    width: 18px;
 }
 
 .kanban-weather__temp {
     color: var(--text-normal);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
+    white-space: nowrap;
+}
+
+.kanban-weather__temp-low {
+    color: var(--text-faint);
+    font-size: 11px;
     white-space: nowrap;
 }
 

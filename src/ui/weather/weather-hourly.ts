@@ -1,7 +1,7 @@
 import { setIcon } from "obsidian"
 
 import type { HourlyForecastType } from "./weather.types"
-import { mapWeatherCodeToLucideIcon } from "./weather-icons"
+import { getWeatherIconColor, mapWeatherCodeToLucideIcon } from "./weather-icons"
 
 function formatHour(isoTime: string): string {
     const date = new Date(isoTime)
@@ -39,6 +39,7 @@ export function createHourlyWeatherRow(hourlyData: HourlyForecastType[]): HTMLEl
         const iconContainer = document.createElement("span")
 
         iconContainer.className = "kanban-weather__icon"
+        iconContainer.style.color = getWeatherIconColor(forecast.weatherCode)
         setIcon(iconContainer, mapWeatherCodeToLucideIcon(forecast.weatherCode, forecast.isDay))
 
         const temperature = document.createElement("span")
@@ -46,12 +47,16 @@ export function createHourlyWeatherRow(hourlyData: HourlyForecastType[]): HTMLEl
         temperature.className = "kanban-weather__temp"
         temperature.textContent = `${forecast.temperature}°`
 
-        const precipitation = document.createElement("span")
+        item.append(timeLabel, iconContainer, temperature)
 
-        precipitation.className = "kanban-weather__detail"
-        precipitation.textContent = `${forecast.precipitationProbability}%`
+        if (forecast.precipitationProbability > 0) {
+            const precipitation = document.createElement("span")
 
-        item.append(timeLabel, iconContainer, temperature, precipitation)
+            precipitation.className = "kanban-weather__detail"
+            precipitation.textContent = `${forecast.precipitationProbability}%`
+            item.append(precipitation)
+        }
+
         scrollContainer.append(item)
     }
 

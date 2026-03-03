@@ -1,5 +1,6 @@
 import type { WeatherLocationType } from "./weather.types"
 import { fetchWeatherData } from "./weather-cache"
+import { createCurrentWeatherBanner } from "./weather-current"
 import { createDailyWeatherRow } from "./weather-daily"
 import { createHourlyWeatherRow } from "./weather-hourly"
 
@@ -22,6 +23,7 @@ export async function renderWeatherSection(
         const weatherData = await fetchWeatherData(location)
 
         wrapper.empty()
+        wrapper.append(createCurrentWeatherBanner(weatherData.current))
         wrapper.append(createHourlyWeatherRow(weatherData.hourly))
         wrapper.append(createDailyWeatherRow(weatherData.daily))
     } catch (error) {

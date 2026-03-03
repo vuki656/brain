@@ -7,6 +7,7 @@ export async function fetchWeatherFromApi(location: WeatherLocationType): Promis
         `https://api.open-meteo.com/v1/forecast` +
         `?latitude=${location.latitude}` +
         `&longitude=${location.longitude}` +
+        `&current=temperature_2m,weather_code,is_day` +
         `&hourly=temperature_2m,precipitation_probability,weather_code,is_day` +
         `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
         `&temperature_unit=celsius` +
@@ -52,5 +53,14 @@ export async function fetchWeatherFromApi(location: WeatherLocationType): Promis
         })
     }
 
-    return { daily, hourly }
+    const todayDaily = daily[0]
+    const current: WeatherDataType["current"] = {
+        isDay: data.current.is_day === 1,
+        temperature: Math.round(data.current.temperature_2m as number),
+        temperatureMax: todayDaily ? todayDaily.temperatureMax : 0,
+        temperatureMin: todayDaily ? todayDaily.temperatureMin : 0,
+        weatherCode: data.current.weather_code as number,
+    }
+
+    return { current, daily, hourly }
 }

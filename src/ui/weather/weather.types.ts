@@ -19,7 +19,16 @@ export type DailyForecastType = {
     weatherCode: number
 }
 
+export type CurrentWeatherType = {
+    isDay: boolean
+    temperature: number
+    temperatureMax: number
+    temperatureMin: number
+    weatherCode: number
+}
+
 export type WeatherDataType = {
+    current: CurrentWeatherType
     daily: DailyForecastType[]
     hourly: HourlyForecastType[]
 }
