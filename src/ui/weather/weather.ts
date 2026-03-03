@@ -24,8 +24,13 @@ export async function renderWeatherSection(
 
         wrapper.empty()
         wrapper.append(createCurrentWeatherBanner(weatherData.current))
-        wrapper.append(createHourlyWeatherRow(weatherData.hourly))
-        wrapper.append(createDailyWeatherRow(weatherData.daily))
+
+        const splitRow = document.createElement("div")
+
+        splitRow.className = "kanban-weather__split"
+        splitRow.append(createHourlyWeatherRow(weatherData.hourly))
+        splitRow.append(createDailyWeatherRow(weatherData.daily))
+        wrapper.append(splitRow)
     } catch (error) {
         console.error("Failed to load weather data", error)
 

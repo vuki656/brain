@@ -1071,6 +1071,17 @@
     margin-left: auto;
 }
 
+/* Weather split layout */
+.kanban-weather__split {
+    display: flex;
+    gap: 8px;
+}
+
+.kanban-weather__split .kanban-weather__row {
+    flex: 1;
+    min-width: 0;
+}
+
 /* Weather rows */
 .kanban-weather__row {
     display: flex;
