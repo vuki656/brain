@@ -1112,17 +1112,7 @@
     border-radius: 2px;
 }
 
-.kanban-weather__hourly-item {
-    align-items: center;
-    background: var(--background-secondary);
-    border-radius: 6px;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    gap: 2px;
-    padding: 6px 8px;
-}
-
+.kanban-weather__hourly-item,
 .kanban-weather__daily-item {
     align-items: center;
     background: var(--background-secondary);
@@ -1132,7 +1122,7 @@
     flex-shrink: 0;
     gap: 2px;
     min-width: 56px;
-    padding: 8px 10px;
+    padding: 6px 8px;
 }
 
 .kanban-weather__label {
