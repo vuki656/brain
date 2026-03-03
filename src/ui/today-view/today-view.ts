@@ -21,19 +21,6 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
 
     todayPanel.className = "kanban-today"
 
-    const weatherLocation = parseWeatherLocation(
-        pluginSettings.weatherLatitude,
-        pluginSettings.weatherLongitude,
-    )
-
-    if (weatherLocation) {
-        const weatherContainer = document.createElement("div")
-
-        weatherContainer.className = "kanban-weather-container"
-        todayPanel.append(weatherContainer)
-        void renderWeatherSection(weatherContainer, weatherLocation)
-    }
-
     const sortableInstances: Sortable[] = []
     const sectionCardLists: { dateKey: string; element: HTMLElement }[] = []
 
@@ -141,6 +128,19 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
     const projectsPanel = document.createElement("div")
 
     projectsPanel.className = "kanban-today-layout__projects"
+
+    const weatherLocation = parseWeatherLocation(
+        pluginSettings.weatherLatitude,
+        pluginSettings.weatherLongitude,
+    )
+
+    if (weatherLocation) {
+        const weatherContainer = document.createElement("div")
+
+        weatherContainer.className = "kanban-weather-container"
+        projectsPanel.append(weatherContainer)
+        void renderWeatherSection(weatherContainer, weatherLocation)
+    }
 
     for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
         const project = board.projects[projectIndex]
