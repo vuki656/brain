@@ -29,5 +29,31 @@ export class VukiKanbanSettingTab extends PluginSettingTab {
                         await plugin.saveSettings()
                     })
             })
+
+        new Setting(containerEl)
+            .setName("Weather latitude")
+            .setDesc("Latitude for weather forecast in today view (e.g. 48.8566)")
+            .addText((text) => {
+                return text
+                    .setPlaceholder("48.8566")
+                    .setValue(settings.weatherLatitude)
+                    .onChange(async (value) => {
+                        settings.weatherLatitude = value
+                        await plugin.saveSettings()
+                    })
+            })
+
+        new Setting(containerEl)
+            .setName("Weather longitude")
+            .setDesc("Longitude for weather forecast in today view (e.g. 2.3522)")
+            .addText((text) => {
+                return text
+                    .setPlaceholder("2.3522")
+                    .setValue(settings.weatherLongitude)
+                    .onChange(async (value) => {
+                        settings.weatherLongitude = value
+                        await plugin.saveSettings()
+                    })
+            })
     }
 }

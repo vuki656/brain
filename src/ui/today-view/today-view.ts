@@ -5,6 +5,7 @@ import { createCardElement, immutableUpdateCard } from "../card"
 import { createProjectElement, getProjectColor, getProjectIcon } from "../project"
 import { openQuickAddDialog } from "../quick-add"
 import { createCardSortableOptions, createProjectCardMoveHandler } from "../sortable"
+import { parseWeatherLocation, renderWeatherSection } from "../weather"
 import type { TodayViewOptionsType } from "./today-view.types"
 import {
     collectCardsByDateGroup,
@@ -19,6 +20,19 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
     const todayPanel = document.createElement("div")
 
     todayPanel.className = "kanban-today"
+
+    const weatherLocation = parseWeatherLocation(
+        pluginSettings.weatherLatitude,
+        pluginSettings.weatherLongitude,
+    )
+
+    if (weatherLocation) {
+        const weatherContainer = document.createElement("div")
+
+        weatherContainer.className = "kanban-weather-container"
+        todayPanel.append(weatherContainer)
+        void renderWeatherSection(weatherContainer, weatherLocation)
+    }
 
     const sortableInstances: Sortable[] = []
     const sectionCardLists: { dateKey: string; element: HTMLElement }[] = []

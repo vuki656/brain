@@ -21,7 +21,7 @@ export type TodayViewOptionsType = {
     board: BoardType
     container: HTMLElement
     onMutation: MutationHandlerType
-    pluginSettings: { notePathPrefix: string }
+    pluginSettings: { notePathPrefix: string; weatherLatitude: string; weatherLongitude: string }
     vault: Vault
     viewState: ViewStateType
 }

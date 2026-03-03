@@ -8,7 +8,7 @@ export type BoardProjectsOptionsType = {
     board: BoardType
     container: HTMLElement
     onMutation: MutationHandlerType
-    pluginSettings: { notePathPrefix: string }
+    pluginSettings: { notePathPrefix: string; weatherLatitude: string; weatherLongitude: string }
     vault: Vault
     viewState: ViewStateType
 }
@@ -19,7 +19,7 @@ export type RenderBoardOptionsType = {
     container: HTMLElement
     onMutation: MutationHandlerType
     onViewStateChange: (viewState: ViewStateType) => void
-    pluginSettings: { notePathPrefix: string }
+    pluginSettings: { notePathPrefix: string; weatherLatitude: string; weatherLongitude: string }
     vault: Vault
     viewState: ViewStateType
 }

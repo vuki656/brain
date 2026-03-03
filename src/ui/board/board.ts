@@ -116,6 +116,12 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
     const previousProjectsPanel = container.querySelector(".kanban-today-layout__projects")
     const savedProjectsPanelScroll = previousProjectsPanel ? previousProjectsPanel.scrollTop : 0
 
+    const previousHourlyScroll = container.querySelector<HTMLElement>('[data-weather-row="hourly"]')
+    const savedHourlyScrollLeft = previousHourlyScroll ? previousHourlyScroll.scrollLeft : 0
+
+    const previousDailyScroll = container.querySelector<HTMLElement>('[data-weather-row="daily"]')
+    const savedDailyScrollLeft = previousDailyScroll ? previousDailyScroll.scrollLeft : 0
+
     container.style.visibility = "hidden"
     container.empty()
 
@@ -147,6 +153,17 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
 
         if (newProjectsPanel) {
             newProjectsPanel.scrollTop = savedProjectsPanelScroll
+        }
+
+        const newHourlyScroll = container.querySelector<HTMLElement>('[data-weather-row="hourly"]')
+        const newDailyScroll = container.querySelector<HTMLElement>('[data-weather-row="daily"]')
+
+        if (newHourlyScroll) {
+            newHourlyScroll.scrollLeft = savedHourlyScrollLeft
+        }
+
+        if (newDailyScroll) {
+            newDailyScroll.scrollLeft = savedDailyScrollLeft
         }
 
         container.style.visibility = ""
