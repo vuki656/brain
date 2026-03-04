@@ -492,12 +492,11 @@
 }
 
 .is-mobile:not(.is-tablet) .kanban-today {
-    max-width: none;
+    flex: 1 1 auto;
 }
 
 .kanban-today {
-    max-width: 500px;
-    min-width: 300px;
+    flex: 0 0 500px;
     overflow-y: auto;
     padding: 12px;
 }
