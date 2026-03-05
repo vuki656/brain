@@ -64,15 +64,12 @@ export function createDailyWeatherRow(dailyData: DailyForecastType[]): HTMLEleme
         lowTemporary.className = "kanban-weather__temp-low"
         lowTemporary.textContent = `${forecast.temperatureMin}°`
 
-        item.append(dayLabel, iconContainer, highTemporary, lowTemporary)
+        const precipitation = document.createElement("span")
 
-        if (forecast.precipitationProbabilityMax > 0) {
-            const precipitation = document.createElement("span")
+        precipitation.className = "kanban-weather__detail"
+        precipitation.textContent = `${forecast.precipitationProbabilityMax}%`
 
-            precipitation.className = "kanban-weather__detail"
-            precipitation.textContent = `${forecast.precipitationProbabilityMax}%`
-            item.append(precipitation)
-        }
+        item.append(dayLabel, iconContainer, highTemporary, lowTemporary, precipitation)
 
         scrollContainer.append(item)
     }

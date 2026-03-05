@@ -47,15 +47,12 @@ export function createHourlyWeatherRow(hourlyData: HourlyForecastType[]): HTMLEl
         temperature.className = "kanban-weather__temp"
         temperature.textContent = `${forecast.temperature}°`
 
-        item.append(timeLabel, iconContainer, temperature)
+        const precipitation = document.createElement("span")
 
-        if (forecast.precipitationProbability > 0) {
-            const precipitation = document.createElement("span")
+        precipitation.className = "kanban-weather__detail"
+        precipitation.textContent = `${forecast.precipitationProbability}%`
 
-            precipitation.className = "kanban-weather__detail"
-            precipitation.textContent = `${forecast.precipitationProbability}%`
-            item.append(precipitation)
-        }
+        item.append(timeLabel, iconContainer, temperature, precipitation)
 
         scrollContainer.append(item)
     }
