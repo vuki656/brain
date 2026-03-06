@@ -1003,7 +1003,7 @@ kanban-plugin: vuki-kanban
         expect(card.title).toBe("Critical fix")
     })
 
-    it("should round-trip blocked cards idempotently", () => {
+    it("should round-trip blocked cards through parse and serialize", () => {
         const markdown = `---
 
 kanban-plugin: vuki-kanban

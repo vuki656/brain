@@ -71,7 +71,7 @@ export function createProjectCardMoveHandler(
             return
         }
 
-        let insertIndex = targetProject.cards.length
+        let insertIndex = 0
 
         for (let domIndex = 0; domIndex < targetCardElements.length; domIndex++) {
             const currentElement = targetCardElements[domIndex]
@@ -84,16 +84,16 @@ export function createProjectCardMoveHandler(
                 continue
             }
 
-            const nextElement = targetCardElements[domIndex + 1] as HTMLElement | undefined
+            const previousElement = targetCardElements[domIndex - 1] as HTMLElement | undefined
 
-            if (nextElement) {
-                const nextCardId = nextElement.dataset.cardId
-                const nextDataIndex = targetProject.cards.findIndex((searchCard) => {
-                    return searchCard.id === nextCardId
+            if (previousElement) {
+                const previousCardId = previousElement.dataset.cardId
+                const previousDataIndex = targetProject.cards.findIndex((searchCard) => {
+                    return searchCard.id === previousCardId
                 })
 
-                if (nextDataIndex !== -1) {
-                    insertIndex = nextDataIndex
+                if (previousDataIndex !== -1) {
+                    insertIndex = previousDataIndex + 1
                 }
             }
 
