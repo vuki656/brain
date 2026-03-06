@@ -4,6 +4,7 @@ import { FRONTMATTER_KEY, generateId, toDateString } from "../shared"
 const TODAY_REGEX = /\s@today/g
 const DATE_REGEX = /\s@{(\d{4}-\d{2}-\d{2})}/g
 const PRIORITY_IMPORTANT_REGEX = /\s!important/g
+const BLOCKED_REGEX = /\s!blocked\(([^)]+)\)/g
 
 const LINKED_NOTE_REGEX = /(?:^|\s)\[\[(.+?)]]/g
 const ID_REGEX = /\s@id:([\da-z]+)/g
@@ -24,6 +25,7 @@ function parseCard(line: string): CardType | null {
     let text = line.replace(CHECKBOX_CHECKED_REGEX, "").replace(CHECKBOX_UNCHECKED_REGEX, "")
 
     let priority: PriorityType = null
+    let blockedReason: string | null = null
     let date: string | null = null
     let linkedNote: string | null = null
     let id: string | null = null
@@ -64,6 +66,15 @@ function parseCard(line: string): CardType | null {
 
     PRIORITY_IMPORTANT_REGEX.lastIndex = 0
 
+    const blockedMatch = BLOCKED_REGEX.exec(text)
+
+    if (blockedMatch) {
+        blockedReason = blockedMatch[1] ?? null
+        text = text.replace(BLOCKED_REGEX, "")
+    }
+
+    BLOCKED_REGEX.lastIndex = 0
+
     const linkedNoteMatch = LINKED_NOTE_REGEX.exec(text)
 
     if (linkedNoteMatch) {
@@ -74,6 +85,7 @@ function parseCard(line: string): CardType | null {
     LINKED_NOTE_REGEX.lastIndex = 0
 
     return {
+        blockedReason,
         completed: isChecked,
         date,
         description: null,
@@ -217,6 +229,10 @@ function serializeCard(card: CardType): string {
 
     if (card.priority) {
         line = `${line} !${card.priority}`
+    }
+
+    if (card.blockedReason !== null) {
+        line = `${line} !blocked(${card.blockedReason})`
     }
 
     if (card.date && !isToday) {

@@ -931,6 +931,138 @@ describe("generateId", () => {
     })
 })
 
+describe("blocked status", () => {
+    it("should parse card with !blocked(reason)", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Deploy API changes !blocked(waiting on staging environment) @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.blockedReason).toBe("waiting on staging environment")
+        expect(card.title).toBe("Deploy API changes")
+    })
+
+    it("should parse card without blocked as null", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Regular task @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+
+        expect(board.projects[0].cards[0].blockedReason).toBeNull()
+    })
+
+    it("should parse card with both !important and !blocked(reason)", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Critical fix !important !blocked(waiting on security review) @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.priority).toBe("important")
+        expect(card.blockedReason).toBe("waiting on security review")
+        expect(card.title).toBe("Critical fix")
+    })
+
+    it("should round-trip blocked cards idempotently", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task one !important !blocked(need database migration) @id:abc123
+- [ ] Task two @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const serialized = serializeBoard(board)
+        const reparsed = parseBoard(serialized)
+
+        expect(reparsed.projects[0].cards[0].blockedReason).toBe("need database migration")
+        expect(reparsed.projects[0].cards[0].priority).toBe("important")
+        expect(reparsed.projects[0].cards[1].blockedReason).toBeNull()
+
+        const secondSerialize = serializeBoard(reparsed)
+
+        expect(secondSerialize).toBe(serialized)
+    })
+
+    it("should handle blocked reason with special characters", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Complex task !blocked(waiting on: API keys, certificates) @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.blockedReason).toBe("waiting on: API keys, certificates")
+        expect(card.title).toBe("Complex task")
+
+        const serialized = serializeBoard(board)
+
+        expect(serialized).toContain("!blocked(waiting on: API keys, certificates)")
+    })
+})
+
 describe("round-trip", () => {
     it("should preserve board content through parse and serialize", () => {
         const board = parseBoard(SAMPLE_BOARD)
@@ -953,6 +1085,7 @@ describe("round-trip", () => {
                 expect(reparsedCard.title).toBe(originalCard.title)
                 expect(reparsedCard.completed).toBe(originalCard.completed)
                 expect(reparsedCard.priority).toBe(originalCard.priority)
+                expect(reparsedCard.blockedReason).toBe(originalCard.blockedReason)
                 expect(reparsedCard.date).toBe(originalCard.date)
                 expect(reparsedCard.linkedNote).toBe(originalCard.linkedNote)
                 expect(reparsedCard.id).toBe(originalCard.id)

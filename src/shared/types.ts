@@ -1,6 +1,7 @@
 export type PriorityType = "important" | null
 
 export type CardType = {
+    blockedReason: string | null
     completed: boolean
     date: string | null
     description: string | null

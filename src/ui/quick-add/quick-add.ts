@@ -12,6 +12,7 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
     const isEditMode = editContext !== undefined
     let selectedDate: string | null = isEditMode ? editContext.card.date : (prefillDate ?? null)
     let selectedPriority: PriorityType = isEditMode ? editContext.card.priority : null
+    let selectedBlockedReason: string | null = isEditMode ? editContext.card.blockedReason : null
 
     const overlay = document.createElement("div")
 
@@ -245,6 +246,66 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
     priorityRow.append(priorityButton)
     dialog.append(priorityRow)
 
+    const blockedRow = document.createElement("div")
+
+    blockedRow.className = "kanban-quick-add__row"
+
+    const blockedLabel = document.createElement("span")
+
+    blockedLabel.className = "kanban-quick-add__label"
+    blockedLabel.textContent = "Blocked"
+    blockedRow.append(blockedLabel)
+
+    const blockedToggleContainer = document.createElement("div")
+
+    blockedToggleContainer.className = "kanban-quick-add__blocked-container"
+
+    const blockedToggle = document.createElement("span")
+
+    blockedToggle.className = "kanban-quick-add__blocked-toggle"
+
+    const blockedToggleIcon = document.createElement("span")
+
+    blockedToggleIcon.className = "kanban-quick-add__blocked-toggle-icon"
+    setIcon(blockedToggleIcon, "ban")
+    blockedToggle.append(blockedToggleIcon, document.createTextNode("Blocked"))
+
+    const blockedReasonInput = document.createElement("input")
+
+    blockedReasonInput.className = "kanban-quick-add__blocked-reason-input"
+    blockedReasonInput.type = "text"
+    blockedReasonInput.placeholder = "Reason..."
+
+    if (isEditMode && selectedBlockedReason !== null) {
+        blockedToggle.classList.add("kanban-quick-add__blocked-toggle--active")
+        blockedReasonInput.value = selectedBlockedReason
+        blockedReasonInput.style.display = ""
+    } else {
+        blockedReasonInput.style.display = "none"
+    }
+
+    blockedToggle.addEventListener("click", () => {
+        if (selectedBlockedReason !== null) {
+            selectedBlockedReason = null
+            blockedToggle.classList.remove("kanban-quick-add__blocked-toggle--active")
+            blockedReasonInput.style.display = "none"
+            blockedReasonInput.value = ""
+        } else {
+            selectedBlockedReason = ""
+            blockedToggle.classList.add("kanban-quick-add__blocked-toggle--active")
+            blockedReasonInput.style.display = ""
+            blockedReasonInput.focus()
+        }
+    })
+
+    blockedReasonInput.addEventListener("input", () => {
+        selectedBlockedReason = blockedReasonInput.value
+    })
+
+    blockedToggleContainer.append(blockedToggle, blockedReasonInput)
+    blockedRow.append(blockedToggleContainer)
+    dialog.append(blockedRow)
+
     const submitButton = document.createElement("span")
 
     submitButton.className = "kanban-quick-add__submit"
@@ -267,7 +328,13 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
         const descriptionValue = descriptionInput.value.trim() || null
 
         if (isEditMode) {
+            const blockedReasonValue =
+                selectedBlockedReason !== null && selectedBlockedReason.trim() !== ""
+                    ? selectedBlockedReason.trim()
+                    : null
+
             const update: Partial<CardType> = {
+                blockedReason: blockedReasonValue,
                 date: selectedDate,
                 description: descriptionValue,
                 priority: selectedPriority,
@@ -311,7 +378,13 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
 
             onMutation({ ...board, projects: newProjects })
         } else {
+            const newBlockedReasonValue =
+                selectedBlockedReason !== null && selectedBlockedReason.trim() !== ""
+                    ? selectedBlockedReason.trim()
+                    : null
+
             const newCard: CardType = {
+                blockedReason: newBlockedReasonValue,
                 completed: false,
                 date: selectedDate,
                 description: descriptionValue,

@@ -870,6 +870,153 @@
     background: var(--interactive-accent-hover);
 }
 
+/* Blocked section */
+.kanban-card__blocked {
+    align-items: center;
+    border-left: 3px solid var(--color-red);
+    border-radius: 4px;
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 4px 8px;
+}
+
+.kanban-card__blocked-icon {
+    align-items: center;
+    color: var(--color-red);
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.kanban-card__blocked-icon svg {
+    height: 12px;
+    width: 12px;
+}
+
+.kanban-card__blocked-label {
+    color: var(--color-red);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.kanban-card__blocked-reason {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+/* Blocked reason prompt */
+.kanban-blocked-reason-overlay {
+    align-items: center;
+    background: rgb(0 0 0 / 50%);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    position: fixed;
+    z-index: 999;
+}
+
+.kanban-blocked-reason-dialog {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 90vw;
+    padding: 20px;
+    width: 340px;
+}
+
+.kanban-blocked-reason-dialog__label {
+    color: var(--text-normal);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.kanban-blocked-reason-prompt {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    box-sizing: border-box;
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    padding: 8px 12px;
+    width: 100%;
+}
+
+.kanban-blocked-reason-prompt:focus {
+    border-color: var(--interactive-accent);
+}
+
+/* Quick add blocked toggle */
+.kanban-quick-add__blocked-container {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.kanban-quick-add__blocked-toggle {
+    align-items: center;
+    background: var(--background-secondary);
+    border-radius: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 12px;
+    gap: 6px;
+    padding: 4px 10px;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.kanban-quick-add__blocked-toggle:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.kanban-quick-add__blocked-toggle--active {
+    background: var(--color-red);
+    color: var(--text-on-accent);
+}
+
+.kanban-quick-add__blocked-toggle--active:hover {
+    background: var(--color-red);
+    color: var(--text-on-accent);
+    opacity: 90%;
+}
+
+.kanban-quick-add__blocked-toggle-icon {
+    align-items: center;
+    display: inline-flex;
+}
+
+.kanban-quick-add__blocked-toggle-icon svg {
+    height: 14px;
+    width: 14px;
+}
+
+.kanban-quick-add__blocked-reason-input {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    box-sizing: border-box;
+    color: var(--text-normal);
+    flex: 1;
+    font-family: inherit;
+    font-size: 12px;
+    min-width: 120px;
+    outline: none;
+    padding: 4px 8px;
+}
+
+.kanban-quick-add__blocked-reason-input:focus {
+    border-color: var(--interactive-accent);
+}
+
 /* Card description */
 .kanban-card__description {
     -webkit-box-orient: vertical;

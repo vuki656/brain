@@ -167,6 +167,30 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
         cardElement.append(metaRow)
     }
 
+    if (card.blockedReason !== null) {
+        const blockedSection = document.createElement("div")
+
+        blockedSection.className = "kanban-card__blocked"
+
+        const blockedIcon = document.createElement("span")
+
+        blockedIcon.className = "kanban-card__blocked-icon"
+        setIcon(blockedIcon, "ban")
+
+        const blockedLabel = document.createElement("span")
+
+        blockedLabel.className = "kanban-card__blocked-label"
+        blockedLabel.textContent = "Blocked"
+
+        const blockedReasonElement = document.createElement("span")
+
+        blockedReasonElement.className = "kanban-card__blocked-reason"
+        blockedReasonElement.textContent = card.blockedReason
+
+        blockedSection.append(blockedIcon, blockedLabel, blockedReasonElement)
+        cardElement.append(blockedSection)
+    }
+
     cardElement.addEventListener("contextmenu", (contextMenuEvent) => {
         contextMenuEvent.preventDefault()
         showCardContextMenu({
@@ -212,6 +236,7 @@ export function createAddCardForm(
 
             if (text) {
                 const newCard: CardType = {
+                    blockedReason: null,
                     completed: false,
                     date: null,
                     description: null,

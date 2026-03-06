@@ -201,6 +201,100 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
 
     menu.addSeparator()
 
+    if (card.blockedReason !== null) {
+        menu.addItem((item) => {
+            return item
+                .setIcon("circle-check")
+                .setTitle("Unblock")
+                .onClick(() => {
+                    const newProjects = immutableUpdateCard({
+                        cardIndex,
+                        projectIndex,
+                        projects: board.projects,
+                        update: { blockedReason: null },
+                    })
+                    onMutation({ ...board, projects: newProjects })
+                })
+        })
+    } else {
+        menu.addItem((item) => {
+            return item
+                .setIcon("ban")
+                .setTitle("Block...")
+                .onClick(() => {
+                    const reasonInput = document.createElement("input")
+
+                    reasonInput.type = "text"
+                    reasonInput.placeholder = "Blocked reason..."
+                    reasonInput.className = "kanban-blocked-reason-prompt"
+
+                    const promptOverlay = document.createElement("div")
+
+                    promptOverlay.className = "kanban-blocked-reason-overlay"
+
+                    const promptDialog = document.createElement("div")
+
+                    promptDialog.className = "kanban-blocked-reason-dialog"
+
+                    const promptLabel = document.createElement("div")
+
+                    promptLabel.className = "kanban-blocked-reason-dialog__label"
+                    promptLabel.textContent = "Why is this card blocked?"
+
+                    const promptSubmit = document.createElement("span")
+
+                    promptSubmit.className = "kanban-quick-add__submit"
+                    promptSubmit.textContent = "Block"
+
+                    const cleanup = () => {
+                        promptOverlay.remove()
+                    }
+
+                    const submit = () => {
+                        const reason = reasonInput.value.trim()
+
+                        if (!reason) {
+                            reasonInput.focus()
+
+                            return
+                        }
+
+                        const newProjects = immutableUpdateCard({
+                            cardIndex,
+                            projectIndex,
+                            projects: board.projects,
+                            update: { blockedReason: reason },
+                        })
+                        onMutation({ ...board, projects: newProjects })
+                        cleanup()
+                    }
+
+                    promptSubmit.addEventListener("click", submit)
+                    reasonInput.addEventListener("keydown", (keyboardEvent) => {
+                        if (keyboardEvent.key === "Enter") {
+                            keyboardEvent.preventDefault()
+                            submit()
+                        }
+
+                        if (keyboardEvent.key === "Escape") {
+                            cleanup()
+                        }
+                    })
+                    promptOverlay.addEventListener("click", cleanup)
+                    promptDialog.addEventListener("click", (dialogEvent) => {
+                        dialogEvent.stopPropagation()
+                    })
+
+                    promptDialog.append(promptLabel, reasonInput, promptSubmit)
+                    promptOverlay.append(promptDialog)
+                    document.body.append(promptOverlay)
+                    reasonInput.focus()
+                })
+        })
+    }
+
+    menu.addSeparator()
+
     if (!card.linkedNote) {
         menu.addItem((item) => {
             return item
