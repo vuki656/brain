@@ -1,15 +1,7 @@
-import { addDays, differenceInCalendarDays, format, nextMonday, startOfDay } from "date-fns"
+import { differenceInCalendarDays, format, startOfDay } from "date-fns"
 
 export function toDateString(date: Date): string {
     return format(date, "yyyy-MM-dd")
-}
-
-export function getNextMonday(): Date {
-    return nextMonday(new Date())
-}
-
-export function getTomorrowDate(): Date {
-    return addDays(new Date(), 1)
 }
 
 export function getDayDifference(dateString: string): number {

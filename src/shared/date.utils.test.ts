@@ -1,12 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, setSystemTime } from "bun:test"
 
-import {
-    formatDate,
-    getDayDifference,
-    getNextMonday,
-    getTomorrowDate,
-    toDateString,
-} from "./date.utils"
+import { formatDate, getDayDifference, toDateString } from "./date.utils"
 
 describe("toDateString", () => {
     it("should format a date as YYYY-MM-DD", () => {
@@ -31,95 +25,6 @@ describe("toDateString", () => {
 
     it("should handle year boundary Jan 1", () => {
         expect(toDateString(new Date(2026, 0, 1))).toBe("2026-01-01")
-    })
-})
-
-describe("getNextMonday", () => {
-    afterEach(() => {
-        setSystemTime()
-    })
-
-    it("should return next Monday when today is Wednesday", () => {
-        setSystemTime(new Date(2026, 1, 18))
-        const result = getNextMonday()
-
-        expect(result.getDay()).toBe(1)
-        expect(toDateString(result)).toBe("2026-02-23")
-    })
-
-    it("should return next Monday when today is Monday", () => {
-        setSystemTime(new Date(2026, 1, 23))
-        const result = getNextMonday()
-
-        expect(result.getDay()).toBe(1)
-        expect(toDateString(result)).toBe("2026-03-02")
-    })
-
-    it("should return next Monday when today is Sunday", () => {
-        setSystemTime(new Date(2026, 1, 22))
-        const result = getNextMonday()
-
-        expect(result.getDay()).toBe(1)
-        expect(toDateString(result)).toBe("2026-02-23")
-    })
-
-    it("should return next Monday when today is Tuesday", () => {
-        setSystemTime(new Date(2026, 1, 17))
-        const result = getNextMonday()
-
-        expect(result.getDay()).toBe(1)
-        expect(toDateString(result)).toBe("2026-02-23")
-    })
-
-    it("should return next Monday when today is Thursday", () => {
-        setSystemTime(new Date(2026, 1, 19))
-        const result = getNextMonday()
-
-        expect(result.getDay()).toBe(1)
-        expect(toDateString(result)).toBe("2026-02-23")
-    })
-
-    it("should return next Monday when today is Friday", () => {
-        setSystemTime(new Date(2026, 1, 20))
-        const result = getNextMonday()
-
-        expect(result.getDay()).toBe(1)
-        expect(toDateString(result)).toBe("2026-02-23")
-    })
-
-    it("should return next Monday when today is Saturday", () => {
-        setSystemTime(new Date(2026, 1, 21))
-        const result = getNextMonday()
-
-        expect(result.getDay()).toBe(1)
-        expect(toDateString(result)).toBe("2026-02-23")
-    })
-})
-
-describe("getTomorrowDate", () => {
-    afterEach(() => {
-        setSystemTime()
-    })
-
-    it("should return tomorrow's date", () => {
-        setSystemTime(new Date(2026, 1, 22))
-        const result = getTomorrowDate()
-
-        expect(toDateString(result)).toBe("2026-02-23")
-    })
-
-    it("should handle month boundary", () => {
-        setSystemTime(new Date(2026, 1, 28))
-        const result = getTomorrowDate()
-
-        expect(toDateString(result)).toBe("2026-03-01")
-    })
-
-    it("should handle year boundary", () => {
-        setSystemTime(new Date(2025, 11, 31))
-        const result = getTomorrowDate()
-
-        expect(toDateString(result)).toBe("2026-01-01")
     })
 })
 
