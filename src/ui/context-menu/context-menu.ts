@@ -385,13 +385,73 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setTitle("Delete card")
             .setWarning(true)
             .onClick(() => {
-                const newProjects = immutableSpliceCard({
-                    cardIndex,
-                    deleteCount: 1,
-                    projectIndex,
-                    projects: board.projects,
+                const overlay = document.createElement("div")
+
+                overlay.className = "kanban-delete-confirm-overlay"
+
+                const dialog = document.createElement("div")
+
+                dialog.className = "kanban-delete-confirm-dialog"
+
+                const label = document.createElement("div")
+
+                label.className = "kanban-delete-confirm-dialog__label"
+                label.textContent = "Delete this card?"
+
+                const cardTitle = card.linkedNote
+                    ? (card.linkedNote.split("/").pop() ?? card.linkedNote)
+                    : card.title
+                const preview = document.createElement("div")
+
+                preview.className = "kanban-delete-confirm-dialog__preview"
+                preview.textContent = cardTitle
+
+                const actions = document.createElement("div")
+
+                actions.className = "kanban-delete-confirm-dialog__actions"
+
+                const cancelButton = document.createElement("span")
+
+                cancelButton.className = "kanban-delete-confirm__cancel"
+                cancelButton.textContent = "Cancel"
+
+                const deleteButton = document.createElement("span")
+
+                deleteButton.className = "kanban-delete-confirm__delete"
+                deleteButton.textContent = "Delete"
+
+                const cleanup = () => {
+                    overlay.remove()
+                }
+
+                const confirmDelete = () => {
+                    const newProjects = immutableSpliceCard({
+                        cardIndex,
+                        deleteCount: 1,
+                        projectIndex,
+                        projects: board.projects,
+                    })
+                    onMutation({ ...board, projects: newProjects })
+                    cleanup()
+                }
+
+                cancelButton.addEventListener("click", cleanup)
+                deleteButton.addEventListener("click", confirmDelete)
+                overlay.addEventListener("click", cleanup)
+                dialog.addEventListener("click", (dialogEvent) => {
+                    dialogEvent.stopPropagation()
                 })
-                onMutation({ ...board, projects: newProjects })
+                dialog.addEventListener("keydown", (keyboardEvent) => {
+                    if (keyboardEvent.key === "Escape") {
+                        cleanup()
+                    }
+                })
+
+                actions.append(cancelButton, deleteButton)
+                dialog.append(label, preview, actions)
+                overlay.append(dialog)
+                document.body.append(overlay)
+                deleteButton.focus()
             })
     })
 
