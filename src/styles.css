@@ -380,6 +380,11 @@
     color: var(--text-on-accent);
 }
 
+.kanban-card__badge--backlog {
+    background: var(--background-modifier-border);
+    color: var(--text-muted);
+}
+
 /* Add card */
 .kanban-add-card {
     flex-shrink: 0;

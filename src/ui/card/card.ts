@@ -163,6 +163,14 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
         metaRow.append(dateBadge)
     }
 
+    if (card.backlog && !projectPill) {
+        const backlogBadge = document.createElement("span")
+
+        backlogBadge.className = "kanban-card__badge kanban-card__badge--backlog"
+        backlogBadge.textContent = "Backlog"
+        metaRow.append(backlogBadge)
+    }
+
     if (metaRow.children.length > 0) {
         cardElement.append(metaRow)
     }
