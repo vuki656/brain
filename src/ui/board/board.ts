@@ -144,29 +144,35 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
             vault,
             viewState,
         })
-        const newTodayList = container.querySelector(".kanban-today")
-        const newProjectsPanel = container.querySelector(".kanban-today-layout__projects")
+        requestAnimationFrame(() => {
+            const newTodayList = container.querySelector(".kanban-today")
+            const newProjectsPanel = container.querySelector(".kanban-today-layout__projects")
 
-        if (newTodayList) {
-            newTodayList.scrollTop = savedTodayScroll
-        }
+            if (newTodayList) {
+                newTodayList.scrollTop = savedTodayScroll
+            }
 
-        if (newProjectsPanel) {
-            newProjectsPanel.scrollTop = savedProjectsPanelScroll
-        }
+            if (newProjectsPanel) {
+                newProjectsPanel.scrollTop = savedProjectsPanelScroll
+            }
 
-        const newHourlyScroll = container.querySelector<HTMLElement>('[data-weather-row="hourly"]')
-        const newDailyScroll = container.querySelector<HTMLElement>('[data-weather-row="daily"]')
+            const newHourlyScroll = container.querySelector<HTMLElement>(
+                '[data-weather-row="hourly"]',
+            )
+            const newDailyScroll = container.querySelector<HTMLElement>(
+                '[data-weather-row="daily"]',
+            )
 
-        if (newHourlyScroll) {
-            newHourlyScroll.scrollLeft = savedHourlyScrollLeft
-        }
+            if (newHourlyScroll) {
+                newHourlyScroll.scrollLeft = savedHourlyScrollLeft
+            }
 
-        if (newDailyScroll) {
-            newDailyScroll.scrollLeft = savedDailyScrollLeft
-        }
+            if (newDailyScroll) {
+                newDailyScroll.scrollLeft = savedDailyScrollLeft
+            }
 
-        container.style.visibility = ""
+            container.style.visibility = ""
+        })
 
         return sortableInstances
     }
@@ -179,13 +185,15 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
         vault,
         viewState,
     })
-    const newBoard = container.querySelector(".kanban-board")
+    requestAnimationFrame(() => {
+        const newBoard = container.querySelector(".kanban-board")
 
-    if (newBoard) {
-        newBoard.scrollLeft = savedScrollLeft
-    }
+        if (newBoard) {
+            newBoard.scrollLeft = savedScrollLeft
+        }
 
-    container.style.visibility = ""
+        container.style.visibility = ""
+    })
 
     return sortableInstances
 }
