@@ -350,6 +350,97 @@
     background: var(--color-red);
 }
 
+/* Subtask progress */
+.kanban-card__subtask-progress {
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+/* Subtasks */
+.kanban-card__subtasks {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+    padding-left: 28px;
+}
+
+.kanban-card__subtask {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+}
+
+.kanban-card__subtask--completed .kanban-card__subtask-title {
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.kanban-card__subtask-checkbox {
+    cursor: pointer;
+    flex-shrink: 0;
+    height: 14px;
+    width: 14px;
+}
+
+.kanban-card__subtask-title {
+    color: var(--text-normal);
+    font-size: 12px;
+    line-height: 18px;
+    word-break: break-word;
+}
+
+.kanban-card__subtask-delete {
+    align-items: center;
+    color: var(--text-faint);
+    cursor: pointer;
+    display: inline-flex;
+    flex-shrink: 0;
+    margin-left: auto;
+    opacity: 0%;
+    transition: opacity 0.15s ease;
+}
+
+.kanban-card__subtask:hover .kanban-card__subtask-delete {
+    opacity: 100%;
+}
+
+.kanban-card__subtask-delete:hover {
+    color: var(--color-red);
+}
+
+.kanban-card__subtask-delete svg {
+    height: 12px;
+    width: 12px;
+}
+
+.kanban-card__add-subtask {
+    color: var(--text-faint);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 0;
+    transition: color 0.15s ease;
+}
+
+.kanban-card__add-subtask:hover {
+    color: var(--text-muted);
+}
+
+.kanban-card__add-subtask-input {
+    background: var(--background-primary);
+    border: 1px solid var(--interactive-accent);
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+    padding: 4px 8px;
+    width: 100%;
+}
+
 /* Card meta (today badge, date) */
 .kanban-card__meta {
     display: flex;

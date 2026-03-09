@@ -1,5 +1,11 @@
 export type PriorityType = "important" | null
 
+export type SubtaskType = {
+    completed: boolean
+    id: string
+    title: string
+}
+
 export type CardType = {
     backlog: boolean
     blockedReason: string | null
@@ -9,6 +15,7 @@ export type CardType = {
     id: string
     linkedNote: string | null
     priority: PriorityType
+    subtasks: SubtaskType[]
     title: string
 }
 

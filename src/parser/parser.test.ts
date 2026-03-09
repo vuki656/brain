@@ -836,7 +836,7 @@ kanban-plugin: vuki-kanban
         expect(board.projects[0].cards[0].description).toBe("Description line")
     })
 
-    it("should stop description at indented checkbox line", () => {
+    it("should treat indented checkbox as subtask, not stop description", () => {
         const markdown = `---
 
 kanban-plugin: vuki-kanban
@@ -846,8 +846,8 @@ kanban-plugin: vuki-kanban
 ## Col
 
 - [ ] Task @id:abc123
+  - [ ] Subtask @id:sub001
   Description here
-  - [ ] Subtask
 - [ ] Other @id:def456
 
 %% kanban:settings
@@ -858,7 +858,328 @@ kanban-plugin: vuki-kanban
 
         const board = parseBoard(markdown)
 
+        expect(board.projects[0].cards[0].subtasks).toHaveLength(1)
+        expect(board.projects[0].cards[0].subtasks[0].title).toBe("Subtask")
         expect(board.projects[0].cards[0].description).toBe("Description here")
+    })
+})
+
+describe("subtasks", () => {
+    it("should parse a single subtask", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [ ] Buy groceries @id:sub001
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.subtasks).toHaveLength(1)
+        expect(card.subtasks[0].title).toBe("Buy groceries")
+        expect(card.subtasks[0].completed).toBe(false)
+        expect(card.subtasks[0].id).toBe("sub001")
+    })
+
+    it("should parse multiple subtasks", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [ ] First subtask @id:sub001
+  - [ ] Second subtask @id:sub002
+  - [ ] Third subtask @id:sub003
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.subtasks).toHaveLength(3)
+        expect(card.subtasks[0].title).toBe("First subtask")
+        expect(card.subtasks[1].title).toBe("Second subtask")
+        expect(card.subtasks[2].title).toBe("Third subtask")
+    })
+
+    it("should parse mixed completed and uncompleted subtasks", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [x] Done subtask @id:sub001
+  - [ ] Pending subtask @id:sub002
+  - [x] Also done @id:sub003
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.subtasks[0].completed).toBe(true)
+        expect(card.subtasks[1].completed).toBe(false)
+        expect(card.subtasks[2].completed).toBe(true)
+    })
+
+    it("should parse subtasks with description coexisting", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [ ] Subtask one @id:sub001
+  - [x] Subtask two @id:sub002
+  Some description text
+  On multiple lines
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.subtasks).toHaveLength(2)
+        expect(card.subtasks[0].title).toBe("Subtask one")
+        expect(card.subtasks[1].title).toBe("Subtask two")
+        expect(card.description).toBe("Some description text\nOn multiple lines")
+    })
+
+    it("should handle subtasks without description", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [ ] Only subtask @id:sub001
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.subtasks).toHaveLength(1)
+        expect(card.description).toBeNull()
+    })
+
+    it("should handle description without subtasks", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  Just a description
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.subtasks).toHaveLength(0)
+        expect(card.description).toBe("Just a description")
+    })
+
+    it("should generate id for subtasks missing @id", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [ ] No id subtask
+  - [ ] Another no id
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.subtasks[0].id).toMatch(/^[\da-z]{6}$/)
+        expect(card.subtasks[1].id).toMatch(/^[\da-z]{6}$/)
+        expect(card.subtasks[0].id).not.toBe(card.subtasks[1].id)
+    })
+
+    it("should keep tokens in subtask text as literal (not parsed as @today etc.)", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [ ] Review @today changes @id:sub001
+  - [ ] Fix !important bug @id:sub002
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.subtasks[0].title).toBe("Review @today changes")
+        expect(card.subtasks[1].title).toBe("Fix !important bug")
+    })
+
+    it("should not double-parse subtasks as top-level cards", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [ ] Subtask one @id:sub001
+  - [x] Subtask two @id:sub002
+- [ ] Second card @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+
+        expect(board.projects[0].cards).toHaveLength(2)
+        expect(board.projects[0].cards[0].title).toBe("Main task")
+        expect(board.projects[0].cards[0].subtasks).toHaveLength(2)
+        expect(board.projects[0].cards[1].title).toBe("Second card")
+        expect(board.projects[0].cards[1].subtasks).toHaveLength(0)
+    })
+
+    it("should round-trip subtasks through parse and serialize", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [ ] Subtask one @id:sub001
+  - [x] Subtask two @id:sub002
+  Description here
+- [x] Completed card @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const serialized = serializeBoard(board)
+        const reparsed = parseBoard(serialized)
+
+        const card = reparsed.projects[0].cards[0]
+
+        expect(card.subtasks).toHaveLength(2)
+        expect(card.subtasks[0].title).toBe("Subtask one")
+        expect(card.subtasks[0].completed).toBe(false)
+        expect(card.subtasks[0].id).toBe("sub001")
+        expect(card.subtasks[1].title).toBe("Subtask two")
+        expect(card.subtasks[1].completed).toBe(true)
+        expect(card.subtasks[1].id).toBe("sub002")
+        expect(card.description).toBe("Description here")
+
+        expect(reparsed.projects[0].cards[1].subtasks).toHaveLength(0)
+
+        const secondSerialize = serializeBoard(reparsed)
+
+        expect(secondSerialize).toBe(serialized)
+    })
+
+    it("should serialize subtasks as indented checkboxes before description", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Main task @id:abc123
+  - [ ] First @id:sub001
+  - [x] Second @id:sub002
+  My description
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const serialized = serializeBoard(board)
+
+        expect(serialized).toContain(
+            "- [ ] Main task @id:abc123\n  - [ ] First @id:sub001\n  - [x] Second @id:sub002\n  My description",
+        )
     })
 })
 
@@ -1092,6 +1413,7 @@ describe("round-trip", () => {
                 expect(reparsedCard.linkedNote).toBe(originalCard.linkedNote)
                 expect(reparsedCard.id).toBe(originalCard.id)
                 expect(reparsedCard.description).toBe(originalCard.description)
+                expect(reparsedCard.subtasks).toEqual(originalCard.subtasks)
             }
         }
 

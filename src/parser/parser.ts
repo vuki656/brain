@@ -1,4 +1,11 @@
-import type { BoardType, CardType, KanbanSettingsType, PriorityType, ProjectType } from "../shared"
+import type {
+    BoardType,
+    CardType,
+    KanbanSettingsType,
+    PriorityType,
+    ProjectType,
+    SubtaskType,
+} from "../shared"
 import { FRONTMATTER_KEY, generateId, toDateString } from "../shared"
 
 const TODAY_REGEX = /\s@today/g
@@ -104,6 +111,7 @@ function parseCard(line: string): CardType | null {
         id: id ?? generateId(),
         linkedNote,
         priority,
+        subtasks: [],
         title: text.trim(),
     }
 }
@@ -193,8 +201,49 @@ function parseSettings(lines: string[]): KanbanSettingsType {
     }
 }
 
-function collectDescription(lines: string[], cardLineIndex: number): string | null {
+const SUBTASK_CHECKBOX_REGEX = /^- \[([ x])] (.+)$/
+
+function parseSubtask(line: string): SubtaskType {
+    const match = SUBTASK_CHECKBOX_REGEX.exec(line)
+
+    if (!match) {
+        return { completed: false, id: generateId(), title: line }
+    }
+
+    const completed = match[1] === "x"
+    let text = match[2] ?? ""
+
+    const idMatch = ID_REGEX.exec(text)
+    let id: string | null = null
+
+    if (idMatch) {
+        id = idMatch[1] ?? null
+        text = text.replace(ID_REGEX, "")
+    }
+
+    ID_REGEX.lastIndex = 0
+
+    return {
+        completed,
+        id: id ?? generateId(),
+        title: text.trim(),
+    }
+}
+
+type SubtasksAndDescriptionType = {
+    description: string | null
+    linesConsumed: number
+    subtasks: SubtaskType[]
+}
+
+function collectSubtasksAndDescription(
+    lines: string[],
+    cardLineIndex: number,
+): SubtasksAndDescriptionType {
+    const subtasks: SubtaskType[] = []
     const descriptionLines: string[] = []
+    let linesConsumed = 0
+    let pastSubtasks = false
 
     for (let nextIndex = cardLineIndex + 1; nextIndex < lines.length; nextIndex++) {
         const nextLine = lines[nextIndex]
@@ -209,10 +258,6 @@ function collectDescription(lines: string[], cardLineIndex: number): string | nu
 
         const nextTrimmed = nextLine.trim()
 
-        if (nextTrimmed.startsWith("- [ ] ") || nextTrimmed.startsWith("- [x] ")) {
-            break
-        }
-
         if (PROJECT_HEADING_REGEX.test(nextTrimmed)) {
             break
         }
@@ -221,10 +266,30 @@ function collectDescription(lines: string[], cardLineIndex: number): string | nu
             break
         }
 
+        if (
+            !pastSubtasks &&
+            (nextTrimmed.startsWith("- [ ] ") || nextTrimmed.startsWith("- [x] "))
+        ) {
+            subtasks.push(parseSubtask(nextTrimmed))
+            linesConsumed++
+            continue
+        }
+
+        pastSubtasks = true
+
+        if (nextTrimmed.startsWith("- [ ] ") || nextTrimmed.startsWith("- [x] ")) {
+            break
+        }
+
         descriptionLines.push(nextTrimmed)
+        linesConsumed++
     }
 
-    return descriptionLines.length > 0 ? descriptionLines.join("\n") : null
+    return {
+        description: descriptionLines.length > 0 ? descriptionLines.join("\n") : null,
+        linesConsumed,
+        subtasks,
+    }
 }
 
 function serializeCard(card: CardType): string {
@@ -306,7 +371,15 @@ export function parseBoard(markdown: string): BoardType {
             const card = parseCard(trimmed)
 
             if (card) {
-                card.description = collectDescription(lines, lineIndex)
+                const { description, linesConsumed, subtasks } = collectSubtasksAndDescription(
+                    lines,
+                    lineIndex,
+                )
+
+                card.description = description
+                card.subtasks = subtasks
+                lineIndex = lineIndex + linesConsumed // eslint-disable-line sonarjs/updated-loop-counter -- must skip consumed subtask/description lines
+
                 currentProject.cards.push(card)
             }
         }
@@ -325,6 +398,12 @@ export function serializeBoard(board: BoardType): string {
 
         for (const card of project.cards) {
             lines.push(serializeCard(card))
+
+            for (const subtask of card.subtasks) {
+                const subtaskCheckbox = subtask.completed ? "- [x] " : "- [ ] "
+
+                lines.push(`  ${subtaskCheckbox}${subtask.title} @id:${subtask.id}`)
+            }
 
             if (card.description) {
                 const indentedLines = card.description.split("\n").map((descriptionLine) => {

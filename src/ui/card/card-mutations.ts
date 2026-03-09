@@ -1,4 +1,4 @@
-import type { CardType, ProjectType } from "../../shared"
+import type { CardType, ProjectType, SubtaskType } from "../../shared"
 
 type SpliceCardOptionsType = {
     cardIndex: number
@@ -27,6 +27,29 @@ export function immutableSpliceCard(options: SpliceCardOptionsType): ProjectType
         newCards.splice(cardIndex, deleteCount, ...insertCards)
 
         return { ...project, cards: newCards }
+    })
+}
+
+export function immutableToggleSubtask(subtasks: SubtaskType[], subtaskId: string): SubtaskType[] {
+    return subtasks.map((subtask) => {
+        if (subtask.id !== subtaskId) {
+            return subtask
+        }
+
+        return { ...subtask, completed: !subtask.completed }
+    })
+}
+
+export function immutableAddSubtask(
+    subtasks: SubtaskType[],
+    newSubtask: SubtaskType,
+): SubtaskType[] {
+    return [...subtasks, newSubtask]
+}
+
+export function immutableDeleteSubtask(subtasks: SubtaskType[], subtaskId: string): SubtaskType[] {
+    return subtasks.filter((subtask) => {
+        return subtask.id !== subtaskId
     })
 }
 

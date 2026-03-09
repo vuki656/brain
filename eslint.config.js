@@ -20,4 +20,10 @@ export default [
             packageJson(),
         ],
     }),
+    {
+        files: ["**/*.test.ts"],
+        rules: {
+            "sonarjs/max-lines": "off",
+        },
+    },
 ]

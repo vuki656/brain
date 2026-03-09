@@ -391,6 +391,7 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
                 id: generateId(),
                 linkedNote: null,
                 priority: selectedPriority,
+                subtasks: [],
                 title,
             }
             const newProjects = immutableSpliceCard({

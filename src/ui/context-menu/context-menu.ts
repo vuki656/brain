@@ -1,8 +1,9 @@
 import { nextMonday, startOfTomorrow } from "date-fns"
 import { Menu, Notice, TFile } from "obsidian"
 
-import { toDateString } from "../../shared"
-import { immutableSpliceCard, immutableUpdateCard } from "../card"
+import type { SubtaskType } from "../../shared"
+import { generateId, toDateString } from "../../shared"
+import { immutableAddSubtask, immutableSpliceCard, immutableUpdateCard } from "../card"
 import { showDatePicker } from "../date-picker"
 import { openQuickAddDialog } from "../quick-add"
 import type { CardContextMenuOptionsType, PriorityMenuOptionsType } from "./context-menu.types"
@@ -125,6 +126,87 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                     editContext: { card, cardIndex, projectIndex },
                     onMutation,
                 })
+            })
+    })
+
+    menu.addItem((item) => {
+        return item
+            .setIcon("list-checks")
+            .setTitle("Add subtask")
+            .onClick(() => {
+                const subtaskInput = document.createElement("input")
+
+                subtaskInput.type = "text"
+                subtaskInput.placeholder = "Subtask title..."
+                subtaskInput.className = "kanban-blocked-reason-prompt"
+
+                const promptOverlay = document.createElement("div")
+
+                promptOverlay.className = "kanban-blocked-reason-overlay"
+
+                const promptDialog = document.createElement("div")
+
+                promptDialog.className = "kanban-blocked-reason-dialog"
+
+                const promptLabel = document.createElement("div")
+
+                promptLabel.className = "kanban-blocked-reason-dialog__label"
+                promptLabel.textContent = "Add subtask"
+
+                const promptSubmit = document.createElement("span")
+
+                promptSubmit.className = "kanban-quick-add__submit"
+                promptSubmit.textContent = "Add"
+
+                const cleanup = () => {
+                    promptOverlay.remove()
+                }
+
+                const submit = () => {
+                    const title = subtaskInput.value.trim()
+
+                    if (!title) {
+                        subtaskInput.focus()
+
+                        return
+                    }
+
+                    const newSubtask: SubtaskType = {
+                        completed: false,
+                        id: generateId(),
+                        title,
+                    }
+                    const newSubtasks = immutableAddSubtask(card.subtasks, newSubtask)
+                    const newProjects = immutableUpdateCard({
+                        cardIndex,
+                        projectIndex,
+                        projects: board.projects,
+                        update: { subtasks: newSubtasks },
+                    })
+                    onMutation({ ...board, projects: newProjects })
+                    cleanup()
+                }
+
+                promptSubmit.addEventListener("click", submit)
+                subtaskInput.addEventListener("keydown", (keyboardEvent) => {
+                    if (keyboardEvent.key === "Enter") {
+                        keyboardEvent.preventDefault()
+                        submit()
+                    }
+
+                    if (keyboardEvent.key === "Escape") {
+                        cleanup()
+                    }
+                })
+                promptOverlay.addEventListener("click", cleanup)
+                promptDialog.addEventListener("click", (dialogEvent) => {
+                    dialogEvent.stopPropagation()
+                })
+
+                promptDialog.append(promptLabel, subtaskInput, promptSubmit)
+                promptOverlay.append(promptDialog)
+                document.body.append(promptOverlay)
+                subtaskInput.focus()
             })
     })
 

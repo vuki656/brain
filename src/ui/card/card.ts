@@ -1,11 +1,17 @@
 import { setIcon, TFile } from "obsidian"
 
-import type { BoardType, CardType } from "../../shared"
+import type { BoardType, CardType, SubtaskType } from "../../shared"
 import { formatDate, generateId, getDayDifference, toDateString } from "../../shared"
 import { showCardContextMenu, showPriorityMenu } from "../context-menu"
 import { startInlineEdit } from "../inline-edit"
 import type { CardElementOptionsType } from "./card.types"
-import { immutableSpliceCard, immutableUpdateCard } from "./card-mutations"
+import {
+    immutableAddSubtask,
+    immutableDeleteSubtask,
+    immutableSpliceCard,
+    immutableToggleSubtask,
+    immutableUpdateCard,
+} from "./card-mutations"
 
 type MutationHandlerType = (board: BoardType) => void
 
@@ -112,8 +118,132 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
         })
     })
 
-    cardContent.append(priorityButton)
+    if (card.subtasks.length > 0) {
+        const progressCounter = document.createElement("span")
+        const completedCount = card.subtasks.filter((subtask) => {
+            return subtask.completed
+        }).length
+
+        progressCounter.className = "kanban-card__subtask-progress"
+        progressCounter.textContent = `${completedCount}/${card.subtasks.length}`
+        cardContent.append(priorityButton, progressCounter)
+    } else {
+        cardContent.append(priorityButton)
+    }
+
     cardElement.append(cardContent)
+
+    if (card.subtasks.length > 0) {
+        const subtasksContainer = document.createElement("div")
+
+        subtasksContainer.className = "kanban-card__subtasks"
+
+        for (const subtask of card.subtasks) {
+            const subtaskElement = document.createElement("div")
+
+            subtaskElement.className = "kanban-card__subtask"
+
+            if (subtask.completed) {
+                subtaskElement.classList.add("kanban-card__subtask--completed")
+            }
+
+            const subtaskCheckbox = document.createElement("input")
+
+            subtaskCheckbox.type = "checkbox"
+            subtaskCheckbox.className = "kanban-card__subtask-checkbox task-list-item-checkbox"
+            subtaskCheckbox.checked = subtask.completed
+            subtaskCheckbox.addEventListener("change", () => {
+                const newSubtasks = immutableToggleSubtask(card.subtasks, subtask.id)
+                const newProjects = immutableUpdateCard({
+                    cardIndex,
+                    projectIndex,
+                    projects: board.projects,
+                    update: { subtasks: newSubtasks },
+                })
+                onMutation({ ...board, projects: newProjects })
+            })
+
+            const subtaskTitle = document.createElement("span")
+
+            subtaskTitle.className = "kanban-card__subtask-title"
+            subtaskTitle.textContent = subtask.title
+
+            const subtaskDelete = document.createElement("span")
+
+            subtaskDelete.className = "kanban-card__subtask-delete"
+            setIcon(subtaskDelete, "x")
+            subtaskDelete.addEventListener("click", (deleteEvent) => {
+                deleteEvent.stopPropagation()
+                const newSubtasks = immutableDeleteSubtask(card.subtasks, subtask.id)
+                const newProjects = immutableUpdateCard({
+                    cardIndex,
+                    projectIndex,
+                    projects: board.projects,
+                    update: { subtasks: newSubtasks },
+                })
+                onMutation({ ...board, projects: newProjects })
+            })
+
+            subtaskElement.append(subtaskCheckbox, subtaskTitle, subtaskDelete)
+            subtasksContainer.append(subtaskElement)
+        }
+
+        const addSubtaskButton = document.createElement("span")
+
+        addSubtaskButton.className = "kanban-card__add-subtask"
+        addSubtaskButton.textContent = "+ Add subtask"
+        addSubtaskButton.addEventListener("click", (addEvent) => {
+            addEvent.stopPropagation()
+            addSubtaskButton.style.display = "none"
+
+            const subtaskInput = document.createElement("input")
+
+            subtaskInput.type = "text"
+            subtaskInput.className = "kanban-card__add-subtask-input"
+            subtaskInput.placeholder = "Subtask title..."
+            subtasksContainer.append(subtaskInput)
+            subtaskInput.focus()
+
+            const confirmSubtask = () => {
+                const subtaskText = subtaskInput.value.trim()
+
+                if (subtaskText) {
+                    const newSubtask: SubtaskType = {
+                        completed: false,
+                        id: generateId(),
+                        title: subtaskText,
+                    }
+                    const newSubtasks = immutableAddSubtask(card.subtasks, newSubtask)
+                    const newProjects = immutableUpdateCard({
+                        cardIndex,
+                        projectIndex,
+                        projects: board.projects,
+                        update: { subtasks: newSubtasks },
+                    })
+                    onMutation({ ...board, projects: newProjects })
+                }
+
+                subtaskInput.remove()
+                addSubtaskButton.style.display = ""
+            }
+
+            subtaskInput.addEventListener("blur", confirmSubtask)
+            subtaskInput.addEventListener("keydown", (keyboardEvent) => {
+                if (keyboardEvent.key === "Enter") {
+                    keyboardEvent.preventDefault()
+                    subtaskInput.blur()
+                }
+
+                if (keyboardEvent.key === "Escape") {
+                    subtaskInput.remove()
+                    addSubtaskButton.style.display = ""
+                }
+            })
+        })
+
+        subtasksContainer.append(addSubtaskButton)
+        cardElement.append(subtasksContainer)
+    }
 
     if (card.description) {
         const descriptionElement = document.createElement("div")
@@ -252,6 +382,7 @@ export function createAddCardForm(
                     id: generateId(),
                     linkedNote: null,
                     priority: null,
+                    subtasks: [],
                     title: text,
                 }
                 const newProjects = immutableSpliceCard({

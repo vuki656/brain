@@ -1,7 +1,13 @@
 import { describe, expect, it } from "bun:test"
 
-import { makeCard, makeProjects } from "../../shared/test-utils"
-import { immutableSpliceCard, immutableUpdateCard } from "./card-mutations"
+import { makeCard, makeProjects, makeSubtask } from "../../shared/test-utils"
+import {
+    immutableAddSubtask,
+    immutableDeleteSubtask,
+    immutableSpliceCard,
+    immutableToggleSubtask,
+    immutableUpdateCard,
+} from "./card-mutations"
 
 describe("immutableSpliceCard", () => {
     it("should remove a card without mutating the original", () => {
@@ -207,5 +213,74 @@ describe("immutableUpdateCard", () => {
         expect(result[1].cards[0].completed).toBe(false)
         expect(projects[1].cards[0].completed).toBe(true)
         expect(result[0]).toBe(projects[0])
+    })
+})
+
+describe("immutableToggleSubtask", () => {
+    it("should toggle a subtask from uncompleted to completed", () => {
+        const subtasks = [makeSubtask({ id: "sub1" }), makeSubtask({ id: "sub2" })]
+        const result = immutableToggleSubtask(subtasks, "sub1")
+
+        expect(result[0].completed).toBe(true)
+        expect(result[1].completed).toBe(false)
+    })
+
+    it("should toggle a subtask from completed to uncompleted", () => {
+        const subtasks = [makeSubtask({ completed: true, id: "sub1" })]
+        const result = immutableToggleSubtask(subtasks, "sub1")
+
+        expect(result[0].completed).toBe(false)
+    })
+
+    it("should not mutate the original array", () => {
+        const subtasks = [makeSubtask({ id: "sub1" })]
+        const result = immutableToggleSubtask(subtasks, "sub1")
+
+        expect(subtasks[0].completed).toBe(false)
+        expect(result[0].completed).toBe(true)
+    })
+})
+
+describe("immutableAddSubtask", () => {
+    it("should append a new subtask to the end", () => {
+        const subtasks = [makeSubtask({ id: "sub1" })]
+        const newSubtask = makeSubtask({ id: "sub2", title: "New subtask" })
+        const result = immutableAddSubtask(subtasks, newSubtask)
+
+        expect(result).toHaveLength(2)
+        expect(result[1].id).toBe("sub2")
+        expect(result[1].title).toBe("New subtask")
+    })
+
+    it("should not mutate the original array", () => {
+        const subtasks = [makeSubtask({ id: "sub1" })]
+        const newSubtask = makeSubtask({ id: "sub2" })
+
+        immutableAddSubtask(subtasks, newSubtask)
+
+        expect(subtasks).toHaveLength(1)
+    })
+})
+
+describe("immutableDeleteSubtask", () => {
+    it("should remove the subtask with matching id", () => {
+        const subtasks = [
+            makeSubtask({ id: "sub1" }),
+            makeSubtask({ id: "sub2" }),
+            makeSubtask({ id: "sub3" }),
+        ]
+        const result = immutableDeleteSubtask(subtasks, "sub2")
+
+        expect(result).toHaveLength(2)
+        expect(result[0].id).toBe("sub1")
+        expect(result[1].id).toBe("sub3")
+    })
+
+    it("should not mutate the original array", () => {
+        const subtasks = [makeSubtask({ id: "sub1" }), makeSubtask({ id: "sub2" })]
+
+        immutableDeleteSubtask(subtasks, "sub1")
+
+        expect(subtasks).toHaveLength(2)
     })
 })

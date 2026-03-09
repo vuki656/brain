@@ -1,10 +1,18 @@
-import type { BoardType, CardType, KanbanSettingsType, ProjectType } from "./types"
+import type { BoardType, CardType, KanbanSettingsType, ProjectType, SubtaskType } from "./types"
 
 type MakeTodayCardOptionsType = {
     card?: Partial<CardType>
     cardIndex?: number
     projectIndex?: number
     projectTitle?: string
+}
+
+export function makeSubtask(overrides: Partial<SubtaskType> = {}): SubtaskType {
+    return {
+        completed: overrides.completed ?? false,
+        id: overrides.id ?? "sub123",
+        title: overrides.title ?? "Test subtask",
+    }
 }
 
 export function makeCard(overrides: Partial<CardType> = {}): CardType {
@@ -17,6 +25,7 @@ export function makeCard(overrides: Partial<CardType> = {}): CardType {
         id: overrides.id ?? "abc123",
         linkedNote: overrides.linkedNote ?? null,
         priority: overrides.priority ?? null,
+        subtasks: overrides.subtasks ?? [],
         title: overrides.title ?? "Test card",
     }
 }
