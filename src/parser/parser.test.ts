@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- test file with comprehensive parser coverage */
 import { describe, expect, it } from "bun:test"
 
 import { generateId, toDateString } from "../shared"
@@ -1084,6 +1085,7 @@ describe("round-trip", () => {
 
                 expect(reparsedCard.title).toBe(originalCard.title)
                 expect(reparsedCard.completed).toBe(originalCard.completed)
+                expect(reparsedCard.backlog).toBe(originalCard.backlog)
                 expect(reparsedCard.priority).toBe(originalCard.priority)
                 expect(reparsedCard.blockedReason).toBe(originalCard.blockedReason)
                 expect(reparsedCard.date).toBe(originalCard.date)
@@ -1102,5 +1104,162 @@ describe("round-trip", () => {
         const secondSerialize = serializeBoard(parseBoard(firstSerialize))
 
         expect(secondSerialize).toBe(firstSerialize)
+    })
+})
+
+describe("backlog", () => {
+    it("should parse card with @backlog token", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Refactor authentication module @backlog @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.backlog).toBe(true)
+        expect(card.title).toBe("Refactor authentication module")
+    })
+
+    it("should parse card without @backlog as false", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Regular task @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+
+        expect(board.projects[0].cards[0].backlog).toBe(false)
+    })
+
+    it("should parse card with @backlog combined with other tokens", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Important backlog item @backlog !important @today @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.backlog).toBe(true)
+        expect(card.priority).toBe("important")
+        expect(card.date).toBe(TODAY_STRING)
+        expect(card.title).toBe("Important backlog item")
+    })
+
+    it("should round-trip backlog cards through parse and serialize", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Backlog task @backlog @id:abc123
+- [ ] Normal task @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const serialized = serializeBoard(board)
+        const reparsed = parseBoard(serialized)
+
+        expect(reparsed.projects[0].cards[0].backlog).toBe(true)
+        expect(reparsed.projects[0].cards[1].backlog).toBe(false)
+
+        const secondSerialize = serializeBoard(reparsed)
+
+        expect(secondSerialize).toBe(serialized)
+    })
+
+    it("should round-trip backlog card with no date", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Unscheduled backlog task @backlog @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.backlog).toBe(true)
+        expect(card.date).toBeNull()
+
+        const serialized = serializeBoard(board)
+        const reparsed = parseBoard(serialized)
+
+        expect(reparsed.projects[0].cards[0].backlog).toBe(true)
+        expect(reparsed.projects[0].cards[0].date).toBeNull()
+    })
+
+    it("should serialize @backlog token before @id", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Backlog task @backlog @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const serialized = serializeBoard(board)
+
+        expect(serialized).toContain("- [ ] Backlog task @backlog @id:abc123")
     })
 })

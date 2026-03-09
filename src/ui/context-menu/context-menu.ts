@@ -83,6 +83,38 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
         })
     }
 
+    if (card.backlog) {
+        menu.addItem((item) => {
+            return item
+                .setIcon("inbox")
+                .setTitle("Remove from backlog")
+                .onClick(() => {
+                    const newProjects = immutableUpdateCard({
+                        cardIndex,
+                        projectIndex,
+                        projects: board.projects,
+                        update: { backlog: false },
+                    })
+                    onMutation({ ...board, projects: newProjects })
+                })
+        })
+    } else {
+        menu.addItem((item) => {
+            return item
+                .setIcon("archive")
+                .setTitle("Add to backlog")
+                .onClick(() => {
+                    const newProjects = immutableUpdateCard({
+                        cardIndex,
+                        projectIndex,
+                        projects: board.projects,
+                        update: { backlog: true, date: null },
+                    })
+                    onMutation({ ...board, projects: newProjects })
+                })
+        })
+    }
+
     menu.addItem((item) => {
         return item
             .setIcon("pencil")

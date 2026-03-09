@@ -9,6 +9,7 @@ type MakeTodayCardOptionsType = {
 
 export function makeCard(overrides: Partial<CardType> = {}): CardType {
     return {
+        backlog: overrides.backlog ?? false,
         blockedReason: overrides.blockedReason ?? null,
         completed: overrides.completed ?? false,
         date: overrides.date ?? null,

@@ -267,7 +267,11 @@ describe("collectCardsByDateGroup", () => {
 
         const groups = collectCardsByDateGroup(board)
         const futureGroups = groups.filter((group) => {
-            return group.dateKey !== "today" && group.dateKey !== "overdue"
+            return (
+                group.dateKey !== "today" &&
+                group.dateKey !== "overdue" &&
+                group.dateKey !== "backlog"
+            )
         })
 
         expect(futureGroups).toHaveLength(2)

@@ -383,6 +383,7 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
                     : null
 
             const newCard: CardType = {
+                backlog: false,
                 blockedReason: newBlockedReasonValue,
                 completed: false,
                 date: selectedDate,

@@ -1,6 +1,7 @@
 // eslint-disable-next-line import-x/no-named-as-default -- SortableJS exports Sortable as both default and named
 import Sortable, { type SortableEvent } from "sortablejs"
 
+import type { CardType } from "../../shared"
 import { createCardElement, immutableUpdateCard } from "../card"
 import { createProjectElement, getProjectColor, getProjectIcon } from "../project"
 import { openQuickAddDialog } from "../quick-add"
@@ -31,6 +32,10 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
 
         if (group.dateKey === "overdue") {
             section.classList.add("kanban-today__section--overdue")
+        }
+
+        if (group.dateKey === "backlog") {
+            section.classList.add("kanban-today__section--backlog")
         }
 
         const header = document.createElement("div")
@@ -64,7 +69,7 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
             header.append(subtitleSpan)
         }
 
-        if (group.dateKey !== "overdue") {
+        if (group.dateKey !== "overdue" && group.dateKey !== "backlog") {
             const addButton = document.createElement("span")
 
             addButton.className = "kanban-today__add-button"
@@ -111,7 +116,8 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
             const emptyMessage = document.createElement("div")
 
             emptyMessage.className = "kanban-today__empty"
-            emptyMessage.textContent = "No tasks for today"
+            emptyMessage.textContent =
+                group.dateKey === "backlog" ? "No backlog tasks" : "No tasks for today"
             cardListElement.append(emptyMessage)
         }
 
@@ -180,14 +186,37 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
                 const movedProjectIndex = Number(sortableEvent.item.dataset.projectIndex)
 
                 if (cardId && targetDateKey && sourceDateKey !== targetDateKey) {
+                    if (targetDateKey === "backlog") {
+                        const newProjects = immutableUpdateCard({
+                            cardIndex: movedCardIndex,
+                            projectIndex: movedProjectIndex,
+                            projects: board.projects,
+                            update: { backlog: true, date: null },
+                        })
+
+                        const newTodayOrder = collectTodayOrderFromSections(sectionCardLists)
+
+                        onMutation({
+                            ...board,
+                            projects: newProjects,
+                            settings: { ...board.settings, todayOrder: newTodayOrder },
+                        })
+
+                        return
+                    }
+
                     const targetDate = getDateForSection(targetDateKey)
+                    const update: Partial<CardType> =
+                        sourceDateKey === "backlog"
+                            ? { backlog: false, date: targetDate }
+                            : { date: targetDate }
 
                     if (targetDate) {
                         const newProjects = immutableUpdateCard({
                             cardIndex: movedCardIndex,
                             projectIndex: movedProjectIndex,
                             projects: board.projects,
-                            update: { date: targetDate },
+                            update,
                         })
 
                         const newTodayOrder = collectTodayOrderFromSections(sectionCardLists)

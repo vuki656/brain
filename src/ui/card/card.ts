@@ -236,6 +236,7 @@ export function createAddCardForm(
 
             if (text) {
                 const newCard: CardType = {
+                    backlog: false,
                     blockedReason: null,
                     completed: false,
                     date: null,

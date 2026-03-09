@@ -5,6 +5,7 @@ const TODAY_REGEX = /\s@today/g
 const DATE_REGEX = /\s@{(\d{4}-\d{2}-\d{2})}/g
 const PRIORITY_IMPORTANT_REGEX = /\s!important/g
 const BLOCKED_REGEX = /\s!blocked\(([^)]+)\)/g
+const BACKLOG_REGEX = /\s@backlog/g
 
 const LINKED_NOTE_REGEX = /(?:^|\s)\[\[(.+?)]]/g
 const ID_REGEX = /\s@id:([\da-z]+)/g
@@ -24,6 +25,7 @@ function parseCard(line: string): CardType | null {
 
     let text = line.replace(CHECKBOX_CHECKED_REGEX, "").replace(CHECKBOX_UNCHECKED_REGEX, "")
 
+    let backlog = false
     let priority: PriorityType = null
     let blockedReason: string | null = null
     let date: string | null = null
@@ -75,6 +77,15 @@ function parseCard(line: string): CardType | null {
 
     BLOCKED_REGEX.lastIndex = 0
 
+    const backlogMatch = BACKLOG_REGEX.exec(text)
+
+    if (backlogMatch) {
+        backlog = true
+        text = text.replace(BACKLOG_REGEX, "")
+    }
+
+    BACKLOG_REGEX.lastIndex = 0
+
     const linkedNoteMatch = LINKED_NOTE_REGEX.exec(text)
 
     if (linkedNoteMatch) {
@@ -85,6 +96,7 @@ function parseCard(line: string): CardType | null {
     LINKED_NOTE_REGEX.lastIndex = 0
 
     return {
+        backlog,
         blockedReason,
         completed: isChecked,
         date,
@@ -237,6 +249,10 @@ function serializeCard(card: CardType): string {
 
     if (card.date && !isToday) {
         line = `${line} @{${card.date}}`
+    }
+
+    if (card.backlog) {
+        line = `${line} @backlog`
     }
 
     line = `${line} @id:${card.id}`

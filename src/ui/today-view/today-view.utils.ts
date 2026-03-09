@@ -11,6 +11,10 @@ function isCardVisibleInTodayFilter(card: CardType): boolean {
         return true
     }
 
+    if (card.backlog) {
+        return true
+    }
+
     return false
 }
 
@@ -54,7 +58,7 @@ function formatDateGroupLabel(dateString: string): string {
 }
 
 function formatDateGroupSubtitle(dateKey: string): string {
-    if (dateKey === "today" || dateKey === "overdue") {
+    if (dateKey === "today" || dateKey === "overdue" || dateKey === "backlog") {
         return ""
     }
 
@@ -87,6 +91,7 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
     const todayString = toDateString(new Date())
     const overdueCards: TodayCardType[] = []
     const todayCards: TodayCardType[] = []
+    const backlogCards: TodayCardType[] = []
     const futureBuckets = new Map<string, TodayCardType[]>()
 
     for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
@@ -111,10 +116,6 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
                 continue
             }
 
-            if (!card.date) {
-                continue
-            }
-
             const todayCard: TodayCardType = {
                 card,
                 cardIndex,
@@ -122,19 +123,36 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
                 projectTitle: project.title,
             }
 
+            if (card.backlog) {
+                backlogCards.push(todayCard)
+
+                continue
+            }
+
+            if (!card.date) {
+                continue
+            }
+
+            const todayCardWithDate: TodayCardType = {
+                card,
+                cardIndex,
+                projectIndex,
+                projectTitle: project.title,
+            }
+
             if (card.date.localeCompare(todayString) < 0) {
-                overdueCards.push(todayCard)
+                overdueCards.push(todayCardWithDate)
 
                 continue
             }
 
             if (card.date === todayString) {
-                todayCards.push(todayCard)
+                todayCards.push(todayCardWithDate)
 
                 continue
             }
 
-            addCardToFutureBucket(futureBuckets, card.date, todayCard)
+            addCardToFutureBucket(futureBuckets, card.date, todayCardWithDate)
         }
     }
 
@@ -173,6 +191,12 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
         })
     }
 
+    groups.push({
+        cards: sortCardsByOrder(backlogCards, savedOrder.backlog ?? []),
+        dateKey: "backlog",
+        label: "Backlog",
+    })
+
     return groups
 }
 
@@ -181,7 +205,7 @@ function getDateForSection(dateKey: string): string | null {
         return toDateString(new Date())
     }
 
-    if (dateKey === "overdue") {
+    if (dateKey === "overdue" || dateKey === "backlog") {
         return null
     }
 
