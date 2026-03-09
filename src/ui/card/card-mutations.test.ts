@@ -4,6 +4,7 @@ import { makeCard, makeProjects, makeSubtask } from "../../shared/test-utils"
 import {
     immutableAddSubtask,
     immutableDeleteSubtask,
+    immutableEditSubtask,
     immutableSpliceCard,
     immutableToggleSubtask,
     immutableUpdateCard,
@@ -259,6 +260,35 @@ describe("immutableAddSubtask", () => {
         immutableAddSubtask(subtasks, newSubtask)
 
         expect(subtasks).toHaveLength(1)
+    })
+})
+
+describe("immutableEditSubtask", () => {
+    it("should update the title of the matching subtask", () => {
+        const subtasks = [
+            makeSubtask({ id: "sub1", title: "Original" }),
+            makeSubtask({ id: "sub2", title: "Unchanged" }),
+        ]
+        const result = immutableEditSubtask(subtasks, "sub1", "Updated title")
+
+        expect(result[0].title).toBe("Updated title")
+        expect(result[1].title).toBe("Unchanged")
+    })
+
+    it("should not mutate the original array", () => {
+        const subtasks = [makeSubtask({ id: "sub1", title: "Original" })]
+
+        immutableEditSubtask(subtasks, "sub1", "Changed")
+
+        expect(subtasks[0].title).toBe("Original")
+    })
+
+    it("should preserve other properties of the subtask", () => {
+        const subtasks = [makeSubtask({ completed: true, id: "sub1", title: "Original" })]
+        const result = immutableEditSubtask(subtasks, "sub1", "Changed")
+
+        expect(result[0].completed).toBe(true)
+        expect(result[0].id).toBe("sub1")
     })
 })
 

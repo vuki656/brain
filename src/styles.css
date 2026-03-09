@@ -393,25 +393,35 @@
     word-break: break-word;
 }
 
+.kanban-card__subtask-edit,
 .kanban-card__subtask-delete {
     align-items: center;
     color: var(--text-faint);
     cursor: pointer;
     display: inline-flex;
     flex-shrink: 0;
-    margin-left: auto;
     opacity: 0%;
     transition: opacity 0.15s ease;
 }
 
+.kanban-card__subtask-edit {
+    margin-left: auto;
+}
+
+.kanban-card__subtask:hover .kanban-card__subtask-edit,
 .kanban-card__subtask:hover .kanban-card__subtask-delete {
     opacity: 100%;
+}
+
+.kanban-card__subtask-edit:hover {
+    color: var(--interactive-accent);
 }
 
 .kanban-card__subtask-delete:hover {
     color: var(--color-red);
 }
 
+.kanban-card__subtask-edit svg,
 .kanban-card__subtask-delete svg {
     height: 12px;
     width: 12px;

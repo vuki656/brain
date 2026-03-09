@@ -53,6 +53,20 @@ export function immutableDeleteSubtask(subtasks: SubtaskType[], subtaskId: strin
     })
 }
 
+export function immutableEditSubtask(
+    subtasks: SubtaskType[],
+    subtaskId: string,
+    newTitle: string,
+): SubtaskType[] {
+    return subtasks.map((subtask) => {
+        if (subtask.id !== subtaskId) {
+            return subtask
+        }
+
+        return { ...subtask, title: newTitle }
+    })
+}
+
 export function immutableUpdateCard(options: UpdateCardOptionsType): ProjectType[] {
     const { cardIndex, projectIndex, projects, update } = options
 

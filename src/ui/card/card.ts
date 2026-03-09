@@ -8,6 +8,7 @@ import type { CardElementOptionsType } from "./card.types"
 import {
     immutableAddSubtask,
     immutableDeleteSubtask,
+    immutableEditSubtask,
     immutableSpliceCard,
     immutableToggleSubtask,
     immutableUpdateCard,
@@ -168,6 +169,24 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
             subtaskTitle.className = "kanban-card__subtask-title"
             subtaskTitle.textContent = subtask.title
 
+            const subtaskEdit = document.createElement("span")
+
+            subtaskEdit.className = "kanban-card__subtask-edit"
+            setIcon(subtaskEdit, "pencil")
+            subtaskEdit.addEventListener("click", (editEvent) => {
+                editEvent.stopPropagation()
+                startInlineEdit(subtaskTitle, subtask.title, (newTitle) => {
+                    const newSubtasks = immutableEditSubtask(card.subtasks, subtask.id, newTitle)
+                    const newProjects = immutableUpdateCard({
+                        cardIndex,
+                        projectIndex,
+                        projects: board.projects,
+                        update: { subtasks: newSubtasks },
+                    })
+                    onMutation({ ...board, projects: newProjects })
+                })
+            })
+
             const subtaskDelete = document.createElement("span")
 
             subtaskDelete.className = "kanban-card__subtask-delete"
@@ -184,7 +203,7 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
                 onMutation({ ...board, projects: newProjects })
             })
 
-            subtaskElement.append(subtaskCheckbox, subtaskTitle, subtaskDelete)
+            subtaskElement.append(subtaskCheckbox, subtaskTitle, subtaskEdit, subtaskDelete)
             subtasksContainer.append(subtaskElement)
         }
 
