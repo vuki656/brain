@@ -127,7 +127,7 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
 
         progressCounter.className = "kanban-card__subtask-progress"
         progressCounter.textContent = `${completedCount}/${card.subtasks.length}`
-        cardContent.append(priorityButton, progressCounter)
+        cardContent.append(progressCounter, priorityButton)
     } else {
         cardContent.append(priorityButton)
     }
