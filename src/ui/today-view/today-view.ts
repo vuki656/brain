@@ -15,9 +15,56 @@ import {
     getDateForSection,
 } from "./today-view.utils"
 
+function isTodayOrderChanged(
+    current: Partial<Record<string, string[]>>,
+    cleaned: Record<string, string[]>,
+): boolean {
+    const currentKeys = Object.keys(current).sort((first, second) => {
+        return first.localeCompare(second)
+    })
+    const cleanedKeys = Object.keys(cleaned).sort((first, second) => {
+        return first.localeCompare(second)
+    })
+
+    if (currentKeys.length !== cleanedKeys.length) {
+        return true
+    }
+
+    for (const [index, key] of currentKeys.entries()) {
+        if (key !== cleanedKeys[index]) {
+            return true
+        }
+
+        const currentIds = current[key] ?? []
+        const cleanedIds = cleaned[key] ?? []
+
+        if (currentIds.length !== cleanedIds.length) {
+            return true
+        }
+
+        for (const [idIndex, currentId] of currentIds.entries()) {
+            if (currentId !== cleanedIds[idIndex]) {
+                return true
+            }
+        }
+    }
+
+    return false
+}
+
 export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
     const { board, container, onMutation, pluginSettings, vault, viewState } = options
-    const dateGroups = collectCardsByDateGroup(board)
+    const { cleanedTodayOrder, groups: dateGroups } = collectCardsByDateGroup(board)
+
+    if (isTodayOrderChanged(board.settings.todayOrder, cleanedTodayOrder)) {
+        queueMicrotask(() => {
+            onMutation({
+                ...board,
+                settings: { ...board.settings, todayOrder: cleanedTodayOrder },
+            })
+        })
+    }
+
     const todayPanel = document.createElement("div")
 
     todayPanel.className = "kanban-today"

@@ -180,7 +180,7 @@ describe("collectCardsByDateGroup", () => {
             projects: [{ cards: [], title: "Col" }],
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
         const todayGroup = groups.find((group) => {
             return group.dateKey === "today"
         })
@@ -200,7 +200,7 @@ describe("collectCardsByDateGroup", () => {
             ],
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
         const todayGroup = groups.find((group) => {
             return group.dateKey === "today"
         })
@@ -223,7 +223,7 @@ describe("collectCardsByDateGroup", () => {
             ],
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
 
         expect(groups[0].dateKey).toBe("overdue")
         expect(groups[0].cards[0].card.id).toBe("od1")
@@ -241,7 +241,7 @@ describe("collectCardsByDateGroup", () => {
             ],
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
 
         expect(groups[0].dateKey).toBe("today")
         expect(
@@ -265,7 +265,7 @@ describe("collectCardsByDateGroup", () => {
             ],
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
         const futureGroups = groups.filter((group) => {
             return (
                 group.dateKey !== "today" &&
@@ -300,7 +300,7 @@ describe("collectCardsByDateGroup", () => {
             },
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
         const todayGroup = groups.find((group) => {
             return group.dateKey === "today"
         })
@@ -323,7 +323,7 @@ describe("collectCardsByDateGroup", () => {
             ],
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
         const todayGroup = groups.find((group) => {
             return group.dateKey === "today"
         })
@@ -346,7 +346,7 @@ describe("collectCardsByDateGroup", () => {
             ],
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
         const allCards = groups.flatMap((group) => {
             return group.cards
         })
@@ -364,7 +364,7 @@ describe("collectCardsByDateGroup", () => {
             ],
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
         const todayGroup = groups.find((group) => {
             return group.dateKey === "today"
         })
@@ -396,7 +396,7 @@ describe("collectCardsByDateGroup", () => {
             ],
         })
 
-        const groups = collectCardsByDateGroup(board)
+        const { groups } = collectCardsByDateGroup(board)
 
         const overdueGroup = groups.find((group) => {
             return group.dateKey === "overdue"
@@ -411,6 +411,107 @@ describe("collectCardsByDateGroup", () => {
         expect(overdueGroup?.cards).toHaveLength(1)
         expect(todayGroup?.cards).toHaveLength(2)
         expect(futureGroup?.cards).toHaveLength(1)
+    })
+})
+
+describe("cleanedTodayOrder", () => {
+    afterEach(() => {
+        setSystemTime()
+    })
+
+    it("should remove stale card IDs not present in current group", () => {
+        setSystemTime(new Date(2026, 1, 22))
+        const board = makeBoard({
+            projects: [
+                {
+                    cards: [makeCard({ date: "2026-02-22", id: "existing" })],
+                    title: "Col",
+                },
+            ],
+            settings: {
+                archivedProjects: [],
+                collapsedProjects: [],
+                projectColors: {},
+                projectIcons: {},
+                todayOrder: { today: ["deleted", "existing", "also-deleted"] },
+            },
+        })
+
+        const { cleanedTodayOrder } = collectCardsByDateGroup(board)
+
+        expect(cleanedTodayOrder.today).toEqual(["existing"])
+    })
+
+    it("should append new card IDs not in saved order", () => {
+        setSystemTime(new Date(2026, 1, 22))
+        const board = makeBoard({
+            projects: [
+                {
+                    cards: [
+                        makeCard({ date: "2026-02-22", id: "old" }),
+                        makeCard({ date: "2026-02-22", id: "new" }),
+                    ],
+                    title: "Col",
+                },
+            ],
+            settings: {
+                archivedProjects: [],
+                collapsedProjects: [],
+                projectColors: {},
+                projectIcons: {},
+                todayOrder: { today: ["old"] },
+            },
+        })
+
+        const { cleanedTodayOrder } = collectCardsByDateGroup(board)
+
+        expect(cleanedTodayOrder.today).toEqual(["old", "new"])
+    })
+
+    it("should not include empty groups in cleaned order", () => {
+        setSystemTime(new Date(2026, 1, 22))
+        const board = makeBoard({
+            projects: [{ cards: [], title: "Col" }],
+            settings: {
+                archivedProjects: [],
+                collapsedProjects: [],
+                projectColors: {},
+                projectIcons: {},
+                todayOrder: { overdue: ["stale2"], today: ["stale1"] },
+            },
+        })
+
+        const { cleanedTodayOrder } = collectCardsByDateGroup(board)
+
+        expect(cleanedTodayOrder.today).toBeUndefined()
+        expect(cleanedTodayOrder.overdue).toBeUndefined()
+    })
+
+    it("should remove card IDs that moved to a different date group", () => {
+        setSystemTime(new Date(2026, 1, 22))
+        const board = makeBoard({
+            projects: [
+                {
+                    cards: [
+                        makeCard({ date: "2026-02-22", id: "stayed" }),
+                        makeCard({ date: "2026-02-25", id: "moved" }),
+                    ],
+                    title: "Col",
+                },
+            ],
+            settings: {
+                archivedProjects: [],
+                collapsedProjects: [],
+                projectColors: {},
+                projectIcons: {},
+                todayOrder: { today: ["moved", "stayed"] },
+            },
+        })
+
+        const { cleanedTodayOrder } = collectCardsByDateGroup(board)
+
+        expect(cleanedTodayOrder.today).toEqual(["stayed"])
+        expect(cleanedTodayOrder["2026-02-25"]).toEqual(["moved"])
     })
 })
 

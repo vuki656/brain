@@ -17,6 +17,11 @@ export type DateGroupType = {
     label: string
 }
 
+export type CollectedDateGroupsType = {
+    cleanedTodayOrder: Record<string, string[]>
+    groups: DateGroupType[]
+}
+
 export type TodayViewOptionsType = {
     board: BoardType
     container: HTMLElement

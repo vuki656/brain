@@ -1585,3 +1585,145 @@ kanban-plugin: vuki-kanban
         expect(serialized).toContain("- [ ] Backlog task @backlog @id:abc123")
     })
 })
+
+describe("completion sort in serialization", () => {
+    it("should serialize incomplete cards before completed cards", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [x] Done first @id:done1
+- [ ] Open second @id:open1
+- [x] Done third @id:done2
+- [ ] Open fourth @id:open2
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const serialized = serializeBoard(board)
+        const lines = serialized.split("\n")
+        const cardLines = lines.filter((line) => {
+            return line.startsWith("- [")
+        })
+
+        expect(cardLines[0]).toContain("Open second")
+        expect(cardLines[1]).toContain("Open fourth")
+        expect(cardLines[2]).toContain("Done first")
+        expect(cardLines[3]).toContain("Done third")
+    })
+
+    it("should preserve relative order within incomplete and completed groups", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [x] Zebra @id:z1
+- [ ] Banana @id:b1
+- [x] Apple @id:a1
+- [ ] Cherry @id:c1
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const serialized = serializeBoard(board)
+        const lines = serialized.split("\n")
+        const cardLines = lines.filter((line) => {
+            return line.startsWith("- [")
+        })
+
+        expect(cardLines[0]).toContain("Banana")
+        expect(cardLines[1]).toContain("Cherry")
+        expect(cardLines[2]).toContain("Zebra")
+        expect(cardLines[3]).toContain("Apple")
+    })
+
+    it("should be idempotent after completion sort", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [x] Done task @id:done1
+- [ ] Open task @id:open1
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const firstSerialize = serializeBoard(parseBoard(markdown))
+        const secondSerialize = serializeBoard(parseBoard(firstSerialize))
+
+        expect(secondSerialize).toBe(firstSerialize)
+    })
+})
+
+describe("deterministic JSON serialization", () => {
+    it("should sort todayOrder keys alphabetically", () => {
+        const board = parseBoard(SAMPLE_BOARD)
+
+        board.settings.todayOrder = {
+            "2026-03-01": ["bbb222"],
+            backlog: ["ccc333"],
+            today: ["aaa111"],
+        }
+
+        const serialized = serializeBoard(board)
+
+        expect(serialized).toContain(
+            '"today-order":{"2026-03-01":["bbb222"],"backlog":["ccc333"],"today":["aaa111"]}',
+        )
+    })
+
+    it("should sort projectColors keys alphabetically", () => {
+        const board = parseBoard(SAMPLE_BOARD)
+
+        board.settings.projectColors = { Apple: "blue", Zebra: "red" }
+
+        const serialized = serializeBoard(board)
+
+        expect(serialized).toContain('"project-colors":{"Apple":"blue","Zebra":"red"}')
+    })
+
+    it("should sort projectIcons keys alphabetically", () => {
+        const board = parseBoard(SAMPLE_BOARD)
+
+        board.settings.projectIcons = { Apple: "star", Zebra: "rocket" }
+
+        const serialized = serializeBoard(board)
+
+        expect(serialized).toContain('"project-icons":{"Apple":"star","Zebra":"rocket"}')
+    })
+
+    it("should produce identical output regardless of Record key insertion order", () => {
+        const board = parseBoard(SAMPLE_BOARD)
+
+        board.settings.todayOrder = { overdue: ["b"], today: ["a"] }
+        const serializedFirst = serializeBoard(board)
+
+        board.settings.todayOrder = { overdue: ["b"], today: ["a"] }
+        const serializedSecond = serializeBoard(board)
+
+        expect(serializedFirst).toBe(serializedSecond)
+    })
+})

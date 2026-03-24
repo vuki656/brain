@@ -1,6 +1,6 @@
 import type { BoardType, CardType } from "../../shared"
 import { getDayDifference, toDateString } from "../../shared"
-import type { DateGroupType, TodayCardType } from "./today-view.types"
+import type { CollectedDateGroupsType, DateGroupType, TodayCardType } from "./today-view.types"
 
 function isCardVisibleInTodayFilter(card: CardType): boolean {
     if (card.completed) {
@@ -87,7 +87,13 @@ function addCardToFutureBucket(
     }
 }
 
-function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
+function extractCardIds(cards: TodayCardType[]): string[] {
+    return cards.map((todayCard) => {
+        return todayCard.card.id
+    })
+}
+
+function collectCardsByDateGroup(board: BoardType): CollectedDateGroupsType {
     const todayString = toDateString(new Date())
     const overdueCards: TodayCardType[] = []
     const todayCards: TodayCardType[] = []
@@ -158,20 +164,22 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
 
     const savedOrder = board.settings.todayOrder
     const groups: DateGroupType[] = []
+    const cleanedTodayOrder: Record<string, string[]> = {}
 
     if (overdueCards.length > 0) {
-        groups.push({
-            cards: sortCardsByOrder(overdueCards, savedOrder.overdue ?? []),
-            dateKey: "overdue",
-            label: "Overdue",
-        })
+        const sorted = sortCardsByOrder(overdueCards, savedOrder.overdue ?? [])
+
+        groups.push({ cards: sorted, dateKey: "overdue", label: "Overdue" })
+        cleanedTodayOrder.overdue = extractCardIds(sorted)
     }
 
-    groups.push({
-        cards: sortCardsByOrder(todayCards, savedOrder.today ?? []),
-        dateKey: "today",
-        label: "Today",
-    })
+    const sortedTodayCards = sortCardsByOrder(todayCards, savedOrder.today ?? [])
+
+    groups.push({ cards: sortedTodayCards, dateKey: "today", label: "Today" })
+
+    if (sortedTodayCards.length > 0) {
+        cleanedTodayOrder.today = extractCardIds(sortedTodayCards)
+    }
 
     const sortedFutureDates = [...futureBuckets.keys()].sort((first, second) => {
         return first.localeCompare(second)
@@ -184,20 +192,21 @@ function collectCardsByDateGroup(board: BoardType): DateGroupType[] {
             continue
         }
 
-        groups.push({
-            cards: sortCardsByOrder(cards, savedOrder[dateKey] ?? []),
-            dateKey,
-            label: formatDateGroupLabel(dateKey),
-        })
+        const sorted = sortCardsByOrder(cards, savedOrder[dateKey] ?? [])
+
+        groups.push({ cards: sorted, dateKey, label: formatDateGroupLabel(dateKey) })
+        cleanedTodayOrder[dateKey] = extractCardIds(sorted)
     }
 
-    groups.push({
-        cards: sortCardsByOrder(backlogCards, savedOrder.backlog ?? []),
-        dateKey: "backlog",
-        label: "Backlog",
-    })
+    const sortedBacklogCards = sortCardsByOrder(backlogCards, savedOrder.backlog ?? [])
 
-    return groups
+    groups.push({ cards: sortedBacklogCards, dateKey: "backlog", label: "Backlog" })
+
+    if (sortedBacklogCards.length > 0) {
+        cleanedTodayOrder.backlog = extractCardIds(sortedBacklogCards)
+    }
+
+    return { cleanedTodayOrder, groups }
 }
 
 function getDateForSection(dateKey: string): string | null {

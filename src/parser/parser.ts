@@ -325,6 +325,31 @@ function serializeCard(card: CardType): string {
     return line
 }
 
+function sortRecordKeys<TValue>(record: Record<string, TValue>): Record<string, TValue> {
+    const sorted: Record<string, TValue> = {}
+
+    for (const key of Object.keys(record).sort((first, second) => {
+        return first.localeCompare(second)
+    })) {
+        const value = record[key]
+
+        if (value !== undefined) {
+            sorted[key] = value
+        }
+    }
+
+    return sorted
+}
+
+function sortCardsByCompletionStatus(cards: CardType[]): CardType[] {
+    return [...cards].sort((first, second) => {
+        const completedFirst = first.completed ? 1 : 0
+        const completedSecond = second.completed ? 1 : 0
+
+        return completedFirst - completedSecond
+    })
+}
+
 export function parseBoard(markdown: string): BoardType {
     const lines = markdown.split("\n")
     const projects: ProjectType[] = []
@@ -396,7 +421,9 @@ export function serializeBoard(board: BoardType): string {
     for (const project of board.projects) {
         lines.push(`## ${project.title}`, "")
 
-        for (const card of project.cards) {
+        const sortedCards = sortCardsByCompletionStatus(project.cards)
+
+        for (const card of sortedCards) {
             lines.push(serializeCard(card))
 
             for (const subtask of card.subtasks) {
@@ -428,15 +455,15 @@ export function serializeBoard(board: BoardType): string {
     }
 
     if (Object.keys(board.settings.todayOrder).length > 0) {
-        settingsObject["today-order"] = board.settings.todayOrder
+        settingsObject["today-order"] = sortRecordKeys(board.settings.todayOrder)
     }
 
     if (Object.keys(board.settings.projectColors).length > 0) {
-        settingsObject["project-colors"] = board.settings.projectColors
+        settingsObject["project-colors"] = sortRecordKeys(board.settings.projectColors)
     }
 
     if (Object.keys(board.settings.projectIcons).length > 0) {
-        settingsObject["project-icons"] = board.settings.projectIcons
+        settingsObject["project-icons"] = sortRecordKeys(board.settings.projectIcons)
     }
 
     lines.push("%% kanban:settings", "```json", JSON.stringify(settingsObject), "```", "%%")
