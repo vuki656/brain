@@ -3,7 +3,8 @@ import { Notice, setIcon } from "obsidian"
 import { getProjectColor, getProjectIcon } from "../project"
 import type { FocusTimerDialogOptionsType, FocusTimerOptionsType } from "./focus-timer.types"
 
-const CIRCUMFERENCE = 2 * Math.PI * 8
+const RING_RADIUS = 10
+const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 const MILLISECONDS_PER_MINUTE = 60_000
 const MILLISECONDS_PER_SECOND = 1000
 
@@ -42,16 +43,16 @@ function createSvgRing(fraction: number, completed: boolean): SVGSVGElement {
     const namespace = "http://www.w3.org/2000/svg"
     const svg = document.createElementNS(namespace, "svg")
 
-    svg.setAttribute("width", "20")
-    svg.setAttribute("height", "20")
-    svg.setAttribute("viewBox", "0 0 20 20")
+    svg.setAttribute("width", "24")
+    svg.setAttribute("height", "24")
+    svg.setAttribute("viewBox", "0 0 24 24")
     svg.classList.add("kanban-focus-timer__ring")
 
     const trackCircle = document.createElementNS(namespace, "circle")
 
-    trackCircle.setAttribute("cx", "10")
-    trackCircle.setAttribute("cy", "10")
-    trackCircle.setAttribute("r", "8")
+    trackCircle.setAttribute("cx", "12")
+    trackCircle.setAttribute("cy", "12")
+    trackCircle.setAttribute("r", String(RING_RADIUS))
     trackCircle.setAttribute("fill", "none")
     trackCircle.setAttribute("stroke", "var(--background-modifier-border)")
     trackCircle.setAttribute("stroke-width", "2")
@@ -59,13 +60,13 @@ function createSvgRing(fraction: number, completed: boolean): SVGSVGElement {
 
     const progressCircle = document.createElementNS(namespace, "circle")
 
-    progressCircle.setAttribute("cx", "10")
-    progressCircle.setAttribute("cy", "10")
-    progressCircle.setAttribute("r", "8")
+    progressCircle.setAttribute("cx", "12")
+    progressCircle.setAttribute("cy", "12")
+    progressCircle.setAttribute("r", String(RING_RADIUS))
     progressCircle.setAttribute("fill", "none")
     progressCircle.setAttribute("stroke-width", "2")
     progressCircle.setAttribute("stroke-linecap", "round")
-    progressCircle.setAttribute("transform", "rotate(-90 10 10)")
+    progressCircle.setAttribute("transform", "rotate(-90 12 12)")
     progressCircle.setAttribute("stroke-dasharray", String(CIRCUMFERENCE))
 
     if (completed) {
