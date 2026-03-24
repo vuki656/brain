@@ -3,9 +3,10 @@ import { TextFileView, type WorkspaceLeaf } from "obsidian"
 import type Sortable from "sortablejs"
 
 import { parseBoard, serializeBoard } from "../parser"
-import type { BoardType, ViewStateType } from "../shared"
+import type { BoardType, PluginSettingsType, ViewStateType } from "../shared"
 import { KANBAN_VIEW_TYPE } from "../shared"
 import { renderBoard } from "../ui/board"
+import { cleanupFocusTimer } from "../ui/focus-timer"
 import type VukiKanbanPlugin from "./plugin"
 
 export class KanbanView extends TextFileView {
@@ -62,6 +63,7 @@ export class KanbanView extends TextFileView {
 
     // eslint-disable-next-line @typescript-eslint/require-await -- Obsidian base class requires async signature
     public async onClose(): Promise<void> {
+        cleanupFocusTimer()
         this.destroySortable()
     }
 
@@ -93,6 +95,11 @@ export class KanbanView extends TextFileView {
             onMutation: (newBoard) => {
                 this.board = newBoard
                 this.requestSave()
+                this.render()
+            },
+            onPluginSettingsChange: (newSettings: PluginSettingsType) => {
+                this.plugin.settings = newSettings
+                void this.plugin.saveSettings()
                 this.render()
             },
             onViewStateChange: (newViewState) => {

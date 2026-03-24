@@ -3,6 +3,7 @@ import Sortable, { type SortableEvent } from "sortablejs"
 
 import type { CardType } from "../../shared"
 import { createCardElement, immutableUpdateCard } from "../card"
+import { renderFocusTimer } from "../focus-timer"
 import { createProjectElement, getProjectColor, getProjectIcon } from "../project"
 import { openQuickAddDialog } from "../quick-add"
 import { createCardSortableOptions, createProjectCardMoveHandler } from "../sortable"
@@ -53,7 +54,15 @@ function isTodayOrderChanged(
 }
 
 export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
-    const { board, container, onMutation, pluginSettings, vault, viewState } = options
+    const {
+        board,
+        container,
+        onMutation,
+        onPluginSettingsChange,
+        pluginSettings,
+        vault,
+        viewState,
+    } = options
     const { cleanedTodayOrder, groups: dateGroups } = collectCardsByDateGroup(board)
 
     if (isTodayOrderChanged(board.settings.todayOrder, cleanedTodayOrder)) {
@@ -194,6 +203,20 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
         projectsPanel.append(weatherContainer)
         void renderWeatherSection(weatherContainer, weatherLocation)
     }
+
+    const focusTimerContainer = document.createElement("div")
+
+    focusTimerContainer.className = "kanban-focus-timer-container"
+    projectsPanel.append(focusTimerContainer)
+
+    renderFocusTimer({
+        board,
+        container: focusTimerContainer,
+        focusTimerState: pluginSettings.focusTimer,
+        onFocusTimerStateChange: (newState) => {
+            onPluginSettingsChange({ ...pluginSettings, focusTimer: newState })
+        },
+    })
 
     for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
         const project = board.projects[projectIndex]

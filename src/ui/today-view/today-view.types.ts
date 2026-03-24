@@ -1,6 +1,6 @@
 import type { Vault } from "obsidian"
 
-import type { BoardType, CardType, ViewStateType } from "../../shared"
+import type { BoardType, CardType, PluginSettingsType, ViewStateType } from "../../shared"
 
 type MutationHandlerType = (board: BoardType) => void
 
@@ -26,7 +26,8 @@ export type TodayViewOptionsType = {
     board: BoardType
     container: HTMLElement
     onMutation: MutationHandlerType
-    pluginSettings: { notePathPrefix: string; weatherLatitude: string; weatherLongitude: string }
+    onPluginSettingsChange: (settings: PluginSettingsType) => void
+    pluginSettings: PluginSettingsType
     vault: Vault
     viewState: ViewStateType
 }

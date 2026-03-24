@@ -1525,3 +1525,212 @@
     height: 12px;
     width: 12px;
 }
+
+/* Focus Timer */
+.kanban-focus-timer-container {
+    padding: 0 12px;
+}
+
+.kanban-focus-timer {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.kanban-focus-timer__label {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.kanban-focus-timer__add-button {
+    align-items: center;
+    background: none;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    color: var(--text-faint);
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 14px;
+    height: 22px;
+    justify-content: center;
+    transition: all 0.15s ease;
+    width: 22px;
+}
+
+.kanban-focus-timer__add-button:hover {
+    background: var(--background-primary-alt);
+    border-color: var(--text-muted);
+    color: var(--text-normal);
+}
+
+.kanban-focus-timer__ring {
+    flex-shrink: 0;
+}
+
+.kanban-focus-timer__time {
+    color: var(--text-normal);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.kanban-focus-timer__project {
+    color: var(--text-muted);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.kanban-focus-timer__cancel {
+    align-items: center;
+    color: var(--text-faint);
+    cursor: pointer;
+    display: inline-flex;
+    flex-shrink: 0;
+    margin-left: auto;
+    transition: color 0.15s ease;
+}
+
+.kanban-focus-timer__cancel:hover {
+    color: var(--text-normal);
+}
+
+.kanban-focus-timer__cancel svg {
+    height: 14px;
+    width: 14px;
+}
+
+.kanban-focus-timer--completed .kanban-focus-timer__time {
+    color: var(--color-green);
+}
+
+/* Focus Timer Dialog */
+.kanban-focus-overlay {
+    align-items: center;
+    background: rgb(0 0 0 / 50%);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    position: fixed;
+    z-index: 999;
+}
+
+.kanban-focus-dialog {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 90vw;
+    padding: 20px;
+    width: 340px;
+}
+
+.kanban-focus__label {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.kanban-focus__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.kanban-focus__chip {
+    align-items: center;
+    background: var(--background-secondary);
+    border-radius: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 12px;
+    gap: 4px;
+    padding: 4px 10px;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.kanban-focus__chip:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.kanban-focus__chip--active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.kanban-focus__chip--active:hover {
+    background: var(--interactive-accent-hover);
+    color: var(--text-on-accent);
+}
+
+.kanban-focus__chip-icon {
+    align-items: center;
+    display: inline-flex;
+}
+
+.kanban-focus__chip-icon svg {
+    height: 12px;
+    width: 12px;
+}
+
+.kanban-focus__chip--active .kanban-focus__chip-icon {
+    color: var(--text-on-accent);
+}
+
+.kanban-focus__until-row {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+}
+
+.kanban-focus__select {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    color: var(--text-normal);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 10px;
+}
+
+.kanban-focus__separator {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.kanban-focus__submit {
+    align-items: center;
+    background: var(--interactive-accent);
+    border-radius: 6px;
+    color: var(--text-on-accent);
+    cursor: pointer;
+    display: flex;
+    font-size: 14px;
+    font-weight: 500;
+    justify-content: center;
+    padding: 8px 16px;
+    transition: background 0.15s ease;
+    user-select: none;
+}
+
+.kanban-focus__submit:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.kanban-focus__submit--disabled {
+    cursor: default;
+    opacity: 50%;
+}
+
+.kanban-focus__submit--disabled:hover {
+    background: var(--interactive-accent);
+}

@@ -1,6 +1,6 @@
 import type { App, Vault } from "obsidian"
 
-import type { BoardType, ViewStateType } from "../../shared"
+import type { BoardType, PluginSettingsType, ViewStateType } from "../../shared"
 
 type MutationHandlerType = (board: BoardType) => void
 
@@ -8,7 +8,7 @@ export type BoardProjectsOptionsType = {
     board: BoardType
     container: HTMLElement
     onMutation: MutationHandlerType
-    pluginSettings: { notePathPrefix: string; weatherLatitude: string; weatherLongitude: string }
+    pluginSettings: PluginSettingsType
     vault: Vault
     viewState: ViewStateType
 }
@@ -18,8 +18,9 @@ export type RenderBoardOptionsType = {
     board: BoardType
     container: HTMLElement
     onMutation: MutationHandlerType
+    onPluginSettingsChange: (settings: PluginSettingsType) => void
     onViewStateChange: (viewState: ViewStateType) => void
-    pluginSettings: { notePathPrefix: string; weatherLatitude: string; weatherLongitude: string }
+    pluginSettings: PluginSettingsType
     vault: Vault
     viewState: ViewStateType
 }
