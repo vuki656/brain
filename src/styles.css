@@ -1528,7 +1528,7 @@
 
 /* Focus Timer */
 .kanban-focus-timer-container {
-    padding: 0 12px;
+    padding: 0;
 }
 
 .kanban-focus-timer {
