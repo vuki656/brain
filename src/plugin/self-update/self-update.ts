@@ -55,6 +55,7 @@ export async function selfUpdate(app: App): Promise<void> {
     })
 
     await app.plugins.disablePlugin(PLUGIN_ID)
+    await app.plugins.loadManifests()
     await app.plugins.enablePlugin(PLUGIN_ID)
 
     const leavesToRestore: { filePath: string; leaf: WorkspaceLeaf }[] = []
