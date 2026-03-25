@@ -1,8 +1,8 @@
-import type { WeatherLocationType } from "./weather.types"
 import { fetchWeatherData } from "./weather-cache"
 import { createCurrentWeatherBanner } from "./weather-current"
 import { createDailyWeatherRow } from "./weather-daily"
 import { createHourlyWeatherRow } from "./weather-hourly"
+import type { WeatherLocationType } from "./weather.types"
 
 export async function renderWeatherSection(
     container: HTMLElement,

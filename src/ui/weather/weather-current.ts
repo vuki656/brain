@@ -1,11 +1,11 @@
 import { setIcon } from "obsidian"
 
-import type { CurrentWeatherType } from "./weather.types"
 import {
     getWeatherIconColor,
     mapWeatherCodeToLabel,
     mapWeatherCodeToLucideIcon,
 } from "./weather-icons"
+import type { CurrentWeatherType } from "./weather.types"
 
 export function createCurrentWeatherBanner(current: CurrentWeatherType): HTMLElement {
     const banner = document.createElement("div")

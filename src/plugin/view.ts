@@ -49,6 +49,14 @@ export class KanbanView extends TextFileView {
         this.boardContainer.empty()
     }
 
+    private destroySortable(): void {
+        for (const instance of this.sortableInstances) {
+            instance.destroy()
+        }
+
+        this.sortableInstances = []
+    }
+
     public getDisplayText(): string {
         return this.file?.basename ?? "Kanban"
     }
@@ -65,24 +73,6 @@ export class KanbanView extends TextFileView {
     public async onClose(): Promise<void> {
         cleanupFocusTimer()
         this.destroySortable()
-    }
-
-    public setViewData(data: string, clear: boolean): void {
-        this.board = parseBoard(data)
-
-        if (clear) {
-            this.viewState = { hideCompletedActive: true, todayFilterActive: true }
-        }
-
-        this.render()
-    }
-
-    private destroySortable(): void {
-        for (const instance of this.sortableInstances) {
-            instance.destroy()
-        }
-
-        this.sortableInstances = []
     }
 
     private render(): void {
@@ -114,5 +104,15 @@ export class KanbanView extends TextFileView {
             vault: this.app.vault,
             viewState: this.viewState,
         })
+    }
+
+    public setViewData(data: string, clear: boolean): void {
+        this.board = parseBoard(data)
+
+        if (clear) {
+            this.viewState = { hideCompletedActive: true, todayFilterActive: true }
+        }
+
+        this.render()
     }
 }

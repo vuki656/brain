@@ -1,5 +1,5 @@
-import type { WeatherDataType, WeatherLocationType } from "./weather.types"
 import { fetchWeatherFromApi } from "./weather-api"
+import type { WeatherDataType, WeatherLocationType } from "./weather.types"
 
 type CacheEntryType = {
     data: WeatherDataType

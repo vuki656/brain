@@ -1,7 +1,7 @@
 import { setIcon } from "obsidian"
 
-import type { HourlyForecastType } from "./weather.types"
 import { getWeatherIconColor, mapWeatherCodeToLucideIcon } from "./weather-icons"
+import type { HourlyForecastType } from "./weather.types"
 
 function formatHour(isoTime: string): string {
     const date = new Date(isoTime)

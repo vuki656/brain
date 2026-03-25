@@ -1,7 +1,7 @@
 import { setIcon } from "obsidian"
 
-import type { DailyForecastType } from "./weather.types"
 import { getWeatherIconColor, mapWeatherCodeToLucideIcon } from "./weather-icons"
+import type { DailyForecastType } from "./weather.types"
 
 function formatDayName(isoDate: string): string {
     const date = new Date(`${isoDate}T00:00:00`)

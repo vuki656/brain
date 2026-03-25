@@ -38,10 +38,6 @@ export default class VukiKanbanPlugin extends Plugin {
         }
     }
 
-    public async saveSettings(): Promise<void> {
-        await this.saveData(this.settings)
-    }
-
     private patchWorkspaceLeaf(): void {
         // eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment, consistent-this -- monkey-around requires outer this reference
         const pluginInstance = this
@@ -76,5 +72,9 @@ export default class VukiKanbanPlugin extends Plugin {
                 this.uninstallMonkeyPatch = null
             }
         })
+    }
+
+    public async saveSettings(): Promise<void> {
+        await this.saveData(this.settings)
     }
 }

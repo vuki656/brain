@@ -4,7 +4,6 @@ import type { BoardType, CardType, SubtaskType } from "../../shared"
 import { formatDate, generateId, getDayDifference, toDateString } from "../../shared"
 import { showCardContextMenu, showPriorityMenu } from "../context-menu"
 import { startInlineEdit } from "../inline-edit"
-import type { CardElementOptionsType } from "./card.types"
 import {
     immutableAddSubtask,
     immutableDeleteSubtask,
@@ -13,6 +12,7 @@ import {
     immutableToggleSubtask,
     immutableUpdateCard,
 } from "./card-mutations"
+import type { CardElementOptionsType } from "./card.types"
 
 type MutationHandlerType = (board: BoardType) => void
 

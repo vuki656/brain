@@ -1,12 +1,12 @@
-import type { KnipConfig } from "knip"
+import type { RawConfiguration } from "knip/dist/types/config"
 
 import { core } from "@dvukovic/style-guide/knip"
 
-const config: KnipConfig = {
+const config: RawConfiguration = {
     ...core,
     ignore: [],
     ignoreDependencies: core.ignoreDependencies.filter((dep: string) => {
-        return dep !== "prettier-plugin-*"
+        return dep !== "prettier-plugin-*" && dep !== "stylelint-no-unused-selectors"
     }),
 }
 
