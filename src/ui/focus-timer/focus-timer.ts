@@ -20,6 +20,7 @@ const MINUTE_OPTIONS = [0, 15, 30, 45]
 let activeIntervalId: ReturnType<typeof setInterval> | null = null
 
 type ActiveTimerOptionsType = {
+    cardTitle: string | null
     container: HTMLElement
     endTimestamp: number
     onCancel: () => void
@@ -83,7 +84,7 @@ function createSvgRing(fraction: number, completed: boolean): SVGSVGElement {
 }
 
 function renderActiveTimer(options: ActiveTimerOptionsType): void {
-    const { container, endTimestamp, onCancel, projectTitle, totalDurationMs } = options
+    const { cardTitle, container, endTimestamp, onCancel, projectTitle, totalDurationMs } = options
     const remainingMs = endTimestamp - Date.now()
     const isCompleted = remainingMs <= 0
     const fraction = isCompleted ? 1 : Math.max(0, remainingMs / totalDurationMs)
@@ -108,11 +109,25 @@ function renderActiveTimer(options: ActiveTimerOptionsType): void {
     timeSpan.textContent = isCompleted ? "Done!" : formatTimeRemaining(remainingMs)
     wrapper.append(timeSpan)
 
+    const infoWrapper = document.createElement("div")
+
+    infoWrapper.className = "kanban-focus-timer__info"
+
     const projectSpan = document.createElement("span")
 
     projectSpan.className = "kanban-focus-timer__project"
     projectSpan.textContent = projectTitle
-    wrapper.append(projectSpan)
+    infoWrapper.append(projectSpan)
+
+    if (cardTitle) {
+        const cardSpan = document.createElement("span")
+
+        cardSpan.className = "kanban-focus-timer__card-title"
+        cardSpan.textContent = cardTitle
+        infoWrapper.append(cardSpan)
+    }
+
+    wrapper.append(infoWrapper)
 
     const cancelButton = document.createElement("span")
 
@@ -162,6 +177,7 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
     const { board, onStart } = options
 
     let selectedProjectTitle: string | null = null
+    let selectedCardTitle: string | null = null
     let selectedDurationMs: number | null = null
     let selectedUntilHour: number | null = null
     let selectedUntilMinute: number | null = null
@@ -210,6 +226,76 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
         )
     }
 
+    const taskChips = document.createElement("div")
+
+    taskChips.className = "kanban-focus__chips kanban-focus__chips--tasks"
+
+    const updateTaskChipStates = () => {
+        for (const taskChip of Array.from(
+            taskChips.querySelectorAll(".kanban-focus__chip--task"),
+        )) {
+            const chipValue = (taskChip as HTMLElement).dataset.cardTitle ?? null
+
+            taskChip.classList.toggle("kanban-focus__chip--active", chipValue === selectedCardTitle)
+        }
+    }
+
+    const renderTaskChips = () => {
+        taskChips.empty()
+        selectedCardTitle = null
+
+        if (selectedProjectTitle === null) {
+            const emptyHint = document.createElement("span")
+
+            emptyHint.className = "kanban-focus__hint"
+            emptyHint.textContent = "Select a project first"
+            taskChips.append(emptyHint)
+
+            return
+        }
+
+        const project = board.projects.find((searchProject) => {
+            return searchProject.title === selectedProjectTitle
+        })
+
+        if (!project) {
+            return
+        }
+
+        const incompleteCards = project.cards.filter((card) => {
+            return !card.completed
+        })
+
+        if (incompleteCards.length === 0) {
+            const emptyHint = document.createElement("span")
+
+            emptyHint.className = "kanban-focus__hint"
+            emptyHint.textContent = "No tasks in this project"
+            taskChips.append(emptyHint)
+
+            return
+        }
+
+        for (const card of incompleteCards) {
+            const chip = document.createElement("span")
+
+            chip.className = "kanban-focus__chip kanban-focus__chip--task"
+            chip.dataset.cardTitle = card.title
+            chip.textContent = card.title
+
+            const capturedCardTitle = card.title
+
+            // eslint-disable-next-line @typescript-eslint/no-loop-func -- intentional shared mutable state for toggle behavior
+            chip.addEventListener("click", () => {
+                selectedCardTitle =
+                    selectedCardTitle === capturedCardTitle ? null : capturedCardTitle
+                updateTaskChipStates()
+            })
+
+            taskChips.append(chip)
+        }
+    }
+
     const updateProjectChipStates = () => {
         for (const chip of Array.from(projectChips.querySelectorAll(".kanban-focus__chip"))) {
             const chipValue = (chip as HTMLElement).dataset.projectTitle ?? null
@@ -247,6 +333,7 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
         chip.addEventListener("click", () => {
             selectedProjectTitle = selectedProjectTitle === capturedTitle ? null : capturedTitle
             updateProjectChipStates()
+            renderTaskChips()
             updateSubmitState()
         })
 
@@ -254,6 +341,15 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
     }
 
     dialog.append(projectChips)
+
+    const taskLabel = document.createElement("span")
+
+    taskLabel.className = "kanban-focus__label"
+    taskLabel.textContent = "Task"
+    dialog.append(taskLabel)
+
+    renderTaskChips()
+    dialog.append(taskChips)
 
     const durationLabel = document.createElement("span")
 
@@ -404,7 +500,7 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
             return
         }
 
-        onStart(selectedProjectTitle, durationMs)
+        onStart(selectedProjectTitle, durationMs, selectedCardTitle)
         cleanup()
     })
 
@@ -434,6 +530,7 @@ export function renderFocusTimer(options: FocusTimerOptionsType): void {
 
     if (focusTimerState !== null) {
         renderActiveTimer({
+            cardTitle: focusTimerState.cardTitle,
             container,
             endTimestamp: focusTimerState.endTimestamp,
             onCancel: () => {
@@ -463,8 +560,9 @@ export function renderFocusTimer(options: FocusTimerOptionsType): void {
     addButton.addEventListener("click", () => {
         openFocusTimerDialog({
             board,
-            onStart: (projectTitle, durationMs) => {
+            onStart: (projectTitle, durationMs, cardTitle) => {
                 onFocusTimerStateChange({
+                    cardTitle,
                     endTimestamp: Date.now() + durationMs,
                     projectTitle,
                     totalDurationMs: durationMs,

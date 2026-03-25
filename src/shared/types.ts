@@ -24,9 +24,17 @@ export type ProjectType = {
     title: string
 }
 
+export type FocusTimerStateType = {
+    cardTitle: string | null
+    endTimestamp: number
+    projectTitle: string
+    totalDurationMs: number
+} | null
+
 export type KanbanSettingsType = {
     archivedProjects: string[]
     collapsedProjects: string[]
+    focusTimer: FocusTimerStateType
     projectColors: Record<string, string>
     projectIcons: Record<string, string>
     todayOrder: Partial<Record<string, string[]>>

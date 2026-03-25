@@ -3,7 +3,7 @@ import { TextFileView, type WorkspaceLeaf } from "obsidian"
 import type Sortable from "sortablejs"
 
 import { parseBoard, serializeBoard } from "../parser"
-import type { BoardType, PluginSettingsType, ViewStateType } from "../shared"
+import type { BoardType, ViewStateType } from "../shared"
 import { KANBAN_VIEW_TYPE } from "../shared"
 import { renderBoard } from "../ui/board"
 import { cleanupFocusTimer } from "../ui/focus-timer"
@@ -15,6 +15,7 @@ export class KanbanView extends TextFileView {
         settings: {
             archivedProjects: [],
             collapsedProjects: [],
+            focusTimer: null,
             projectColors: {},
             projectIcons: {},
             todayOrder: {},
@@ -41,6 +42,7 @@ export class KanbanView extends TextFileView {
             settings: {
                 archivedProjects: [],
                 collapsedProjects: [],
+                focusTimer: null,
                 projectColors: {},
                 projectIcons: {},
                 todayOrder: {},
@@ -89,11 +91,6 @@ export class KanbanView extends TextFileView {
             onMutation: (newBoard) => {
                 this.board = newBoard
                 this.requestSave()
-                this.render()
-            },
-            onPluginSettingsChange: (newSettings: PluginSettingsType) => {
-                this.plugin.settings = newSettings
-                void this.plugin.saveSettings()
                 this.render()
             },
             onViewStateChange: (newViewState) => {

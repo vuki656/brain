@@ -1,13 +1,13 @@
-import type { BoardType, FocusTimerSettingsType } from "../../shared"
+import type { BoardType, FocusTimerStateType } from "../../shared"
 
 export type FocusTimerOptionsType = {
     board: BoardType
     container: HTMLElement
-    focusTimerState: FocusTimerSettingsType
-    onFocusTimerStateChange: (state: FocusTimerSettingsType) => void
+    focusTimerState: FocusTimerStateType
+    onFocusTimerStateChange: (state: FocusTimerStateType) => void
 }
 
 export type FocusTimerDialogOptionsType = {
     board: BoardType
-    onStart: (projectTitle: string, durationMs: number) => void
+    onStart: (projectTitle: string, durationMs: number, cardTitle: string | null) => void
 }

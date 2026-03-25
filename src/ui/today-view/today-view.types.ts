@@ -27,7 +27,6 @@ export type TodayViewOptionsType = {
     container: HTMLElement
     onBoardCleanup: MutationHandlerType
     onMutation: MutationHandlerType
-    onPluginSettingsChange: (settings: PluginSettingsType) => void
     pluginSettings: PluginSettingsType
     vault: Vault
     viewState: ViewStateType

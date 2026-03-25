@@ -1,6 +1,7 @@
 import type {
     BoardType,
     CardType,
+    FocusTimerStateType,
     KanbanSettingsType,
     PriorityType,
     ProjectType,
@@ -125,6 +126,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
         return {
             archivedProjects: [],
             collapsedProjects: [],
+            focusTimer: null,
             projectColors: {},
             projectIcons: {},
             todayOrder: {},
@@ -167,6 +169,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
         return {
             archivedProjects: [],
             collapsedProjects: [],
+            focusTimer: null,
             projectColors: {},
             projectIcons: {},
             todayOrder: {},
@@ -183,9 +186,27 @@ function parseSettings(lines: string[]): KanbanSettingsType {
             todayOrder = rawTodayOrder
         }
 
+        let focusTimer: FocusTimerStateType = null
+        const rawFocusTimer = parsed["focus-timer"]
+
+        if (
+            rawFocusTimer &&
+            typeof rawFocusTimer === "object" &&
+            typeof rawFocusTimer.endTimestamp === "number"
+        ) {
+            focusTimer = {
+                cardTitle:
+                    typeof rawFocusTimer.cardTitle === "string" ? rawFocusTimer.cardTitle : null,
+                endTimestamp: rawFocusTimer.endTimestamp,
+                projectTitle: rawFocusTimer.projectTitle ?? "",
+                totalDurationMs: rawFocusTimer.totalDurationMs ?? 0,
+            }
+        }
+
         return {
             archivedProjects: parsed["archived-projects"] ?? [],
             collapsedProjects: parsed["collapsed-projects"] ?? [],
+            focusTimer,
             projectColors: parsed["project-colors"] ?? {},
             projectIcons: parsed["project-icons"] ?? {},
             todayOrder,
@@ -194,6 +215,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
         return {
             archivedProjects: [],
             collapsedProjects: [],
+            focusTimer: null,
             projectColors: {},
             projectIcons: {},
             todayOrder: {},
@@ -464,6 +486,10 @@ export function serializeBoard(board: BoardType): string {
 
     if (Object.keys(board.settings.projectIcons).length > 0) {
         settingsObject["project-icons"] = sortRecordKeys(board.settings.projectIcons)
+    }
+
+    if (board.settings.focusTimer !== null) {
+        settingsObject["focus-timer"] = board.settings.focusTimer
     }
 
     lines.push("%% kanban:settings", "```json", JSON.stringify(settingsObject), "```", "%%")

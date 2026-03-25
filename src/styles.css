@@ -1578,9 +1578,24 @@
     font-weight: 600;
 }
 
+.kanban-focus-timer__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
 .kanban-focus-timer__project {
     color: var(--text-muted);
     font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.kanban-focus-timer__card-title {
+    color: var(--text-normal);
+    font-size: 13px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1685,6 +1700,23 @@
 
 .kanban-focus__chip--active .kanban-focus__chip-icon {
     color: var(--text-on-accent);
+}
+
+.kanban-focus__chips--tasks {
+    flex-direction: column;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.kanban-focus__chip--task {
+    border-radius: 6px;
+    font-size: 13px;
+    padding: 6px 10px;
+}
+
+.kanban-focus__hint {
+    color: var(--text-faint);
+    font-size: 12px;
 }
 
 .kanban-focus__until-row {

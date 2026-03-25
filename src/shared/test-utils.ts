@@ -50,6 +50,7 @@ export function makeBoard(overrides: Partial<BoardType> = {}): BoardType {
     const defaultSettings: KanbanSettingsType = {
         archivedProjects: [],
         collapsedProjects: [],
+        focusTimer: null,
         projectColors: {},
         projectIcons: {},
         todayOrder: {},

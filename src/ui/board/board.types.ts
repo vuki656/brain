@@ -19,7 +19,6 @@ export type RenderBoardOptionsType = {
     container: HTMLElement
     onBoardCleanup: MutationHandlerType
     onMutation: MutationHandlerType
-    onPluginSettingsChange: (settings: PluginSettingsType) => void
     onViewStateChange: (viewState: ViewStateType) => void
     pluginSettings: PluginSettingsType
     vault: Vault

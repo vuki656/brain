@@ -54,16 +54,8 @@ function isTodayOrderChanged(
 }
 
 export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
-    const {
-        board,
-        container,
-        onBoardCleanup,
-        onMutation,
-        onPluginSettingsChange,
-        pluginSettings,
-        vault,
-        viewState,
-    } = options
+    const { board, container, onBoardCleanup, onMutation, pluginSettings, vault, viewState } =
+        options
     const { cleanedTodayOrder, groups: dateGroups } = collectCardsByDateGroup(board)
 
     if (isTodayOrderChanged(board.settings.todayOrder, cleanedTodayOrder)) {
@@ -213,9 +205,12 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
     renderFocusTimer({
         board,
         container: focusTimerContainer,
-        focusTimerState: pluginSettings.focusTimer,
+        focusTimerState: board.settings.focusTimer,
         onFocusTimerStateChange: (newState) => {
-            onPluginSettingsChange({ ...pluginSettings, focusTimer: newState })
+            onMutation({
+                ...board,
+                settings: { ...board.settings, focusTimer: newState },
+            })
         },
     })
 
