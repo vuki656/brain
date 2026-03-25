@@ -1578,24 +1578,10 @@
     font-weight: 600;
 }
 
-.kanban-focus-timer__info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    overflow: hidden;
-}
-
 .kanban-focus-timer__project {
     color: var(--text-muted);
     font-size: 14px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.kanban-focus-timer__card-title {
-    color: var(--text-normal);
-    font-size: 13px;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

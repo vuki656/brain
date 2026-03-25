@@ -109,25 +109,11 @@ function renderActiveTimer(options: ActiveTimerOptionsType): void {
     timeSpan.textContent = isCompleted ? "Done!" : formatTimeRemaining(remainingMs)
     wrapper.append(timeSpan)
 
-    const infoWrapper = document.createElement("div")
-
-    infoWrapper.className = "kanban-focus-timer__info"
-
     const projectSpan = document.createElement("span")
 
     projectSpan.className = "kanban-focus-timer__project"
-    projectSpan.textContent = projectTitle
-    infoWrapper.append(projectSpan)
-
-    if (cardTitle) {
-        const cardSpan = document.createElement("span")
-
-        cardSpan.className = "kanban-focus-timer__card-title"
-        cardSpan.textContent = cardTitle
-        infoWrapper.append(cardSpan)
-    }
-
-    wrapper.append(infoWrapper)
+    projectSpan.textContent = cardTitle ? `${projectTitle} · ${cardTitle}` : projectTitle
+    wrapper.append(projectSpan)
 
     const cancelButton = document.createElement("span")
 
