@@ -57,6 +57,7 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
     const {
         board,
         container,
+        onBoardCleanup,
         onMutation,
         onPluginSettingsChange,
         pluginSettings,
@@ -67,7 +68,7 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
 
     if (isTodayOrderChanged(board.settings.todayOrder, cleanedTodayOrder)) {
         queueMicrotask(() => {
-            onMutation({
+            onBoardCleanup({
                 ...board,
                 settings: { ...board.settings, todayOrder: cleanedTodayOrder },
             })

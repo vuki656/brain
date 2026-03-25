@@ -101,6 +101,7 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
         app,
         board,
         container,
+        onBoardCleanup,
         onMutation,
         onPluginSettingsChange,
         onViewStateChange,
@@ -140,6 +141,7 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
         const sortableInstances = renderTodayView({
             board,
             container,
+            onBoardCleanup,
             onMutation,
             onPluginSettingsChange,
             pluginSettings,

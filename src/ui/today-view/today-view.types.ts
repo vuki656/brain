@@ -25,6 +25,7 @@ export type CollectedDateGroupsType = {
 export type TodayViewOptionsType = {
     board: BoardType
     container: HTMLElement
+    onBoardCleanup: MutationHandlerType
     onMutation: MutationHandlerType
     onPluginSettingsChange: (settings: PluginSettingsType) => void
     pluginSettings: PluginSettingsType
