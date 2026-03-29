@@ -4,7 +4,7 @@ import type Sortable from "sortablejs"
 
 import { parseBoard, serializeBoard } from "../parser"
 import type { BoardType, ViewStateType } from "../shared"
-import { KANBAN_VIEW_TYPE } from "../shared"
+import { KANBAN_VIEW_TYPE, toDateString } from "../shared"
 import { renderBoard } from "../ui/board"
 import { cleanupFocusTimer } from "../ui/focus-timer"
 import type VukiKanbanPlugin from "./plugin"
@@ -24,6 +24,8 @@ export class KanbanView extends TextFileView {
 
     private readonly boardContainer: HTMLElement
 
+    private lastRenderedDate: string = toDateString(new Date())
+
     private readonly plugin: VukiKanbanPlugin
 
     private sortableInstances: Sortable[] = []
@@ -34,6 +36,20 @@ export class KanbanView extends TextFileView {
         super(leaf)
         this.plugin = plugin
         this.boardContainer = this.contentEl.createDiv({ cls: "kanban-container" })
+
+        this.registerDomEvent(document, "visibilitychange", () => {
+            if (document.visibilityState !== "visible") {
+                return
+            }
+
+            const currentDate = toDateString(new Date())
+
+            if (currentDate === this.lastRenderedDate) {
+                return
+            }
+
+            this.render()
+        })
     }
 
     public clear(): void {
@@ -78,6 +94,7 @@ export class KanbanView extends TextFileView {
     }
 
     private render(): void {
+        this.lastRenderedDate = toDateString(new Date())
         this.destroySortable()
 
         this.sortableInstances = renderBoard({
