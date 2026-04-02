@@ -1705,6 +1705,27 @@
     font-size: 12px;
 }
 
+.kanban-focus__until-row {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+}
+
+.kanban-focus__select {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    color: var(--text-normal);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 10px;
+}
+
+.kanban-focus__separator {
+    color: var(--text-muted);
+    font-size: 14px;
+}
 
 .kanban-focus__submit {
     align-items: center;

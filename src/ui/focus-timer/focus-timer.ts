@@ -17,6 +17,7 @@ const DURATION_PRESETS = [
 ]
 
 const UNTIL_PRESET_COUNT = 3
+const MINUTE_OPTIONS = [0, 15, 30, 45]
 
 let activeIntervalId: ReturnType<typeof setInterval> | null = null
 
@@ -368,6 +369,51 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
         }
     }
 
+    const hourSelect = document.createElement("select")
+
+    hourSelect.className = "kanban-focus__select"
+
+    const hourPlaceholder = document.createElement("option")
+
+    hourPlaceholder.value = ""
+    hourPlaceholder.textContent = "Hour"
+    hourPlaceholder.disabled = true
+    hourPlaceholder.selected = true
+    hourSelect.append(hourPlaceholder)
+
+    for (let hour = 0; hour < 24; hour++) {
+        const option = document.createElement("option")
+
+        option.value = String(hour)
+        option.textContent = String(hour).padStart(2, "0")
+        hourSelect.append(option)
+    }
+
+    const minuteSelect = document.createElement("select")
+
+    minuteSelect.className = "kanban-focus__select"
+
+    const minutePlaceholder = document.createElement("option")
+
+    minutePlaceholder.value = ""
+    minutePlaceholder.textContent = "Min"
+    minutePlaceholder.disabled = true
+    minutePlaceholder.selected = true
+    minuteSelect.append(minutePlaceholder)
+
+    for (const minute of MINUTE_OPTIONS) {
+        const option = document.createElement("option")
+
+        option.value = String(minute)
+        option.textContent = String(minute).padStart(2, "0")
+        minuteSelect.append(option)
+    }
+
+    const resetUntilSelects = () => {
+        hourSelect.value = ""
+        minuteSelect.value = ""
+    }
+
     for (const preset of DURATION_PRESETS) {
         const chip = document.createElement("span")
 
@@ -383,6 +429,7 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
             selectedUntilHour = null
             selectedUntilMinute = null
             updateDurationChipStates()
+            resetUntilSelects()
             updateUntilChipStates()
             updateSubmitState()
         })
@@ -412,7 +459,7 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
 
         chip.className = "kanban-focus__chip"
         chip.dataset.untilHour = String(targetHour)
-        chip.textContent = `Until ${String(targetHour).padStart(2, "0")}:00`
+        chip.textContent = `${String(targetHour).padStart(2, "0")}:00`
 
         const capturedHour = targetHour
 
@@ -428,6 +475,7 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
                 updateDurationChipStates()
             }
 
+            resetUntilSelects()
             updateUntilChipStates()
             updateSubmitState()
         })
@@ -436,6 +484,39 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
     }
 
     dialog.append(untilChips)
+
+    const untilRow = document.createElement("div")
+
+    untilRow.className = "kanban-focus__until-row"
+
+    const separator = document.createElement("span")
+
+    separator.className = "kanban-focus__separator"
+    separator.textContent = ":"
+
+    const handleUntilChange = () => {
+        const hourValue = hourSelect.value
+        const minuteValue = minuteSelect.value
+
+        if (hourValue !== "" && minuteValue !== "") {
+            selectedUntilHour = Number(hourValue)
+            selectedUntilMinute = Number(minuteValue)
+            selectedDurationMs = null
+            updateDurationChipStates()
+            updateUntilChipStates()
+        } else {
+            selectedUntilHour = null
+            selectedUntilMinute = null
+        }
+
+        updateSubmitState()
+    }
+
+    hourSelect.addEventListener("change", handleUntilChange)
+    minuteSelect.addEventListener("change", handleUntilChange)
+
+    untilRow.append(hourSelect, separator, minuteSelect)
+    dialog.append(untilRow)
 
     submitButton.addEventListener("click", () => {
         if (selectedProjectTitle === null) {
