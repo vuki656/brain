@@ -9,13 +9,14 @@ const MILLISECONDS_PER_MINUTE = 60_000
 const MILLISECONDS_PER_SECOND = 1000
 
 const DURATION_PRESETS = [
-    { durationMs: 25 * MILLISECONDS_PER_MINUTE, label: "25m" },
+    { durationMs: 30 * MILLISECONDS_PER_MINUTE, label: "30m" },
     { durationMs: 45 * MILLISECONDS_PER_MINUTE, label: "45m" },
     { durationMs: 60 * MILLISECONDS_PER_MINUTE, label: "1h" },
     { durationMs: 120 * MILLISECONDS_PER_MINUTE, label: "2h" },
+    { durationMs: 180 * MILLISECONDS_PER_MINUTE, label: "3h" },
 ]
 
-const MINUTE_OPTIONS = [0, 15, 30, 45]
+const UNTIL_PRESET_COUNT = 3
 
 let activeIntervalId: ReturnType<typeof setInterval> | null = null
 
@@ -347,24 +348,23 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
 
     durationChips.className = "kanban-focus__chips"
 
-    const hourSelect = document.createElement("select")
+    const untilChips = document.createElement("div")
 
-    hourSelect.className = "kanban-focus__select"
-
-    const minuteSelect = document.createElement("select")
-
-    minuteSelect.className = "kanban-focus__select"
-
-    const resetUntilSelects = () => {
-        hourSelect.value = ""
-        minuteSelect.value = ""
-    }
+    untilChips.className = "kanban-focus__chips"
 
     const updateDurationChipStates = () => {
         for (const chip of Array.from(durationChips.querySelectorAll(".kanban-focus__chip"))) {
             const chipValue = Number((chip as HTMLElement).dataset.durationMs)
 
             chip.classList.toggle("kanban-focus__chip--active", chipValue === selectedDurationMs)
+        }
+    }
+
+    const updateUntilChipStates = () => {
+        for (const chip of Array.from(untilChips.querySelectorAll(".kanban-focus__chip"))) {
+            const chipHour = Number((chip as HTMLElement).dataset.untilHour)
+
+            chip.classList.toggle("kanban-focus__chip--active", chipHour === selectedUntilHour)
         }
     }
 
@@ -383,7 +383,7 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
             selectedUntilHour = null
             selectedUntilMinute = null
             updateDurationChipStates()
-            resetUntilSelects()
+            updateUntilChipStates()
             updateSubmitState()
         })
 
@@ -398,69 +398,44 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
     untilLabel.textContent = "Until"
     dialog.append(untilLabel)
 
-    const untilRow = document.createElement("div")
+    const now = new Date()
+    const nextFullHour = new Date(now)
 
-    untilRow.className = "kanban-focus__until-row"
+    nextFullHour.setMinutes(0, 0, 0)
+    nextFullHour.setHours(nextFullHour.getHours() + 1)
 
-    const hourPlaceholder = document.createElement("option")
+    for (let offset = 0; offset < UNTIL_PRESET_COUNT; offset++) {
+        const targetTime = new Date(nextFullHour.getTime() + offset * 60 * MILLISECONDS_PER_MINUTE)
+        const targetHour = targetTime.getHours()
 
-    hourPlaceholder.value = ""
-    hourPlaceholder.textContent = "Hour"
-    hourPlaceholder.disabled = true
-    hourPlaceholder.selected = true
-    hourSelect.append(hourPlaceholder)
+        const chip = document.createElement("span")
 
-    for (let hour = 0; hour < 24; hour++) {
-        const option = document.createElement("option")
+        chip.className = "kanban-focus__chip"
+        chip.dataset.untilHour = String(targetHour)
+        chip.textContent = `Until ${String(targetHour).padStart(2, "0")}:00`
 
-        option.value = String(hour)
-        option.textContent = String(hour).padStart(2, "0")
-        hourSelect.append(option)
+        const capturedHour = targetHour
+
+        // eslint-disable-next-line @typescript-eslint/no-loop-func -- intentional shared mutable state for toggle behavior
+        chip.addEventListener("click", () => {
+            if (selectedUntilHour === capturedHour) {
+                selectedUntilHour = null
+                selectedUntilMinute = null
+            } else {
+                selectedUntilHour = capturedHour
+                selectedUntilMinute = 0
+                selectedDurationMs = null
+                updateDurationChipStates()
+            }
+
+            updateUntilChipStates()
+            updateSubmitState()
+        })
+
+        untilChips.append(chip)
     }
 
-    const separator = document.createElement("span")
-
-    separator.className = "kanban-focus__separator"
-    separator.textContent = ":"
-
-    const minutePlaceholder = document.createElement("option")
-
-    minutePlaceholder.value = ""
-    minutePlaceholder.textContent = "Min"
-    minutePlaceholder.disabled = true
-    minutePlaceholder.selected = true
-    minuteSelect.append(minutePlaceholder)
-
-    for (const minute of MINUTE_OPTIONS) {
-        const option = document.createElement("option")
-
-        option.value = String(minute)
-        option.textContent = String(minute).padStart(2, "0")
-        minuteSelect.append(option)
-    }
-
-    const handleUntilChange = () => {
-        const hourValue = hourSelect.value
-        const minuteValue = minuteSelect.value
-
-        if (hourValue !== "" && minuteValue !== "") {
-            selectedUntilHour = Number(hourValue)
-            selectedUntilMinute = Number(minuteValue)
-            selectedDurationMs = null
-            updateDurationChipStates()
-        } else {
-            selectedUntilHour = null
-            selectedUntilMinute = null
-        }
-
-        updateSubmitState()
-    }
-
-    hourSelect.addEventListener("change", handleUntilChange)
-    minuteSelect.addEventListener("change", handleUntilChange)
-
-    untilRow.append(hourSelect, separator, minuteSelect)
-    dialog.append(untilRow)
+    dialog.append(untilChips)
 
     submitButton.addEventListener("click", () => {
         if (selectedProjectTitle === null) {
@@ -472,16 +447,16 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
         if (selectedDurationMs !== null) {
             durationMs = selectedDurationMs
         } else if (selectedUntilHour !== null && selectedUntilMinute !== null) {
-            const now = new Date()
+            const currentTime = new Date()
             const target = new Date()
 
             target.setHours(selectedUntilHour, selectedUntilMinute, 0, 0)
 
-            if (target.getTime() <= now.getTime()) {
+            if (target.getTime() <= currentTime.getTime()) {
                 target.setDate(target.getDate() + 1)
             }
 
-            durationMs = target.getTime() - now.getTime()
+            durationMs = target.getTime() - currentTime.getTime()
         } else {
             return
         }
