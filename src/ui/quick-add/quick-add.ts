@@ -333,6 +333,7 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
                     : null
 
             const update: Partial<CardType> = {
+                backlog: selectedDate ? false : editContext.card.backlog,
                 blockedReason: blockedReasonValue,
                 date: selectedDate,
                 description: descriptionValue,

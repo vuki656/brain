@@ -184,7 +184,7 @@ export function showDatePicker(options: DatePickerOptionsType): void {
                 cardIndex,
                 projectIndex,
                 projects: board.projects,
-                update: { date: dateString },
+                update: { backlog: false, date: dateString },
             })
 
             onMutation({ ...board, projects: newProjects })

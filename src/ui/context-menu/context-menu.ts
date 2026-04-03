@@ -255,7 +255,7 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                     cardIndex,
                     projectIndex,
                     projects: board.projects,
-                    update: { date: toDateString(todayDate) },
+                    update: { backlog: false, date: toDateString(todayDate) },
                 })
                 onMutation({ ...board, projects: newProjects })
             })
@@ -269,7 +269,7 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                     cardIndex,
                     projectIndex,
                     projects: board.projects,
-                    update: { date: toDateString(tomorrowDate) },
+                    update: { backlog: false, date: toDateString(tomorrowDate) },
                 })
                 onMutation({ ...board, projects: newProjects })
             })
@@ -283,7 +283,7 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                     cardIndex,
                     projectIndex,
                     projects: board.projects,
-                    update: { date: toDateString(nextMonday(new Date())) },
+                    update: { backlog: false, date: toDateString(nextMonday(new Date())) },
                 })
                 onMutation({ ...board, projects: newProjects })
             })
