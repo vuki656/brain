@@ -198,6 +198,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
                 cardTitle:
                     typeof rawFocusTimer.cardTitle === "string" ? rawFocusTimer.cardTitle : null,
                 endTimestamp: rawFocusTimer.endTimestamp,
+                notified: rawFocusTimer.notified === true,
                 projectTitle: rawFocusTimer.projectTitle ?? "",
                 totalDurationMs: rawFocusTimer.totalDurationMs ?? 0,
             }

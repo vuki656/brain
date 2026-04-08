@@ -27,6 +27,7 @@ export type ProjectType = {
 export type FocusTimerStateType = {
     cardTitle: string | null
     endTimestamp: number
+    notified: boolean
     projectTitle: string
     totalDurationMs: number
 } | null

@@ -25,7 +25,9 @@ type ActiveTimerOptionsType = {
     cardTitle: string | null
     container: HTMLElement
     endTimestamp: number
+    notified: boolean
     onCancel: () => void
+    onNotified: () => void
     projectTitle: string
     totalDurationMs: number
 }
@@ -86,7 +88,16 @@ function createSvgRing(fraction: number, completed: boolean): SVGSVGElement {
 }
 
 function renderActiveTimer(options: ActiveTimerOptionsType): void {
-    const { cardTitle, container, endTimestamp, onCancel, projectTitle, totalDurationMs } = options
+    const {
+        cardTitle,
+        container,
+        endTimestamp,
+        notified,
+        onCancel,
+        onNotified,
+        projectTitle,
+        totalDurationMs,
+    } = options
     const remainingMs = endTimestamp - Date.now()
     const isCompleted = remainingMs <= 0
     const fraction = isCompleted ? 1 : Math.max(0, remainingMs / totalDurationMs)
@@ -127,7 +138,10 @@ function renderActiveTimer(options: ActiveTimerOptionsType): void {
     container.append(wrapper)
 
     if (isCompleted) {
-        new Notice("Focus session complete!")
+        if (!notified) {
+            new Notice("Focus session complete!")
+            onNotified()
+        }
 
         return
     }
@@ -141,8 +155,10 @@ function renderActiveTimer(options: ActiveTimerOptionsType): void {
                 activeIntervalId = null
             }
 
-            container.empty()
-            renderActiveTimer(options)
+            if (!notified) {
+                new Notice("Focus session complete!")
+                onNotified()
+            }
 
             return
         }
@@ -575,8 +591,17 @@ export function renderFocusTimer(options: FocusTimerOptionsType): void {
             cardTitle: focusTimerState.cardTitle,
             container,
             endTimestamp: focusTimerState.endTimestamp,
+            notified: focusTimerState.notified,
             onCancel: () => {
                 onFocusTimerStateChange(null)
+            },
+            onNotified: () => {
+                queueMicrotask(() => {
+                    onFocusTimerStateChange({
+                        ...focusTimerState,
+                        notified: true,
+                    })
+                })
             },
             projectTitle: focusTimerState.projectTitle,
             totalDurationMs: focusTimerState.totalDurationMs,
@@ -606,6 +631,7 @@ export function renderFocusTimer(options: FocusTimerOptionsType): void {
                 onFocusTimerStateChange({
                     cardTitle,
                     endTimestamp: Date.now() + durationMs,
+                    notified: false,
                     projectTitle,
                     totalDurationMs: durationMs,
                 })
