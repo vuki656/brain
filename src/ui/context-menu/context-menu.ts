@@ -1,4 +1,4 @@
-import { nextMonday, startOfTomorrow } from "date-fns"
+import { addDays, nextMonday, startOfTomorrow } from "date-fns"
 import { Menu, Notice, TFile } from "obsidian"
 
 import type { SubtaskType } from "../../shared"
@@ -245,6 +245,7 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
 
     const todayDate = new Date()
     const tomorrowDate = startOfTomorrow()
+    const dayAfterTomorrowDate = addDays(tomorrowDate, 1)
 
     menu.addItem((item) => {
         return item
@@ -270,6 +271,20 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                     projectIndex,
                     projects: board.projects,
                     update: { backlog: false, date: toDateString(tomorrowDate) },
+                })
+                onMutation({ ...board, projects: newProjects })
+            })
+    })
+    menu.addItem((item) => {
+        return item
+            .setIcon("calendar-plus-2")
+            .setTitle("Date: Day After Tomorrow")
+            .onClick(() => {
+                const newProjects = immutableUpdateCard({
+                    cardIndex,
+                    projectIndex,
+                    projects: board.projects,
+                    update: { backlog: false, date: toDateString(dayAfterTomorrowDate) },
                 })
                 onMutation({ ...board, projects: newProjects })
             })
