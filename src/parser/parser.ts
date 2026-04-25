@@ -321,12 +321,6 @@ function serializeCard(card: CardType): string {
 
     line = line + (card.linkedNote ? `[[${card.linkedNote}]]` : card.title)
 
-    const isToday = card.date === toDateString(new Date())
-
-    if (isToday) {
-        line = `${line} @today`
-    }
-
     if (card.priority) {
         line = `${line} !${card.priority}`
     }
@@ -335,7 +329,7 @@ function serializeCard(card: CardType): string {
         line = `${line} !blocked(${card.blockedReason})`
     }
 
-    if (card.date && !isToday) {
+    if (card.date) {
         line = `${line} @{${card.date}}`
     }
 

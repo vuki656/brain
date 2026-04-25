@@ -365,12 +365,14 @@ describe("serializeBoard", () => {
         const board = parseBoard(SAMPLE_BOARD)
         const serialized = serializeBoard(board)
 
-        expect(serialized).toContain("- [ ] Schedule weekly standup @today @id:bbb222")
+        expect(serialized).toContain(`- [ ] Schedule weekly standup @{${TODAY_STRING}} @id:bbb222`)
         expect(serialized).toContain(
             "- [ ] Design system tokens !important @{2026-02-25} @id:ccc333",
         )
-        expect(serialized).toContain("- [ ] Review open pull requests @today !important @id:eee555")
-        expect(serialized).not.toContain(`@today @{${TODAY_STRING}}`)
+        expect(serialized).toContain(
+            `- [ ] Review open pull requests !important @{${TODAY_STRING}} @id:eee555`,
+        )
+        expect(serialized).not.toContain("@today")
     })
 
     it("should serialize settings block", () => {
