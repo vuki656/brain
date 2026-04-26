@@ -70,10 +70,6 @@ class TextPromptModal extends Modal {
                     submit()
                 }
             })
-
-            window.setTimeout(() => {
-                text.inputEl.focus()
-            }, 50)
         })
 
         new Setting(contentEl).addButton((button) => {
