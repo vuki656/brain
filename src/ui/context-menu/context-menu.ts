@@ -208,26 +208,28 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setIcon("list-checks")
             .setTitle("Add subtask")
             .onClick(() => {
-                new TextPromptModal(window.app, {
-                    label: "Add subtask",
-                    onSubmit: (title) => {
-                        const newSubtask: SubtaskType = {
-                            completed: false,
-                            id: generateId(),
-                            title,
-                        }
-                        const newSubtasks = immutableAddSubtask(card.subtasks, newSubtask)
-                        const newProjects = immutableUpdateCard({
-                            cardIndex,
-                            projectIndex,
-                            projects: board.projects,
-                            update: { subtasks: newSubtasks },
-                        })
-                        onMutation({ ...board, projects: newProjects })
-                    },
-                    placeholder: "Subtask title...",
-                    submitLabel: "Add",
-                }).open()
+                window.setTimeout(() => {
+                    new TextPromptModal(window.app, {
+                        label: "Add subtask",
+                        onSubmit: (title) => {
+                            const newSubtask: SubtaskType = {
+                                completed: false,
+                                id: generateId(),
+                                title,
+                            }
+                            const newSubtasks = immutableAddSubtask(card.subtasks, newSubtask)
+                            const newProjects = immutableUpdateCard({
+                                cardIndex,
+                                projectIndex,
+                                projects: board.projects,
+                                update: { subtasks: newSubtasks },
+                            })
+                            onMutation({ ...board, projects: newProjects })
+                        },
+                        placeholder: "Subtask title...",
+                        submitLabel: "Add",
+                    }).open()
+                }, 150)
             })
     })
 
