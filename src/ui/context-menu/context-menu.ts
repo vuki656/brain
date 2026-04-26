@@ -1,5 +1,6 @@
 import { addDays, nextMonday, startOfTomorrow } from "date-fns"
-import { Menu, Notice, TFile } from "obsidian"
+import type { App } from "obsidian"
+import { Menu, Modal, Notice, TFile } from "obsidian"
 
 import type { SubtaskType } from "../../shared"
 import { generateId, toDateString } from "../../shared"
@@ -7,6 +8,80 @@ import { immutableAddSubtask, immutableSpliceCard, immutableUpdateCard } from ".
 import { showDatePicker } from "../date-picker"
 import { openQuickAddDialog } from "../quick-add"
 import type { CardContextMenuOptionsType, PriorityMenuOptionsType } from "./context-menu.types"
+
+class TextPromptModal extends Modal {
+    private readonly label: string
+
+    private readonly onSubmit: (value: string) => void
+
+    private readonly placeholder: string
+
+    private readonly submitLabel: string
+
+    constructor(
+        app: App,
+        options: {
+            label: string
+            onSubmit: (value: string) => void
+            placeholder: string
+            submitLabel: string
+        },
+    ) {
+        super(app)
+        this.label = options.label
+        this.placeholder = options.placeholder
+        this.submitLabel = options.submitLabel
+        this.onSubmit = options.onSubmit
+    }
+
+    public onClose(): void {
+        this.contentEl.empty()
+    }
+
+    public onOpen(): void {
+        const { contentEl, label, onSubmit, placeholder, submitLabel } = this
+
+        contentEl.addClass("kanban-blocked-reason-dialog")
+
+        const labelElement = contentEl.createDiv({ cls: "kanban-blocked-reason-dialog__label" })
+
+        labelElement.textContent = label
+
+        const input = contentEl.createEl("input", { cls: "kanban-blocked-reason-prompt" })
+
+        input.type = "text"
+        input.placeholder = placeholder
+
+        const submitButton = contentEl.createEl("span", { cls: "kanban-quick-add__submit" })
+
+        submitButton.textContent = submitLabel
+
+        const submit = () => {
+            const value = input.value.trim()
+
+            if (!value) {
+                input.focus()
+
+                return
+            }
+
+            this.close()
+            onSubmit(value)
+        }
+
+        submitButton.addEventListener("click", submit)
+        input.addEventListener("keydown", (keyboardEvent) => {
+            if (keyboardEvent.key === "Enter") {
+                keyboardEvent.preventDefault()
+                submit()
+            }
+        })
+
+        window.setTimeout(() => {
+            input.focus()
+        }, 0)
+    }
+}
 
 export function showPriorityMenu(options: PriorityMenuOptionsType): void {
     const { board, cardIndex, event, onMutation, projectIndex } = options
@@ -134,79 +209,26 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
             .setIcon("list-checks")
             .setTitle("Add subtask")
             .onClick(() => {
-                const subtaskInput = document.createElement("input")
-
-                subtaskInput.type = "text"
-                subtaskInput.placeholder = "Subtask title..."
-                subtaskInput.className = "kanban-blocked-reason-prompt"
-
-                const promptOverlay = document.createElement("div")
-
-                promptOverlay.className = "kanban-blocked-reason-overlay"
-
-                const promptDialog = document.createElement("div")
-
-                promptDialog.className = "kanban-blocked-reason-dialog"
-
-                const promptLabel = document.createElement("div")
-
-                promptLabel.className = "kanban-blocked-reason-dialog__label"
-                promptLabel.textContent = "Add subtask"
-
-                const promptSubmit = document.createElement("span")
-
-                promptSubmit.className = "kanban-quick-add__submit"
-                promptSubmit.textContent = "Add"
-
-                const cleanup = () => {
-                    promptOverlay.remove()
-                }
-
-                const submit = () => {
-                    const title = subtaskInput.value.trim()
-
-                    if (!title) {
-                        subtaskInput.focus()
-
-                        return
-                    }
-
-                    const newSubtask: SubtaskType = {
-                        completed: false,
-                        id: generateId(),
-                        title,
-                    }
-                    const newSubtasks = immutableAddSubtask(card.subtasks, newSubtask)
-                    const newProjects = immutableUpdateCard({
-                        cardIndex,
-                        projectIndex,
-                        projects: board.projects,
-                        update: { subtasks: newSubtasks },
-                    })
-                    onMutation({ ...board, projects: newProjects })
-                    cleanup()
-                }
-
-                promptSubmit.addEventListener("click", submit)
-                subtaskInput.addEventListener("keydown", (keyboardEvent) => {
-                    if (keyboardEvent.key === "Enter") {
-                        keyboardEvent.preventDefault()
-                        submit()
-                    }
-
-                    if (keyboardEvent.key === "Escape") {
-                        cleanup()
-                    }
-                })
-                promptOverlay.addEventListener("click", cleanup)
-                promptDialog.addEventListener("click", (dialogEvent) => {
-                    dialogEvent.stopPropagation()
-                })
-
-                promptDialog.append(promptLabel, subtaskInput, promptSubmit)
-                promptOverlay.append(promptDialog)
-                document.body.append(promptOverlay)
-                subtaskInput.focus()
+                new TextPromptModal(window.app, {
+                    label: "Add subtask",
+                    onSubmit: (title) => {
+                        const newSubtask: SubtaskType = {
+                            completed: false,
+                            id: generateId(),
+                            title,
+                        }
+                        const newSubtasks = immutableAddSubtask(card.subtasks, newSubtask)
+                        const newProjects = immutableUpdateCard({
+                            cardIndex,
+                            projectIndex,
+                            projects: board.projects,
+                            update: { subtasks: newSubtasks },
+                        })
+                        onMutation({ ...board, projects: newProjects })
+                    },
+                    placeholder: "Subtask title...",
+                    submitLabel: "Add",
+                }).open()
             })
     })
 
