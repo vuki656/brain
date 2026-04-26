@@ -1,6 +1,6 @@
 import { addDays, nextMonday, startOfTomorrow } from "date-fns"
 import type { App } from "obsidian"
-import { Menu, Modal, Notice, TFile } from "obsidian"
+import { Menu, Modal, Notice, Setting, TFile } from "obsidian"
 
 import type { SubtaskType } from "../../shared"
 import { generateId, toDateString } from "../../shared"
@@ -39,47 +39,46 @@ class TextPromptModal extends Modal {
     }
 
     public onOpen(): void {
-        const { contentEl, label, onSubmit, placeholder, submitLabel } = this
+        const { contentEl, label, onSubmit, placeholder, submitLabel, titleEl } = this
 
-        contentEl.addClass("kanban-blocked-reason-dialog")
+        titleEl.setText(label)
 
-        const labelElement = contentEl.createDiv({ cls: "kanban-blocked-reason-dialog__label" })
-
-        labelElement.textContent = label
-
-        const input = contentEl.createEl("input", { cls: "kanban-blocked-reason-prompt" })
-
-        input.type = "text"
-        input.placeholder = placeholder
-
-        const submitButton = contentEl.createEl("span", { cls: "kanban-quick-add__submit" })
-
-        submitButton.textContent = submitLabel
+        let currentValue = ""
+        let inputElement: HTMLInputElement | null = null
 
         const submit = () => {
-            const value = input.value.trim()
+            const trimmed = currentValue.trim()
 
-            if (!value) {
-                input.focus()
+            if (!trimmed) {
+                inputElement?.focus()
 
                 return
             }
 
             this.close()
-            onSubmit(value)
+            onSubmit(trimmed)
         }
 
-        submitButton.addEventListener("click", submit)
-        input.addEventListener("keydown", (keyboardEvent) => {
-            if (keyboardEvent.key === "Enter") {
-                keyboardEvent.preventDefault()
-                submit()
-            }
+        new Setting(contentEl).addText((text) => {
+            text.setPlaceholder(placeholder).onChange((value) => {
+                currentValue = value
+            })
+            inputElement = text.inputEl
+            text.inputEl.addEventListener("keydown", (keyboardEvent) => {
+                if (keyboardEvent.key === "Enter") {
+                    keyboardEvent.preventDefault()
+                    submit()
+                }
+            })
+
+            window.setTimeout(() => {
+                text.inputEl.focus()
+            }, 50)
         })
 
-        window.setTimeout(() => {
-            input.focus()
-        }, 0)
+        new Setting(contentEl).addButton((button) => {
+            button.setButtonText(submitLabel).setCta().onClick(submit)
+        })
     }
 }
 
