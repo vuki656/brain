@@ -31,7 +31,7 @@ export class KanbanView extends TextFileView {
     private sortableInstances: Sortable[] = []
 
     private viewState: ViewStateType = {
-        activeRightTab: "projects",
+        activeRightTab: "tickets",
         hideCompletedActive: true,
         todayFilterActive: true,
     }
@@ -129,7 +129,7 @@ export class KanbanView extends TextFileView {
 
         if (clear) {
             this.viewState = {
-                activeRightTab: "projects",
+                activeRightTab: "tickets",
                 hideCompletedActive: true,
                 todayFilterActive: true,
             }

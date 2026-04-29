@@ -259,7 +259,7 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
         }
     })
 
-    tabHeader.append(projectsTab, ticketsTab)
+    tabHeader.append(ticketsTab, projectsTab)
     projectsPanel.append(tabHeader)
 
     if (viewState.activeRightTab === "projects") {
