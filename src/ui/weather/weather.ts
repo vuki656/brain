@@ -1,5 +1,4 @@
 import { fetchWeatherData } from "./weather-cache"
-import { createCurrentWeatherBanner } from "./weather-current"
 import { createDailyWeatherRow } from "./weather-daily"
 import { createHourlyWeatherRow } from "./weather-hourly"
 import type { WeatherLocationType } from "./weather.types"
@@ -23,7 +22,6 @@ export async function renderWeatherSection(
         const weatherData = await fetchWeatherData(location)
 
         wrapper.empty()
-        wrapper.append(createCurrentWeatherBanner(weatherData.current))
 
         const splitRow = document.createElement("div")
 
