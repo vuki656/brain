@@ -141,6 +141,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
             focusTimer: null,
             projectColors: {},
             projectIcons: {},
+            ticketOrder: {},
             todayOrder: {},
         }
     }
@@ -184,6 +185,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
             focusTimer: null,
             projectColors: {},
             projectIcons: {},
+            ticketOrder: {},
             todayOrder: {},
         }
     }
@@ -196,6 +198,13 @@ function parseSettings(lines: string[]): KanbanSettingsType {
 
         if (rawTodayOrder && typeof rawTodayOrder === "object") {
             todayOrder = rawTodayOrder
+        }
+
+        const rawTicketOrder = parsed["ticket-order"]
+        let ticketOrder: Record<string, string[]> = {}
+
+        if (rawTicketOrder && typeof rawTicketOrder === "object") {
+            ticketOrder = rawTicketOrder
         }
 
         let focusTimer: FocusTimerStateType = null
@@ -222,6 +231,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
             focusTimer,
             projectColors: parsed["project-colors"] ?? {},
             projectIcons: parsed["project-icons"] ?? {},
+            ticketOrder,
             todayOrder,
         }
     } catch {
@@ -231,6 +241,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
             focusTimer: null,
             projectColors: {},
             projectIcons: {},
+            ticketOrder: {},
             todayOrder: {},
         }
     }
@@ -489,6 +500,10 @@ export function serializeBoard(board: BoardType): string {
 
     if (Object.keys(board.settings.todayOrder).length > 0) {
         settingsObject["today-order"] = sortRecordKeys(board.settings.todayOrder)
+    }
+
+    if (Object.keys(board.settings.ticketOrder).length > 0) {
+        settingsObject["ticket-order"] = sortRecordKeys(board.settings.ticketOrder)
     }
 
     if (Object.keys(board.settings.projectColors).length > 0) {

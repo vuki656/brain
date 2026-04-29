@@ -11,7 +11,8 @@ describe("getProjectColor", () => {
                 collapsedProjects: [],
                 projectColors: { Todo: "var(--color-red)" },
                 projectIcons: {},
-                todayOrder: {},
+                ticketOrder: {},
+            todayOrder: {},
             },
         })
 

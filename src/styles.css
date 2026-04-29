@@ -1834,11 +1834,39 @@
 }
 
 .kanban-tickets__row {
+    align-items: flex-start;
     border-bottom: 1px solid var(--background-modifier-border);
     border-radius: 6px;
     cursor: pointer;
+    display: flex;
+    gap: 6px;
     padding: 10px;
     transition: background 0.15s ease;
+}
+
+.kanban-tickets__row-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.kanban-tickets__row-drag {
+    align-items: center;
+    color: var(--text-faint);
+    cursor: grab;
+    display: inline-flex;
+    flex-shrink: 0;
+    opacity: 0%;
+    padding-top: 1px;
+    transition: opacity 0.15s ease;
+}
+
+.kanban-tickets__row-drag svg {
+    height: 14px;
+    width: 14px;
+}
+
+.kanban-tickets__row:hover .kanban-tickets__row-drag {
+    opacity: 100%;
 }
 
 .kanban-tickets__row:last-child {

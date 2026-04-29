@@ -1,4 +1,6 @@
 import { setIcon, type Vault } from "obsidian"
+// eslint-disable-next-line import-x/no-named-as-default -- SortableJS exports Sortable as both default and named
+import Sortable from "sortablejs"
 
 import type { BoardType, PluginSettingsType } from "../../shared"
 import { getProjectColor, getProjectIcon } from "../project"
@@ -24,12 +26,50 @@ type TicketRowOptionsType = {
     vault: Vault
 }
 
+function sortTicketsByOrder(tickets: TicketType[], savedOrder: string[]): TicketType[] {
+    if (savedOrder.length === 0) {
+        return tickets
+    }
+
+    const byName = new Map(
+        tickets.map((ticket) => {
+            return [ticket.name, ticket]
+        }),
+    )
+    const ordered: TicketType[] = []
+    const seen = new Set<string>()
+
+    for (const name of savedOrder) {
+        const ticket = byName.get(name)
+
+        if (ticket) {
+            ordered.push(ticket)
+            seen.add(name)
+        }
+    }
+
+    for (const ticket of tickets) {
+        if (!seen.has(ticket.name)) {
+            ordered.push(ticket)
+        }
+    }
+
+    return ordered
+}
+
 function createTicketRow(options: TicketRowOptionsType): HTMLElement {
     const { board, onMutation, pluginSettings, ticket, vault } = options
 
     const row = document.createElement("div")
 
     row.className = "kanban-tickets__row"
+    row.dataset.ticketName = ticket.name
+
+    const dragHandle = document.createElement("span")
+
+    dragHandle.className = "kanban-tickets__row-drag"
+    setIcon(dragHandle, "grip-vertical")
+    row.append(dragHandle)
 
     const main = document.createElement("div")
 
@@ -207,7 +247,10 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
                 return
             }
 
-            for (const ticket of tickets) {
+            const savedOrder = board.settings.ticketOrder[projectTitle] ?? []
+            const orderedTickets = sortTicketsByOrder(tickets, savedOrder)
+
+            for (const ticket of orderedTickets) {
                 list.append(
                     createTicketRow({
                         board,
@@ -218,6 +261,36 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
                     }),
                 )
             }
+
+            list.dataset.projectTitle = projectTitle
+            Sortable.create(list, {
+                animation: 150,
+                fallbackOnBody: true,
+                handle: ".kanban-tickets__row-drag",
+                onEnd: () => {
+                    const orderIds: string[] = []
+                    const rowElements = list.querySelectorAll<HTMLElement>(".kanban-tickets__row")
+
+                    for (const rowElement of Array.from(rowElements)) {
+                        const ticketName = rowElement.dataset.ticketName
+
+                        if (ticketName) {
+                            orderIds.push(ticketName)
+                        }
+                    }
+
+                    onMutation({
+                        ...board,
+                        settings: {
+                            ...board.settings,
+                            ticketOrder: {
+                                ...board.settings.ticketOrder,
+                                [projectTitle]: orderIds,
+                            },
+                        },
+                    })
+                },
+            })
         })()
     }
 }

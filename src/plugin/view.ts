@@ -18,6 +18,7 @@ export class KanbanView extends TextFileView {
             focusTimer: null,
             projectColors: {},
             projectIcons: {},
+            ticketOrder: {},
             todayOrder: {},
         },
     }
@@ -65,7 +66,8 @@ export class KanbanView extends TextFileView {
                 focusTimer: null,
                 projectColors: {},
                 projectIcons: {},
-                todayOrder: {},
+                ticketOrder: {},
+            todayOrder: {},
             },
         }
         this.boardContainer.empty()

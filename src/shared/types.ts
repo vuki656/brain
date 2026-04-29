@@ -39,6 +39,7 @@ export type KanbanSettingsType = {
     focusTimer: FocusTimerStateType
     projectColors: Record<string, string>
     projectIcons: Record<string, string>
+    ticketOrder: Record<string, string[]>
     todayOrder: Partial<Record<string, string[]>>
 }
 
