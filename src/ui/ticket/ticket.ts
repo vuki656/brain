@@ -26,6 +26,10 @@ type UpdateLinkOptionsType = TicketByNameOptionsType & {
     newLink: string | null
 }
 
+type UpdateEntriesOptionsType = TicketByNameOptionsType & {
+    transform: (entries: TicketEntryType[]) => TicketEntryType[]
+}
+
 type RenameTicketOptionsType = TicketContextType & {
     newName: string
     oldName: string
@@ -229,6 +233,23 @@ async function addTicketEntry(options: AddEntryOptionsType): Promise<void> {
     await vault.modify(file, newContent)
 }
 
+async function updateTicketEntries(options: UpdateEntriesOptionsType): Promise<void> {
+    const { name, notePathPrefix, projectTitle, transform, vault } = options
+    const path = getTicketFilePath(notePathPrefix, projectTitle, name)
+    const file = vault.getAbstractFileByPath(path)
+
+    if (!(file instanceof TFile)) {
+        return
+    }
+
+    const content = await vault.read(file)
+    const parsed = parseTicketFile(content)
+    const newEntries = transform(parsed.entries)
+    const newContent = serializeTicketFile(parsed.link, newEntries)
+
+    await vault.modify(file, newContent)
+}
+
 async function updateTicketLink(options: UpdateLinkOptionsType): Promise<void> {
     const { name, newLink, notePathPrefix, projectTitle, vault } = options
     const path = getTicketFilePath(notePathPrefix, projectTitle, name)
@@ -334,5 +355,6 @@ export {
     renameTicket,
     sanitizeTicketName,
     serializeTicketFile,
+    updateTicketEntries,
     updateTicketLink,
 }

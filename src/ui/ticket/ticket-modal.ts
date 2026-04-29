@@ -10,6 +10,7 @@ import {
     formatRelativeTime,
     readTicket,
     renameTicket,
+    updateTicketEntries,
     updateTicketLink,
 } from "./ticket"
 import type { TicketType } from "./ticket.types"
@@ -180,7 +181,23 @@ export function openTicketModal(options: TicketModalOptionsType): void {
     entriesList.className = "kanban-ticket-modal__entries"
     dialog.append(entriesList)
 
-    const renderEntries = () => {
+    async function refreshTicket(): Promise<void> {
+        const updated = await readTicket({
+            name: currentTicket.name,
+            notePathPrefix: pluginSettings.notePathPrefix,
+            projectTitle: currentTicket.projectTitle,
+            vault,
+        })
+
+        if (updated) {
+            // eslint-disable-next-line require-atomic-updates -- single-flight modal, sequential by user interaction
+            currentTicket = updated
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define -- mutually recursive helpers
+            renderEntries()
+        }
+    }
+
+    function renderEntries(): void {
         entriesList.empty()
 
         if (currentTicket.entries.length === 0) {
@@ -194,20 +211,138 @@ export function openTicketModal(options: TicketModalOptionsType): void {
         }
 
         for (const entry of currentTicket.entries) {
+            const capturedTimestamp = entry.timestamp
             const item = document.createElement("div")
 
             item.className = "kanban-ticket-modal__entry"
+
+            const entryHeader = document.createElement("div")
+
+            entryHeader.className = "kanban-ticket-modal__entry-header"
 
             const time = document.createElement("div")
 
             time.className = "kanban-ticket-modal__entry-time"
             time.textContent = `${entry.timestamp} · ${formatRelativeTime(entry.timestamp)}`
-            item.append(time)
+            entryHeader.append(time)
+
+            const actions = document.createElement("div")
+
+            actions.className = "kanban-ticket-modal__entry-actions"
+
+            const editAction = document.createElement("span")
+
+            editAction.className = "kanban-ticket-modal__entry-action"
+            setIcon(editAction, "pencil")
 
             const text = document.createElement("div")
 
             text.className = "kanban-ticket-modal__entry-text"
             text.textContent = entry.text
+
+            // eslint-disable-next-line @typescript-eslint/no-loop-func -- handlers reference modal-scoped state intentionally
+            editAction.addEventListener("click", (clickEvent) => {
+                clickEvent.stopPropagation()
+                startInlineEdit(text, entry.text, (newValue) => {
+                    const trimmed = newValue.trim()
+
+                    if (trimmed.length === 0 || trimmed === entry.text) {
+                        text.textContent = entry.text
+
+                        return
+                    }
+
+                    void (async () => {
+                        try {
+                            await updateTicketEntries({
+                                name: currentTicket.name,
+                                notePathPrefix: pluginSettings.notePathPrefix,
+                                projectTitle: currentTicket.projectTitle,
+                                transform: (entries) => {
+                                    return entries.map((existingEntry) => {
+                                        if (
+                                            existingEntry.timestamp === capturedTimestamp &&
+                                            existingEntry.text === entry.text
+                                        ) {
+                                            return { ...existingEntry, text: trimmed }
+                                        }
+
+                                        return existingEntry
+                                    })
+                                },
+                                vault,
+                            })
+                            await refreshTicket()
+                            onChange()
+                        } catch (error) {
+                            new Notice(`Failed to edit update: ${String(error)}`)
+                        }
+                    })()
+                })
+            })
+
+            const deleteAction = document.createElement("span")
+
+            deleteAction.className =
+                "kanban-ticket-modal__entry-action kanban-ticket-modal__entry-action--danger"
+            setIcon(deleteAction, "trash-2")
+
+            let deleteArmed = false
+
+            // eslint-disable-next-line @typescript-eslint/no-loop-func -- handlers reference modal-scoped state intentionally
+            deleteAction.addEventListener("click", (clickEvent) => {
+                clickEvent.stopPropagation()
+
+                if (!deleteArmed) {
+                    deleteArmed = true
+                    deleteAction.classList.add("kanban-ticket-modal__entry-action--armed")
+                    setIcon(deleteAction, "check")
+
+                    window.setTimeout(() => {
+                        deleteArmed = false
+                        deleteAction.classList.remove("kanban-ticket-modal__entry-action--armed")
+                        setIcon(deleteAction, "trash-2")
+                    }, 3000)
+
+                    return
+                }
+
+                void (async () => {
+                    try {
+                        await updateTicketEntries({
+                            name: currentTicket.name,
+                            notePathPrefix: pluginSettings.notePathPrefix,
+                            projectTitle: currentTicket.projectTitle,
+                            transform: (entries) => {
+                                let removed = false
+
+                                return entries.filter((existingEntry) => {
+                                    if (
+                                        !removed &&
+                                        existingEntry.timestamp === capturedTimestamp &&
+                                        existingEntry.text === entry.text
+                                    ) {
+                                        removed = true
+
+                                        return false
+                                    }
+
+                                    return true
+                                })
+                            },
+                            vault,
+                        })
+                        await refreshTicket()
+                        onChange()
+                    } catch (error) {
+                        new Notice(`Failed to delete update: ${String(error)}`)
+                    }
+                })()
+            })
+
+            actions.append(editAction, deleteAction)
+            entryHeader.append(actions)
+            item.append(entryHeader)
             item.append(text)
 
             entriesList.append(item)
@@ -215,21 +350,6 @@ export function openTicketModal(options: TicketModalOptionsType): void {
     }
 
     renderEntries()
-
-    const refreshTicket = async () => {
-        const updated = await readTicket({
-            name: currentTicket.name,
-            notePathPrefix: pluginSettings.notePathPrefix,
-            projectTitle: currentTicket.projectTitle,
-            vault,
-        })
-
-        if (updated) {
-            // eslint-disable-next-line require-atomic-updates -- single-flight modal, sequential by user interaction
-            currentTicket = updated
-            renderEntries()
-        }
-    }
 
     const submitEntry = async () => {
         const text = entryInput.value.trim()

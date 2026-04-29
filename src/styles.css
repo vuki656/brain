@@ -1953,10 +1953,56 @@
     padding: 8px 10px;
 }
 
+.kanban-ticket-modal__entry-header {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 3px;
+}
+
 .kanban-ticket-modal__entry-time {
     color: var(--text-faint);
+    flex: 1;
     font-size: 11px;
-    margin-bottom: 3px;
+}
+
+.kanban-ticket-modal__entry-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0%;
+    transition: opacity 0.15s ease;
+}
+
+.kanban-ticket-modal__entry:hover .kanban-ticket-modal__entry-actions {
+    opacity: 100%;
+}
+
+.kanban-ticket-modal__entry-action {
+    align-items: center;
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    padding: 3px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.kanban-ticket-modal__entry-action svg {
+    height: 12px;
+    width: 12px;
+}
+
+.kanban-ticket-modal__entry-action:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.kanban-ticket-modal__entry-action--danger:hover {
+    color: var(--text-error);
+}
+
+.kanban-ticket-modal__entry-action--armed {
+    color: var(--text-error);
 }
 
 .kanban-ticket-modal__entry-text {
