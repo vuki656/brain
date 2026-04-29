@@ -1831,14 +1831,18 @@
 .kanban-tickets__list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
 .kanban-tickets__row {
+    border-bottom: 1px solid var(--background-modifier-border);
     border-radius: 6px;
     cursor: pointer;
-    padding: 8px 10px;
+    padding: 10px;
     transition: background 0.15s ease;
+}
+
+.kanban-tickets__row:last-child {
+    border-bottom: none;
 }
 
 .kanban-tickets__row:hover {
