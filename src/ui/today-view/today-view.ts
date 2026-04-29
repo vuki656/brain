@@ -7,6 +7,7 @@ import { renderFocusTimer } from "../focus-timer"
 import { createProjectElement, getProjectColor, getProjectIcon } from "../project"
 import { openQuickAddDialog } from "../quick-add"
 import { createCardSortableOptions, createProjectCardMoveHandler } from "../sortable"
+import { renderTicketsTab } from "../ticket"
 import { parseWeatherLocation, renderWeatherSection } from "../weather"
 import type { TodayViewOptionsType } from "./today-view.types"
 import {
@@ -54,8 +55,16 @@ function isTodayOrderChanged(
 }
 
 export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
-    const { board, container, onBoardCleanup, onMutation, pluginSettings, vault, viewState } =
-        options
+    const {
+        board,
+        container,
+        onBoardCleanup,
+        onMutation,
+        onViewStateChange,
+        pluginSettings,
+        vault,
+        viewState,
+    } = options
     const { cleanedTodayOrder, groups: dateGroups } = collectCardsByDateGroup(board)
 
     if (isTodayOrderChanged(board.settings.todayOrder, cleanedTodayOrder)) {
@@ -127,7 +136,9 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
                 openQuickAddDialog({
                     board,
                     onMutation,
+                    pluginSettings,
                     prefillDate: getDateForSection(group.dateKey),
+                    vault,
                 })
             })
             header.append(addButton)
@@ -214,28 +225,80 @@ export function renderTodayView(options: TodayViewOptionsType): Sortable[] {
         },
     })
 
-    for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
-        const project = board.projects[projectIndex]
+    const tabHeader = document.createElement("div")
 
-        if (!project) {
-            continue
+    tabHeader.className = "kanban-right-tabs"
+
+    const projectsTab = document.createElement("span")
+
+    projectsTab.className = "kanban-right-tabs__tab"
+    projectsTab.textContent = "Projects"
+
+    if (viewState.activeRightTab === "projects") {
+        projectsTab.classList.add("kanban-right-tabs__tab--active")
+    }
+
+    projectsTab.addEventListener("click", () => {
+        if (viewState.activeRightTab !== "projects") {
+            onViewStateChange({ ...viewState, activeRightTab: "projects" })
         }
+    })
 
-        if (board.settings.archivedProjects.includes(project.title)) {
-            continue
+    const ticketsTab = document.createElement("span")
+
+    ticketsTab.className = "kanban-right-tabs__tab"
+    ticketsTab.textContent = "Tickets"
+
+    if (viewState.activeRightTab === "tickets") {
+        ticketsTab.classList.add("kanban-right-tabs__tab--active")
+    }
+
+    ticketsTab.addEventListener("click", () => {
+        if (viewState.activeRightTab !== "tickets") {
+            onViewStateChange({ ...viewState, activeRightTab: "tickets" })
         }
+    })
 
-        const projectElement = createProjectElement({
+    tabHeader.append(projectsTab, ticketsTab)
+    projectsPanel.append(tabHeader)
+
+    if (viewState.activeRightTab === "projects") {
+        for (let projectIndex = 0; projectIndex < board.projects.length; projectIndex++) {
+            const project = board.projects[projectIndex]
+
+            if (!project) {
+                continue
+            }
+
+            if (board.settings.archivedProjects.includes(project.title)) {
+                continue
+            }
+
+            const projectElement = createProjectElement({
+                board,
+                onMutation,
+                pluginSettings,
+                project,
+                projectIndex,
+                vault,
+                viewState,
+            })
+
+            projectsPanel.append(projectElement)
+        }
+    } else {
+        const ticketsContainer = document.createElement("div")
+
+        ticketsContainer.className = "kanban-tickets"
+        projectsPanel.append(ticketsContainer)
+
+        renderTicketsTab({
             board,
+            container: ticketsContainer,
             onMutation,
             pluginSettings,
-            project,
-            projectIndex,
             vault,
-            viewState,
         })
-
-        projectsPanel.append(projectElement)
     }
 
     layout.append(projectsPanel)

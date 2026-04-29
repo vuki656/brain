@@ -14,6 +14,7 @@ export type CardType = {
     description: string | null
     id: string
     linkedNote: string | null
+    linkedTicket: string | null
     priority: PriorityType
     subtasks: SubtaskType[]
     title: string
@@ -46,7 +47,10 @@ export type BoardType = {
     settings: KanbanSettingsType
 }
 
+export type RightPanelTabType = "projects" | "tickets"
+
 export type ViewStateType = {
+    activeRightTab: RightPanelTabType
     hideCompletedActive: boolean
     todayFilterActive: boolean
 }

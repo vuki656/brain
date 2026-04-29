@@ -195,6 +195,8 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                     board,
                     editContext: { card, cardIndex, projectIndex },
                     onMutation,
+                    pluginSettings,
+                    vault,
                 })
             })
     })

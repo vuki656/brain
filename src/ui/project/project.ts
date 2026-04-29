@@ -5,6 +5,7 @@ import { PROJECT_COLOR_LABELS, PROJECT_COLORS } from "../../shared"
 import { createAddCardForm, createCardElement } from "../card"
 import { showIconPicker } from "../icon-picker"
 import { startInlineEdit } from "../inline-edit"
+import { openAddTicketDialog } from "../ticket"
 import type { ProjectElementOptionsType } from "./project.types"
 import { getProjectColor, getProjectIcon } from "./project.utils"
 
@@ -112,6 +113,23 @@ export function createProjectElement(options: ProjectElementOptionsType): HTMLEl
         headerEvent.preventDefault()
 
         const menu = new Menu()
+
+        menu.addItem((item) => {
+            return item
+                .setIcon("ticket")
+                .setTitle("Add ticket")
+                .onClick(() => {
+                    openAddTicketDialog({
+                        board,
+                        onCreated: () => {
+                            onMutation({ ...board })
+                        },
+                        pluginSettings,
+                        preselectedProjectIndex: projectIndex,
+                        vault,
+                    })
+                })
+        })
 
         menu.addItem((item) => {
             return item

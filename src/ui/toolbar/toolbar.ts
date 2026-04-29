@@ -6,7 +6,7 @@ import type { ToolbarOptionsType } from "./toolbar.types"
 import { setButtonContent } from "./toolbar.utils"
 
 export function createToolbar(options: ToolbarOptionsType): HTMLElement {
-    const { app, board, onMutation, onViewStateChange, viewState } = options
+    const { app, board, onMutation, onViewStateChange, pluginSettings, viewState } = options
     const toolbar = document.createElement("div")
 
     toolbar.className = "kanban-toolbar"
@@ -16,7 +16,7 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
     addTaskButton.className = "kanban-toolbar__button"
     setButtonContent(addTaskButton, "plus", "Add task")
     addTaskButton.addEventListener("click", () => {
-        openQuickAddDialog({ board, onMutation })
+        openQuickAddDialog({ board, onMutation, pluginSettings, vault: app.vault })
     })
 
     const todayButton = document.createElement("button")

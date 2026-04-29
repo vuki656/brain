@@ -1,9 +1,10 @@
-import { setIcon, TFile } from "obsidian"
+import { Notice, setIcon, TFile } from "obsidian"
 
 import type { BoardType, CardType, SubtaskType } from "../../shared"
 import { formatDate, generateId, getDayDifference, toDateString } from "../../shared"
 import { showCardContextMenu, showPriorityMenu } from "../context-menu"
 import { startInlineEdit } from "../inline-edit"
+import { openTicketModal, readTicket } from "../ticket"
 import {
     immutableAddSubtask,
     immutableDeleteSubtask,
@@ -320,6 +321,53 @@ export function createCardElement(options: CardElementOptionsType): HTMLElement 
         metaRow.append(backlogBadge)
     }
 
+    if (card.linkedTicket) {
+        const ticketBadge = document.createElement("span")
+
+        ticketBadge.className = "kanban-card__badge kanban-card__badge--ticket"
+
+        const ticketIcon = document.createElement("span")
+
+        ticketIcon.className = "kanban-card__ticket-icon"
+        setIcon(ticketIcon, "ticket")
+        ticketBadge.append(ticketIcon)
+        ticketBadge.append(document.createTextNode(card.linkedTicket))
+
+        const linkedTicketName = card.linkedTicket
+        const projectTitleForTicket = board.projects[projectIndex]?.title ?? ""
+
+        ticketBadge.addEventListener("click", (ticketClickEvent) => {
+            ticketClickEvent.stopPropagation()
+
+            void (async () => {
+                const ticket = await readTicket({
+                    name: linkedTicketName,
+                    notePathPrefix: pluginSettings.notePathPrefix,
+                    projectTitle: projectTitleForTicket,
+                    vault,
+                })
+
+                if (!ticket) {
+                    new Notice(`Ticket "${linkedTicketName}" not found.`)
+
+                    return
+                }
+
+                openTicketModal({
+                    board,
+                    onChange: () => {
+                        onMutation({ ...board })
+                    },
+                    pluginSettings,
+                    ticket,
+                    vault,
+                })
+            })()
+        })
+
+        metaRow.append(ticketBadge)
+    }
+
     if (metaRow.children.length > 0) {
         cardElement.append(metaRow)
     }
@@ -400,6 +448,7 @@ export function createAddCardForm(
                     description: null,
                     id: generateId(),
                     linkedNote: null,
+                    linkedTicket: null,
                     priority: null,
                     subtasks: [],
                     title: text,

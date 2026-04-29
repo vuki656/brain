@@ -16,6 +16,7 @@ const BLOCKED_REGEX = /\s!blocked\(([^)]+)\)/g
 const BACKLOG_REGEX = /\s@backlog/g
 
 const LINKED_NOTE_REGEX = /(?:^|\s)\[\[(.+?)]]/g
+const TICKET_REGEX = /\s@ticket{([^}]+)}/g
 const ID_REGEX = /\s@id:([\da-z]+)/g
 const CHECKBOX_UNCHECKED_REGEX = /^- \[ ] /
 const CHECKBOX_CHECKED_REGEX = /^- \[x] /
@@ -38,6 +39,7 @@ function parseCard(line: string): CardType | null {
     let blockedReason: string | null = null
     let date: string | null = null
     let linkedNote: string | null = null
+    let linkedTicket: string | null = null
     let id: string | null = null
 
     const idMatch = ID_REGEX.exec(text)
@@ -103,6 +105,15 @@ function parseCard(line: string): CardType | null {
 
     LINKED_NOTE_REGEX.lastIndex = 0
 
+    const ticketMatch = TICKET_REGEX.exec(text)
+
+    if (ticketMatch) {
+        linkedTicket = ticketMatch[1] ?? null
+        text = text.replace(TICKET_REGEX, "")
+    }
+
+    TICKET_REGEX.lastIndex = 0
+
     return {
         backlog,
         blockedReason,
@@ -111,6 +122,7 @@ function parseCard(line: string): CardType | null {
         description: null,
         id: id ?? generateId(),
         linkedNote,
+        linkedTicket,
         priority,
         subtasks: [],
         title: text.trim(),
@@ -335,6 +347,10 @@ function serializeCard(card: CardType): string {
 
     if (card.backlog) {
         line = `${line} @backlog`
+    }
+
+    if (card.linkedTicket) {
+        line = `${line} @ticket{${card.linkedTicket}}`
     }
 
     line = `${line} @id:${card.id}`

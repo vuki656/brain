@@ -132,7 +132,14 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
         delete container.dataset.hideCompleted
     }
 
-    const toolbar = createToolbar({ app, board, onMutation, onViewStateChange, viewState })
+    const toolbar = createToolbar({
+        app,
+        board,
+        onMutation,
+        onViewStateChange,
+        pluginSettings,
+        viewState,
+    })
 
     container.append(toolbar)
 
@@ -142,6 +149,7 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
             container,
             onBoardCleanup,
             onMutation,
+            onViewStateChange,
             pluginSettings,
             vault,
             viewState,

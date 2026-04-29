@@ -1754,3 +1754,318 @@
 .kanban-focus__submit--disabled:hover {
     background: var(--interactive-accent);
 }
+
+/* Right-panel tabs */
+.kanban-right-tabs {
+    border-bottom: 1px solid var(--background-modifier-border);
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+}
+
+.kanban-right-tabs__tab {
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    transition: background 0.15s ease, color 0.15s ease;
+    user-select: none;
+}
+
+.kanban-right-tabs__tab:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.kanban-right-tabs__tab--active {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+/* Tickets tab */
+.kanban-tickets {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.kanban-tickets__section {
+    background: var(--background-secondary);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.kanban-tickets__header {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.kanban-tickets__title {
+    color: var(--text-normal);
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.kanban-tickets__add {
+    background: none;
+    border: 1px dashed var(--background-modifier-border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 8px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.kanban-tickets__add:hover {
+    border-color: var(--interactive-accent);
+    color: var(--text-normal);
+}
+
+.kanban-tickets__list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.kanban-tickets__row {
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 8px 10px;
+    transition: background 0.15s ease;
+}
+
+.kanban-tickets__row:hover {
+    background: var(--background-modifier-hover);
+}
+
+.kanban-tickets__row-name {
+    color: var(--text-normal);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.kanban-tickets__row-subtitle {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.kanban-tickets__empty {
+    color: var(--text-faint);
+    font-size: 12px;
+    font-style: italic;
+    padding: 6px 10px;
+}
+
+/* Ticket modal */
+.kanban-ticket-modal {
+    max-width: 560px;
+    width: 100%;
+}
+
+.kanban-ticket-modal__header {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.kanban-ticket-modal__title {
+    color: var(--text-normal);
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.kanban-ticket-modal__project {
+    background: var(--background-modifier-hover);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 3px 8px;
+}
+
+.kanban-ticket-modal__link-row {
+    margin-bottom: 12px;
+}
+
+.kanban-ticket-modal__link {
+    align-items: center;
+    color: var(--interactive-accent);
+    display: inline-flex;
+    font-size: 12px;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.kanban-ticket-modal__link:hover {
+    text-decoration: underline;
+}
+
+.kanban-ticket-modal__link-icon svg {
+    height: 12px;
+    width: 12px;
+}
+
+.kanban-ticket-modal__add-entry {
+    align-items: stretch;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.kanban-ticket-modal__add-entry .kanban-quick-add__input {
+    flex: 1;
+    margin: 0;
+}
+
+.kanban-ticket-modal__add-entry .kanban-quick-add__submit {
+    margin: 0;
+    padding: 8px 14px;
+}
+
+.kanban-ticket-modal__entries {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.kanban-ticket-modal__entry {
+    background: var(--background-secondary);
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.kanban-ticket-modal__entry-time {
+    color: var(--text-faint);
+    font-size: 11px;
+    margin-bottom: 3px;
+}
+
+.kanban-ticket-modal__entry-text {
+    color: var(--text-normal);
+    font-size: 13px;
+    white-space: pre-wrap;
+}
+
+.kanban-ticket-modal__empty {
+    color: var(--text-faint);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.kanban-ticket-modal__section-heading {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.kanban-ticket-modal__linked-cards {
+    margin-bottom: 14px;
+}
+
+.kanban-ticket-modal__linked-card {
+    align-items: center;
+    border-radius: 4px;
+    color: var(--text-normal);
+    display: flex;
+    font-size: 12px;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.kanban-ticket-modal__linked-card-status {
+    color: var(--text-muted);
+    width: 10px;
+}
+
+.kanban-ticket-modal__linked-card-title {
+    flex: 1;
+}
+
+.kanban-ticket-modal__linked-card-date {
+    color: var(--text-faint);
+    font-size: 11px;
+}
+
+.kanban-ticket-modal__actions {
+    border-top: 1px solid var(--background-modifier-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 10px;
+}
+
+.kanban-ticket-modal__action {
+    background: var(--background-secondary);
+    border-radius: 6px;
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 6px 10px;
+    transition: background 0.15s ease;
+}
+
+.kanban-ticket-modal__action:hover {
+    background: var(--background-modifier-hover);
+}
+
+.kanban-ticket-modal__action--danger {
+    color: var(--text-error);
+}
+
+/* Card ticket badge */
+.kanban-card__badge--ticket {
+    align-items: center;
+    background: var(--background-modifier-hover);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    gap: 4px;
+}
+
+.kanban-card__badge--ticket:hover {
+    color: var(--text-normal);
+}
+
+.kanban-card__ticket-icon {
+    align-items: center;
+    display: inline-flex;
+}
+
+.kanban-card__ticket-icon svg {
+    height: 11px;
+    width: 11px;
+}
+
+/* Quick-add ticket placeholder */
+.kanban-quick-add__ticket-placeholder {
+    color: var(--text-faint);
+    font-size: 12px;
+    font-style: italic;
+    padding: 6px 0;
+}
+
+/* Quick-add heading (for add-ticket-dialog) */
+.kanban-quick-add__heading {
+    color: var(--text-normal);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}

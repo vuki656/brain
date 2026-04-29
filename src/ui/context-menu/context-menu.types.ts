@@ -1,6 +1,6 @@
 import type { Vault } from "obsidian"
 
-import type { BoardType, CardType } from "../../shared"
+import type { BoardType, CardType, PluginSettingsType } from "../../shared"
 
 type MutationHandlerType = (board: BoardType) => void
 
@@ -19,7 +19,7 @@ export type CardContextMenuOptionsType = {
     cardIndex: number
     event: MouseEvent
     onMutation: MutationHandlerType
-    pluginSettings: { notePathPrefix: string }
+    pluginSettings: PluginSettingsType
     projectIndex: number
     vault: Vault
 }

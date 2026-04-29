@@ -1,4 +1,6 @@
-import type { BoardType, CardType } from "../../shared"
+import type { Vault } from "obsidian"
+
+import type { BoardType, CardType, PluginSettingsType } from "../../shared"
 
 type MutationHandlerType = (board: BoardType) => void
 
@@ -12,5 +14,9 @@ export type QuickAddDialogOptionsType = {
     board: BoardType
     editContext?: EditContextType
     onMutation: MutationHandlerType
+    pluginSettings?: PluginSettingsType
     prefillDate?: string | null
+    prefillProjectIndex?: number | null
+    prefillTicket?: string | null
+    vault?: Vault
 }

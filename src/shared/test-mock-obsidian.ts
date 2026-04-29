@@ -15,6 +15,7 @@ mock.module("obsidian", () => {
         },
         setIcon: () => {},
         TFile: class {},
+        TFolder: class {},
         Vault: class {},
     }
 })

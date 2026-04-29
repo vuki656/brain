@@ -1255,6 +1255,133 @@ describe("generateId", () => {
     })
 })
 
+describe("linked ticket", () => {
+    it("should parse card with @ticket{name}", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Implement feature @ticket{XYZ-111 Generic ticket} @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.linkedTicket).toBe("XYZ-111 Generic ticket")
+        expect(card.title).toBe("Implement feature")
+    })
+
+    it("should parse card without ticket as null", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Regular task @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+
+        expect(board.projects[0].cards[0].linkedTicket).toBeNull()
+    })
+
+    it("should round-trip @ticket{} through parse and serialize", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Fix bug @ticket{XYZ-222 Fix sample} @id:abc123
+- [ ] Other task @id:def456
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const serialized = serializeBoard(board)
+        const reparsed = parseBoard(serialized)
+
+        expect(reparsed.projects[0].cards[0].linkedTicket).toBe("XYZ-222 Fix sample")
+        expect(reparsed.projects[0].cards[1].linkedTicket).toBeNull()
+
+        const secondSerialize = serializeBoard(reparsed)
+
+        expect(secondSerialize).toBe(serialized)
+    })
+
+    it("should serialize @ticket{} after @backlog and before @id", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task @backlog @ticket{XYZ-333 Sample} @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const serialized = serializeBoard(board)
+
+        expect(serialized).toContain("- [ ] Task @backlog @ticket{XYZ-333 Sample} @id:abc123")
+    })
+
+    it("should parse @ticket{} alongside other tokens", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Critical fix !important @{2026-03-01} @ticket{XYZ-444 Generic} @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+        const card = board.projects[0].cards[0]
+
+        expect(card.linkedTicket).toBe("XYZ-444 Generic")
+        expect(card.priority).toBe("important")
+        expect(card.date).toBe("2026-03-01")
+        expect(card.title).toBe("Critical fix")
+    })
+})
+
 describe("blocked status", () => {
     it("should parse card with !blocked(reason)", () => {
         const markdown = `---

@@ -6,14 +6,27 @@ import { generateId, toDateString } from "../../shared"
 import { immutableSpliceCard, immutableUpdateCard } from "../card"
 import { showQuickAddDatePicker } from "../date-picker"
 import { getProjectColor, getProjectIcon } from "../project"
+import { listProjectTickets } from "../ticket"
 import type { QuickAddDialogOptionsType } from "./quick-add.types"
 
 function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
-    const { board, editContext, onMutation, prefillDate } = options
+    const {
+        board,
+        editContext,
+        onMutation,
+        pluginSettings,
+        prefillDate,
+        prefillProjectIndex,
+        prefillTicket,
+        vault,
+    } = options
     const isEditMode = editContext !== undefined
     let selectedDate: string | null = isEditMode ? editContext.card.date : (prefillDate ?? null)
     let selectedPriority: PriorityType = isEditMode ? editContext.card.priority : null
     let selectedBlockedReason: string | null = isEditMode ? editContext.card.blockedReason : null
+    let selectedLinkedTicket: string | null = isEditMode
+        ? editContext.card.linkedTicket
+        : (prefillTicket ?? null)
 
     const overlay = document.createElement("div")
 
@@ -68,7 +81,9 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
     projectLabel.textContent = "Project"
     projectRow.append(projectLabel)
 
-    let selectedProjectIndex: number | null = isEditMode ? editContext.projectIndex : null
+    let selectedProjectIndex: number | null = isEditMode
+        ? editContext.projectIndex
+        : (prefillProjectIndex ?? null)
 
     const projectChips = document.createElement("div")
 
@@ -85,6 +100,108 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
                 chipValue !== undefined && Number(chipValue) === selectedProjectIndex,
             )
         }
+    }
+
+    const ticketRow = document.createElement("div")
+
+    ticketRow.className = "kanban-quick-add__row"
+    ticketRow.style.display = pluginSettings && vault ? "" : "none"
+
+    const ticketLabel = document.createElement("span")
+
+    ticketLabel.className = "kanban-quick-add__label"
+    ticketLabel.textContent = "Ticket"
+    ticketRow.append(ticketLabel)
+
+    const ticketChips = document.createElement("div")
+
+    ticketChips.className = "kanban-quick-add__dates"
+    ticketRow.append(ticketChips)
+
+    const updateTicketChipStates = () => {
+        for (const otherChip of Array.from(
+            ticketChips.querySelectorAll(".kanban-quick-add__date-button"),
+        )) {
+            const value = (otherChip as HTMLElement).dataset.ticketName
+            const isActive = value !== undefined && value === selectedLinkedTicket
+
+            otherChip.classList.toggle("kanban-quick-add__date-button--active", isActive)
+        }
+    }
+
+    const renderTicketChip = (ticketName: string): HTMLElement => {
+        const chip = document.createElement("span")
+
+        chip.className = "kanban-quick-add__date-button"
+        chip.textContent = ticketName
+        chip.dataset.ticketName = ticketName
+
+        if (selectedLinkedTicket === ticketName) {
+            chip.classList.add("kanban-quick-add__date-button--active")
+        }
+
+        chip.addEventListener("click", () => {
+            selectedLinkedTicket = selectedLinkedTicket === ticketName ? null : ticketName
+            updateTicketChipStates()
+        })
+
+        return chip
+    }
+
+    const refreshTicketChips = () => {
+        if (!pluginSettings || !vault) {
+            return
+        }
+
+        ticketChips.empty()
+
+        const projectIndexAtStart = selectedProjectIndex
+
+        if (projectIndexAtStart === null) {
+            const placeholder = document.createElement("span")
+
+            placeholder.className = "kanban-quick-add__ticket-placeholder"
+            placeholder.textContent = "Pick a project first"
+            ticketChips.append(placeholder)
+
+            return
+        }
+
+        const project = board.projects[projectIndexAtStart]
+
+        if (!project) {
+            return
+        }
+
+        const projectTitle = project.title
+
+        void (async () => {
+            const tickets = await listProjectTickets({
+                notePathPrefix: pluginSettings.notePathPrefix,
+                projectTitle,
+                vault,
+            })
+
+            if (selectedProjectIndex !== projectIndexAtStart) {
+                return
+            }
+
+            ticketChips.empty()
+
+            if (tickets.length === 0) {
+                const placeholder = document.createElement("span")
+
+                placeholder.className = "kanban-quick-add__ticket-placeholder"
+                placeholder.textContent = "No tickets in this project"
+                ticketChips.append(placeholder)
+
+                return
+            }
+
+            for (const ticket of tickets) {
+                ticketChips.append(renderTicketChip(ticket.name))
+            }
+        })()
     }
 
     for (const [loopProjectIndex, project] of board.projects.entries()) {
@@ -110,7 +227,7 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
 
         chip.append(document.createTextNode(project.title))
 
-        if (isEditMode && loopProjectIndex === editContext.projectIndex) {
+        if (loopProjectIndex === selectedProjectIndex) {
             chip.classList.add("kanban-quick-add__date-button--active")
         }
 
@@ -118,8 +235,16 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
 
         // eslint-disable-next-line @typescript-eslint/no-loop-func -- intentional shared mutable state for toggle behavior
         chip.addEventListener("click", () => {
+            const previous = selectedProjectIndex
+
             selectedProjectIndex =
                 selectedProjectIndex === capturedProjectIndex ? null : capturedProjectIndex
+
+            if (previous !== selectedProjectIndex) {
+                selectedLinkedTicket = null
+                refreshTicketChips()
+            }
+
             updateProjectChipStates()
         })
 
@@ -128,6 +253,8 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
 
     projectRow.append(projectChips)
     dialog.append(projectRow)
+    dialog.append(ticketRow)
+    refreshTicketChips()
 
     const dateRow = document.createElement("div")
 
@@ -337,6 +464,7 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
                 blockedReason: blockedReasonValue,
                 date: selectedDate,
                 description: descriptionValue,
+                linkedTicket: selectedLinkedTicket,
                 priority: selectedPriority,
             }
 
@@ -391,6 +519,7 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
                 description: descriptionValue,
                 id: generateId(),
                 linkedNote: null,
+                linkedTicket: selectedLinkedTicket,
                 priority: selectedPriority,
                 subtasks: [],
                 title,

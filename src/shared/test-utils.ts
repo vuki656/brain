@@ -24,6 +24,7 @@ export function makeCard(overrides: Partial<CardType> = {}): CardType {
         description: overrides.description ?? null,
         id: overrides.id ?? "abc123",
         linkedNote: overrides.linkedNote ?? null,
+        linkedTicket: overrides.linkedTicket ?? null,
         priority: overrides.priority ?? null,
         subtasks: overrides.subtasks ?? [],
         title: overrides.title ?? "Test card",

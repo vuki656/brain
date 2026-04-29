@@ -30,7 +30,11 @@ export class KanbanView extends TextFileView {
 
     private sortableInstances: Sortable[] = []
 
-    private viewState: ViewStateType = { hideCompletedActive: true, todayFilterActive: true }
+    private viewState: ViewStateType = {
+        activeRightTab: "projects",
+        hideCompletedActive: true,
+        todayFilterActive: true,
+    }
 
     constructor(leaf: WorkspaceLeaf, plugin: VukiKanbanPlugin) {
         super(leaf)
@@ -124,7 +128,11 @@ export class KanbanView extends TextFileView {
         this.board = parseBoard(data)
 
         if (clear) {
-            this.viewState = { hideCompletedActive: true, todayFilterActive: true }
+            this.viewState = {
+                activeRightTab: "projects",
+                hideCompletedActive: true,
+                todayFilterActive: true,
+            }
         }
 
         this.render()
