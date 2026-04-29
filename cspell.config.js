@@ -4,7 +4,17 @@ import { core } from "@dvukovic/style-guide/cspell"
 const config = {
     ...core,
     ignorePaths: [...core.ignorePaths],
-    ignoreWords: ["frontmatter", "hasdate", "lezer", "nodate", "reparsed", "vuki", "bunfig"],
+    ignoreWords: [
+        "frontmatter",
+        "hasdate",
+        "lezer",
+        "nodate",
+        "noopener",
+        "noreferrer",
+        "reparsed",
+        "vuki",
+        "bunfig",
+    ],
 }
 
 export default config

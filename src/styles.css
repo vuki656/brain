@@ -6,6 +6,15 @@
     overflow: hidden;
 }
 
+/* Fullscreen mode hides Obsidian's chrome */
+body.vuki-kanban-fullscreen .workspace-tab-header-container,
+body.vuki-kanban-fullscreen .view-header,
+body.vuki-kanban-fullscreen .titlebar,
+body.vuki-kanban-fullscreen .workspace-ribbon,
+body.vuki-kanban-fullscreen .status-bar {
+    display: none;
+}
+
 /* Toolbar */
 .kanban-toolbar {
     border-bottom: 1px solid var(--background-modifier-border);

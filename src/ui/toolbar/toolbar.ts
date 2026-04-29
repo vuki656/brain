@@ -91,6 +91,33 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
     versionLabel.className = "kanban-toolbar__version"
     versionLabel.textContent = pluginManifest ? `v${pluginManifest.version}` : ""
 
+    const FULLSCREEN_CLASS = "vuki-kanban-fullscreen"
+    const fullscreenButton = document.createElement("button")
+    const isFullscreenActive = document.body.classList.contains(FULLSCREEN_CLASS)
+
+    fullscreenButton.className = "kanban-toolbar__button"
+
+    if (isFullscreenActive) {
+        fullscreenButton.classList.add("kanban-toolbar__button--active")
+    }
+
+    setButtonContent(
+        fullscreenButton,
+        isFullscreenActive ? "shrink" : "expand",
+        isFullscreenActive ? "Exit fullscreen" : "Fullscreen",
+    )
+    fullscreenButton.addEventListener("click", () => {
+        const willEnable = !document.body.classList.contains(FULLSCREEN_CLASS)
+
+        document.body.classList.toggle(FULLSCREEN_CLASS, willEnable)
+        fullscreenButton.classList.toggle("kanban-toolbar__button--active", willEnable)
+        setButtonContent(
+            fullscreenButton,
+            willEnable ? "shrink" : "expand",
+            willEnable ? "Exit fullscreen" : "Fullscreen",
+        )
+    })
+
     const updateButton = document.createElement("button")
 
     updateButton.className = "kanban-toolbar__button"
@@ -115,7 +142,7 @@ export function createToolbar(options: ToolbarOptionsType): HTMLElement {
         toolbarButtons.push(archivedButton)
     }
 
-    toolbarButtons.push(toolbarSpacer, versionLabel, updateButton)
+    toolbarButtons.push(fullscreenButton, toolbarSpacer, versionLabel, updateButton)
     toolbar.append(...toolbarButtons)
 
     return toolbar

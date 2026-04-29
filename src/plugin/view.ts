@@ -67,7 +67,7 @@ export class KanbanView extends TextFileView {
                 projectColors: {},
                 projectIcons: {},
                 ticketOrder: {},
-            todayOrder: {},
+                todayOrder: {},
             },
         }
         this.boardContainer.empty()

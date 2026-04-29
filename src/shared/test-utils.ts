@@ -55,7 +55,7 @@ export function makeBoard(overrides: Partial<BoardType> = {}): BoardType {
         projectColors: {},
         projectIcons: {},
         ticketOrder: {},
-            todayOrder: {},
+        todayOrder: {},
     }
 
     return {

@@ -12,7 +12,7 @@ describe("getProjectColor", () => {
                 projectColors: { Todo: "var(--color-red)" },
                 projectIcons: {},
                 ticketOrder: {},
-            todayOrder: {},
+                todayOrder: {},
             },
         })
 

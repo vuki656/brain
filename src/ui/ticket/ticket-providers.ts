@@ -31,5 +31,4 @@ function extractTicketId(link: string | null | undefined): TicketIdMatchType | n
     return null
 }
 
-export type { TicketIdMatchType, TicketProviderType }
-export { extractTicketId, TICKET_PROVIDERS }
+export { extractTicketId }
