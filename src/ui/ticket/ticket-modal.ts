@@ -406,7 +406,7 @@ export function openTicketModal(options: TicketModalOptionsType): void {
                 try {
                     const oldName = currentTicket.name
 
-                    await renameTicket({
+                    const savedName = await renameTicket({
                         newName: trimmed,
                         notePathPrefix: pluginSettings.notePathPrefix,
                         oldName,
@@ -417,10 +417,10 @@ export function openTicketModal(options: TicketModalOptionsType): void {
                     board.projects = updateLinkedTicketReferences(
                         board.projects,
                         oldName,
-                        trimmed,
+                        savedName,
                     )
-                    currentTicket = { ...currentTicket, name: trimmed }
-                    titleElement.textContent = trimmed
+                    currentTicket = { ...currentTicket, name: savedName }
+                    titleElement.textContent = savedName
                     onChange()
                 } catch (error) {
                     new Notice(`Failed to rename ticket: ${String(error)}`)

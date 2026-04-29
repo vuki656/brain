@@ -1,6 +1,7 @@
-import { Notice, type Vault } from "obsidian"
+import { Notice, setIcon, type Vault } from "obsidian"
 
 import type { BoardType, PluginSettingsType } from "../../shared"
+import { getProjectColor, getProjectIcon } from "../project"
 import { createTicket } from "./ticket"
 
 type AddTicketDialogOptionsType = {
@@ -78,7 +79,19 @@ export function openAddTicketDialog(options: AddTicketDialogOptionsType): void {
 
         chip.className = "kanban-quick-add__date-button"
         chip.dataset.projectValue = String(loopProjectIndex)
-        chip.textContent = project.title
+
+        const chipIcon = getProjectIcon(project.title, board)
+
+        if (chipIcon) {
+            const chipIconSpan = document.createElement("span")
+
+            chipIconSpan.className = "kanban-quick-add__chip-icon"
+            chipIconSpan.style.color = getProjectColor(project.title, loopProjectIndex, board)
+            setIcon(chipIconSpan, chipIcon)
+            chip.append(chipIconSpan)
+        }
+
+        chip.append(document.createTextNode(project.title))
 
         if (loopProjectIndex === selectedProjectIndex) {
             chip.classList.add("kanban-quick-add__date-button--active")

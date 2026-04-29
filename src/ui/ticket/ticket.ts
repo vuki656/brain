@@ -43,6 +43,13 @@ function getTicketFilePath(
     return `${getTicketsFolderPath(notePathPrefix, projectTitle)}/${name}.md`
 }
 
+const ILLEGAL_FILENAME_CHARS = /["*/:<>?\\|]/g
+const WHITESPACE_RUN = /\s+/g
+
+function sanitizeTicketName(name: string): string {
+    return name.replaceAll(ILLEGAL_FILENAME_CHARS, "-").replaceAll(WHITESPACE_RUN, " ").trim()
+}
+
 function formatTicketTimestamp(date: Date): string {
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, "0")
@@ -186,12 +193,17 @@ async function ensureFolder(vault: Vault, path: string): Promise<void> {
 
 async function createTicket(options: CreateTicketOptionsType): Promise<void> {
     const { link, name, notePathPrefix, projectTitle, vault } = options
+    const safeName = sanitizeTicketName(name)
+
+    if (safeName.length === 0) {
+        throw new Error("Ticket name cannot be empty after removing illegal characters")
+    }
 
     await ensureFolder(vault, notePathPrefix)
     await ensureFolder(vault, `${notePathPrefix}/${projectTitle}`)
     await ensureFolder(vault, getTicketsFolderPath(notePathPrefix, projectTitle))
 
-    const path = getTicketFilePath(notePathPrefix, projectTitle, name)
+    const path = getTicketFilePath(notePathPrefix, projectTitle, safeName)
     const content = serializeTicketFile(link, [])
 
     await vault.create(path, content)
@@ -233,17 +245,25 @@ async function updateTicketLink(options: UpdateLinkOptionsType): Promise<void> {
     await vault.modify(file, newContent)
 }
 
-async function renameTicket(options: RenameTicketOptionsType): Promise<void> {
+async function renameTicket(options: RenameTicketOptionsType): Promise<string> {
     const { newName, notePathPrefix, oldName, projectTitle, vault } = options
+    const safeName = sanitizeTicketName(newName)
+
+    if (safeName.length === 0) {
+        throw new Error("Ticket name cannot be empty after removing illegal characters")
+    }
+
     const oldPath = getTicketFilePath(notePathPrefix, projectTitle, oldName)
-    const newPath = getTicketFilePath(notePathPrefix, projectTitle, newName)
+    const newPath = getTicketFilePath(notePathPrefix, projectTitle, safeName)
     const file = vault.getAbstractFileByPath(oldPath)
 
     if (!(file instanceof TFile)) {
-        return
+        return safeName
     }
 
     await vault.rename(file, newPath)
+
+    return safeName
 }
 
 async function deleteTicket(options: TicketByNameOptionsType): Promise<void> {
@@ -312,6 +332,7 @@ export {
     parseTicketFile,
     readTicket,
     renameTicket,
+    sanitizeTicketName,
     serializeTicketFile,
     updateTicketLink,
 }
