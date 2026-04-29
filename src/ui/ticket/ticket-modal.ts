@@ -12,9 +12,10 @@ import {
     renameTicket,
     updateTicketEntries,
     updateTicketLink,
+    updateTicketStatus,
 } from "./ticket"
 import { extractTicketId } from "./ticket-providers"
-import type { TicketType } from "./ticket.types"
+import type { TicketStatusType, TicketType } from "./ticket.types"
 
 type TicketModalOptionsType = {
     board: BoardType
@@ -136,9 +137,24 @@ export function openTicketModal(options: TicketModalOptionsType): void {
     const renderIdBadge = () => {
         const match = extractTicketId(currentTicket.link)
 
+        idBadge.classList.remove(
+            "kanban-ticket-modal__id--mine",
+            "kanban-ticket-modal__id--waiting",
+        )
+
+        if (currentTicket.status === "mine") {
+            idBadge.classList.add("kanban-ticket-modal__id--mine")
+        } else if (currentTicket.status === "waiting") {
+            idBadge.classList.add("kanban-ticket-modal__id--waiting")
+        }
+
         if (match) {
             idBadge.textContent = match.id
             idBadge.title = `${match.source}: ${match.id}`
+            idBadge.style.display = ""
+        } else if (currentTicket.status) {
+            idBadge.textContent = currentTicket.status === "mine" ? "MINE" : "WAIT"
+            idBadge.title = currentTicket.status === "mine" ? "My turn" : "Waiting"
             idBadge.style.display = ""
         } else {
             idBadge.textContent = ""
@@ -147,6 +163,81 @@ export function openTicketModal(options: TicketModalOptionsType): void {
     }
 
     renderIdBadge()
+
+    const statusRow = document.createElement("div")
+
+    statusRow.className = "kanban-ticket-modal__status-row"
+
+    const statusLabel = document.createElement("span")
+
+    statusLabel.className = "kanban-quick-add__label"
+    statusLabel.textContent = "Status"
+    statusRow.append(statusLabel)
+
+    const statusButtons = document.createElement("div")
+
+    statusButtons.className = "kanban-quick-add__dates"
+
+    const statusOptions: { label: string; value: TicketStatusType }[] = [
+        { label: "My turn", value: "mine" },
+        { label: "Waiting", value: "waiting" },
+        { label: "—", value: null },
+    ]
+
+    const updateStatusButtonStates = () => {
+        for (const button of Array.from(
+            statusButtons.querySelectorAll(".kanban-quick-add__date-button"),
+        )) {
+            const buttonValue = (button as HTMLElement).dataset.statusValue
+            const normalized = buttonValue === "" ? null : (buttonValue as TicketStatusType)
+
+            button.classList.toggle(
+                "kanban-quick-add__date-button--active",
+                normalized === currentTicket.status,
+            )
+        }
+    }
+
+    for (const statusOption of statusOptions) {
+        const statusButton = document.createElement("span")
+
+        statusButton.className = "kanban-quick-add__date-button"
+        statusButton.textContent = statusOption.label
+        statusButton.dataset.statusValue = statusOption.value ?? ""
+
+        const capturedValue = statusOption.value
+
+        // eslint-disable-next-line @typescript-eslint/no-loop-func -- handlers reference modal-scoped state intentionally
+        statusButton.addEventListener("click", () => {
+            if (capturedValue === currentTicket.status) {
+                return
+            }
+
+            void (async () => {
+                try {
+                    await updateTicketStatus({
+                        name: currentTicket.name,
+                        newStatus: capturedValue,
+                        notePathPrefix: pluginSettings.notePathPrefix,
+                        projectTitle: currentTicket.projectTitle,
+                        vault,
+                    })
+                    currentTicket = { ...currentTicket, status: capturedValue }
+                    updateStatusButtonStates()
+                    renderIdBadge()
+                    onChange()
+                } catch (error) {
+                    new Notice(`Failed to update status: ${String(error)}`)
+                }
+            })()
+        })
+
+        statusButtons.append(statusButton)
+    }
+
+    updateStatusButtonStates()
+    statusRow.append(statusButtons)
+    dialog.append(statusRow)
 
     const linkRow = document.createElement("div")
 

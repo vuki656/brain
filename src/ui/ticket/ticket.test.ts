@@ -84,10 +84,76 @@ link: https://example.com/issues/XYZ-2
 - 2026-04-27 10:15 — second entry
 `
         const parsed = parseTicketFile(original)
-        const serialized = serializeTicketFile(parsed.link, parsed.entries)
+        const serialized = serializeTicketFile(parsed.link, parsed.entries, parsed.status)
         const reparsed = parseTicketFile(serialized)
 
         expect(reparsed.link).toBe(parsed.link)
         expect(reparsed.entries).toEqual(parsed.entries)
+    })
+})
+
+describe("ticket status", () => {
+    it("should parse status field from frontmatter", () => {
+        const content = `---
+link: https://example.com
+status: mine
+---
+
+- 2026-04-29 — first entry
+`
+        const parsed = parseTicketFile(content)
+
+        expect(parsed.status).toBe("mine")
+    })
+
+    it("should return null for missing status", () => {
+        const content = `---
+link: https://example.com
+---
+
+- 2026-04-29 — first entry
+`
+        const parsed = parseTicketFile(content)
+
+        expect(parsed.status).toBeNull()
+    })
+
+    it("should return null for invalid status value", () => {
+        const content = `---
+link:
+status: garbage
+---
+
+`
+        const parsed = parseTicketFile(content)
+
+        expect(parsed.status).toBeNull()
+    })
+
+    it("should serialize status into frontmatter when set", () => {
+        const serialized = serializeTicketFile("https://example.com", [], "waiting")
+
+        expect(serialized).toContain("status: waiting")
+    })
+
+    it("should omit status line when null", () => {
+        const serialized = serializeTicketFile("https://example.com", [], null)
+
+        expect(serialized).not.toContain("status:")
+    })
+
+    it("should round-trip status through parse and serialize", () => {
+        const original = `---
+link: https://example.com
+status: mine
+---
+
+- 2026-04-29 — first entry
+`
+        const parsed = parseTicketFile(original)
+        const serialized = serializeTicketFile(parsed.link, parsed.entries, parsed.status)
+        const reparsed = parseTicketFile(serialized)
+
+        expect(reparsed.status).toBe("mine")
     })
 })

@@ -40,14 +40,38 @@ function createTicketRow(options: TicketRowOptionsType): HTMLElement {
     nameRow.className = "kanban-tickets__row-name-row"
 
     const idMatch = extractTicketId(ticket.link)
+    let statusClass = ""
+
+    if (ticket.status === "mine") {
+        statusClass = "kanban-tickets__row-id--mine"
+    } else if (ticket.status === "waiting") {
+        statusClass = "kanban-tickets__row-id--waiting"
+    }
+
+    let statusLabel = ""
+
+    if (ticket.status === "mine") {
+        statusLabel = "my turn"
+    } else if (ticket.status === "waiting") {
+        statusLabel = "waiting"
+    }
 
     if (idMatch) {
         const idBadge = document.createElement("span")
+        const baseTitle = `${idMatch.source}: ${idMatch.id}`
+        const titleSuffix = statusLabel ? ` · ${statusLabel}` : ""
 
-        idBadge.className = "kanban-tickets__row-id"
+        idBadge.className = `kanban-tickets__row-id ${statusClass}`.trim()
         idBadge.textContent = idMatch.id
-        idBadge.title = `${idMatch.source}: ${idMatch.id}`
+        idBadge.title = `${baseTitle}${titleSuffix}`
         nameRow.append(idBadge)
+    } else if (ticket.status) {
+        const statusDot = document.createElement("span")
+
+        statusDot.className = `kanban-tickets__row-id ${statusClass}`.trim()
+        statusDot.textContent = ticket.status === "mine" ? "MINE" : "WAIT"
+        statusDot.title = ticket.status === "mine" ? "My turn" : "Waiting"
+        nameRow.append(statusDot)
     }
 
     const name = document.createElement("div")

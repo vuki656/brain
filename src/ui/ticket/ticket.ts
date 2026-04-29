@@ -1,6 +1,6 @@
 import { TFile, TFolder, type Vault } from "obsidian"
 
-import type { TicketEntryType, TicketType } from "./ticket.types"
+import type { TicketEntryType, TicketStatusType, TicketType } from "./ticket.types"
 
 const ENTRY_REGEX = /^- (\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2})?) — (.*)$/
 
@@ -24,6 +24,10 @@ type AddEntryOptionsType = TicketByNameOptionsType & {
 
 type UpdateLinkOptionsType = TicketByNameOptionsType & {
     newLink: string | null
+}
+
+type UpdateStatusOptionsType = TicketByNameOptionsType & {
+    newStatus: TicketStatusType
 }
 
 type UpdateEntriesOptionsType = TicketByNameOptionsType & {
@@ -60,12 +64,22 @@ function formatTicketTimestamp(date: Date): string {
     return `${year}-${month}-${day} ${hours}:${minutes}`
 }
 
+function parseStatus(value: string): TicketStatusType {
+    if (value === "mine" || value === "waiting") {
+        return value
+    }
+
+    return null
+}
+
 function parseTicketFile(content: string): {
     entries: TicketEntryType[]
     link: string | null
+    status: TicketStatusType
 } {
     const lines = content.split("\n")
     let link: string | null = null
+    let status: TicketStatusType = null
     const entries: TicketEntryType[] = []
 
     let inFrontmatter = false
@@ -91,6 +105,12 @@ function parseTicketFile(content: string): {
                 link = value.length > 0 ? value : null
             }
 
+            if (inFrontmatter && trimmed.startsWith("status:")) {
+                const value = trimmed.slice("status:".length).trim()
+
+                status = parseStatus(value)
+            }
+
             continue
         }
 
@@ -101,11 +121,23 @@ function parseTicketFile(content: string): {
         }
     }
 
-    return { entries, link }
+    return { entries, link, status }
 }
 
-function serializeTicketFile(link: string | null, entries: TicketEntryType[]): string {
-    const lines: string[] = ["---", `link: ${link ?? ""}`, "---", ""]
+function serializeTicketFile(
+    link: string | null,
+    entries: TicketEntryType[],
+    status: TicketStatusType = null,
+): string {
+    const frontmatterLines: string[] = ["---", `link: ${link ?? ""}`]
+
+    if (status) {
+        frontmatterLines.push(`status: ${status}`)
+    }
+
+    frontmatterLines.push("---", "")
+
+    const lines = [...frontmatterLines]
 
     for (const entry of entries) {
         lines.push(`- ${entry.timestamp} — ${entry.text}`)
@@ -117,7 +149,7 @@ function serializeTicketFile(link: string | null, entries: TicketEntryType[]): s
 function buildTicket(
     name: string,
     projectTitle: string,
-    parsed: { entries: TicketEntryType[]; link: string | null },
+    parsed: { entries: TicketEntryType[]; link: string | null; status: TicketStatusType },
 ): TicketType {
     const lastUpdated = parsed.entries[0]?.timestamp ?? null
 
@@ -127,6 +159,7 @@ function buildTicket(
         link: parsed.link,
         name,
         projectTitle,
+        status: parsed.status,
     }
 }
 
@@ -224,7 +257,11 @@ async function addTicketEntry(options: AddEntryOptionsType): Promise<void> {
         text,
         timestamp: formatTicketTimestamp(new Date()),
     }
-    const newContent = serializeTicketFile(parsed.link, [newEntry, ...parsed.entries])
+    const newContent = serializeTicketFile(
+        parsed.link,
+        [newEntry, ...parsed.entries],
+        parsed.status,
+    )
 
     await vault.modify(file, newContent)
 }
@@ -241,7 +278,23 @@ async function updateTicketEntries(options: UpdateEntriesOptionsType): Promise<v
     const content = await vault.read(file)
     const parsed = parseTicketFile(content)
     const newEntries = transform(parsed.entries)
-    const newContent = serializeTicketFile(parsed.link, newEntries)
+    const newContent = serializeTicketFile(parsed.link, newEntries, parsed.status)
+
+    await vault.modify(file, newContent)
+}
+
+async function updateTicketStatus(options: UpdateStatusOptionsType): Promise<void> {
+    const { name, newStatus, notePathPrefix, projectTitle, vault } = options
+    const path = getTicketFilePath(notePathPrefix, projectTitle, name)
+    const file = vault.getAbstractFileByPath(path)
+
+    if (!(file instanceof TFile)) {
+        return
+    }
+
+    const content = await vault.read(file)
+    const parsed = parseTicketFile(content)
+    const newContent = serializeTicketFile(parsed.link, parsed.entries, newStatus)
 
     await vault.modify(file, newContent)
 }
@@ -257,7 +310,7 @@ async function updateTicketLink(options: UpdateLinkOptionsType): Promise<void> {
 
     const content = await vault.read(file)
     const parsed = parseTicketFile(content)
-    const newContent = serializeTicketFile(newLink, parsed.entries)
+    const newContent = serializeTicketFile(newLink, parsed.entries, parsed.status)
 
     await vault.modify(file, newContent)
 }
@@ -353,4 +406,5 @@ export {
     serializeTicketFile,
     updateTicketEntries,
     updateTicketLink,
+    updateTicketStatus,
 }
