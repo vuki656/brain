@@ -2067,6 +2067,13 @@
     padding: 6px 0;
 }
 
+.kanban-quick-add__date-button[data-ticket-name] {
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Quick-add heading (for add-ticket-dialog) */
 .kanban-quick-add__heading {
     color: var(--text-normal);
