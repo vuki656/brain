@@ -2038,6 +2038,11 @@
     cursor: pointer;
     display: inline-flex;
     gap: 4px;
+    max-width: 220px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .kanban-card__badge--ticket:hover {
