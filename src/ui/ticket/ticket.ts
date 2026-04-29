@@ -39,11 +39,7 @@ function getTicketsFolderPath(notePathPrefix: string, projectTitle: string): str
     return `${notePathPrefix}/${projectTitle}/Tickets`
 }
 
-function getTicketFilePath(
-    notePathPrefix: string,
-    projectTitle: string,
-    name: string,
-): string {
+function getTicketFilePath(notePathPrefix: string, projectTitle: string, name: string): string {
     return `${getTicketsFolderPath(notePathPrefix, projectTitle)}/${name}.md`
 }
 

@@ -108,8 +108,7 @@ export function openAddTicketDialog(options: AddTicketDialogOptionsType): void {
                 projectChips.querySelectorAll(".kanban-quick-add__date-button"),
             )) {
                 const value = (otherChip as HTMLElement).dataset.projectValue
-                const isActive =
-                    value !== undefined && Number(value) === selectedProjectIndex
+                const isActive = value !== undefined && Number(value) === selectedProjectIndex
 
                 otherChip.classList.toggle("kanban-quick-add__date-button--active", isActive)
             }

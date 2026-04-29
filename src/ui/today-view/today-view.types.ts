@@ -35,9 +35,4 @@ type TodayViewOptionsType = {
     viewState: ViewStateType
 }
 
-export type {
-    CollectedDateGroupsType,
-    DateGroupType,
-    TodayCardType,
-    TodayViewOptionsType,
-}
+export type { CollectedDateGroupsType, DateGroupType, TodayCardType, TodayViewOptionsType }
