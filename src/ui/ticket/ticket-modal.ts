@@ -13,6 +13,7 @@ import {
     updateTicketEntries,
     updateTicketLink,
 } from "./ticket"
+import { extractTicketId } from "./ticket-providers"
 import type { TicketType } from "./ticket.types"
 
 type TicketModalOptionsType = {
@@ -113,6 +114,11 @@ export function openTicketModal(options: TicketModalOptionsType): void {
 
     headerRow.className = "kanban-ticket-modal__header"
 
+    const idBadge = document.createElement("span")
+
+    idBadge.className = "kanban-ticket-modal__id"
+    headerRow.append(idBadge)
+
     const titleElement = document.createElement("div")
 
     titleElement.className = "kanban-ticket-modal__title"
@@ -126,6 +132,21 @@ export function openTicketModal(options: TicketModalOptionsType): void {
     headerRow.append(projectBadge)
 
     dialog.append(headerRow)
+
+    const renderIdBadge = () => {
+        const match = extractTicketId(currentTicket.link)
+
+        if (match) {
+            idBadge.textContent = match.id
+            idBadge.title = `${match.source}: ${match.id}`
+            idBadge.style.display = ""
+        } else {
+            idBadge.textContent = ""
+            idBadge.style.display = "none"
+        }
+    }
+
+    renderIdBadge()
 
     const linkRow = document.createElement("div")
 
@@ -499,6 +520,7 @@ export function openTicketModal(options: TicketModalOptionsType): void {
                     })
                     currentTicket = { ...currentTicket, link: newLink }
                     renderLink()
+                    renderIdBadge()
                     onChange()
                 } catch (error) {
                     new Notice(`Failed to update link: ${String(error)}`)

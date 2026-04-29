@@ -1849,10 +1849,34 @@
     background: var(--background-modifier-hover);
 }
 
+.kanban-tickets__row-name-row {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+}
+
+.kanban-tickets__row-id {
+    background: var(--background-modifier-hover);
+    border-radius: 4px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-family: var(--font-monospace, ui-monospace, monospace);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    padding: 2px 6px;
+}
+
 .kanban-tickets__row-name {
     color: var(--text-normal);
+    flex: 1;
     font-size: 13px;
     font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .kanban-tickets__row-subtitle {
@@ -1882,6 +1906,17 @@
     display: flex;
     gap: 10px;
     margin-bottom: 8px;
+}
+
+.kanban-ticket-modal__id {
+    background: var(--background-modifier-hover);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-family: var(--font-monospace, ui-monospace, monospace);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    padding: 3px 7px;
 }
 
 .kanban-ticket-modal__title {

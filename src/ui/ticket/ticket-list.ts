@@ -5,6 +5,7 @@ import { getProjectColor, getProjectIcon } from "../project"
 import { openAddTicketDialog } from "./add-ticket-dialog"
 import { formatRelativeTime, listProjectTickets } from "./ticket"
 import { openTicketModal } from "./ticket-modal"
+import { extractTicketId } from "./ticket-providers"
 import type { TicketType } from "./ticket.types"
 
 type RenderTicketsTabOptionsType = {
@@ -34,11 +35,27 @@ function createTicketRow(options: TicketRowOptionsType): HTMLElement {
 
     main.className = "kanban-tickets__row-main"
 
+    const nameRow = document.createElement("div")
+
+    nameRow.className = "kanban-tickets__row-name-row"
+
+    const idMatch = extractTicketId(ticket.link)
+
+    if (idMatch) {
+        const idBadge = document.createElement("span")
+
+        idBadge.className = "kanban-tickets__row-id"
+        idBadge.textContent = idMatch.id
+        idBadge.title = `${idMatch.source}: ${idMatch.id}`
+        nameRow.append(idBadge)
+    }
+
     const name = document.createElement("div")
 
     name.className = "kanban-tickets__row-name"
     name.textContent = ticket.name
-    main.append(name)
+    nameRow.append(name)
+    main.append(nameRow)
 
     const lastEntry = ticket.entries[0]
     const subtitle = document.createElement("div")
