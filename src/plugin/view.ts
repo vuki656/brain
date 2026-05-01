@@ -97,6 +97,12 @@ export class KanbanView extends TextFileView {
     public async onClose(): Promise<void> {
         cleanupFocusTimer()
         this.destroySortable()
+        document.body.classList.remove("vuki-kanban-fullscreen")
+    }
+
+    // eslint-disable-next-line @typescript-eslint/require-await -- Obsidian base class requires async signature
+    public async onOpen(): Promise<void> {
+        document.body.classList.add("vuki-kanban-fullscreen")
     }
 
     private render(): void {

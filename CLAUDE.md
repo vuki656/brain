@@ -69,6 +69,25 @@ src/
     today-view/                        → Today filter view
       today-view.ts                    → renderTodayView
       today-view.utils.ts              → collectCardsByDateGroup, sortCardsByOrder, formatDateGroupLabel, etc.
+    ticket/                            → Ticket integrations (Linear, Jira, etc.) parsed from card lines
+      ticket.ts                        → renderTicketsTab, extractTicketId
+      ticket-list.ts                   → ticket list rendering for the tickets tab
+      ticket-modal.ts                  → openTicketModal
+      add-ticket-dialog.ts             → openAddTicketDialog
+      ticket-providers.ts              → TICKET_PROVIDERS registry (regex patterns + URL builders)
+      ticket.types.ts                  → TicketType, TicketEntryType, TicketStatusType
+      ticket.test.ts, ticket-providers.test.ts
+    focus-timer/focus-timer.ts         → renderFocusTimer, cleanupFocusTimer
+    icon-picker/                       → Icon picker dialog
+      icon-picker.ts                   → showIconPicker
+      icon-picker.constants.ts         → ICON_PICKER_ICONS
+    weather/                           → Weather widget (Open-Meteo)
+      weather.ts                       → parseWeatherLocation, renderWeatherSection
+      weather-api.ts                   → fetchWeatherData, fetchWeatherFromApi
+      weather-cache.ts                 → cached fetch layer
+      weather-hourly.ts                → createHourlyWeatherRow
+      weather-daily.ts                 → createDailyWeatherRow
+      weather-icons.ts                 → mapWeatherCodeToLucideIcon, getWeatherIconColor
 
   plugin/                              → Obsidian integration
     plugin.ts                          → VukiKanbanPlugin: registerView, monkey-patch, settings
@@ -82,7 +101,7 @@ Mutations produce new `Board` objects (immutable updates) → `parser.serializeB
 via `requestSave()`.
 
 **Markdown tokens** parsed from card lines (order-independent): `@today`, `!important`,
-`@{YYYY-MM-DD}`, `@id:abc123`, `[[NoteName]]`.
+`@{YYYY-MM-DD}`, `@id:abc123`, `@ticket{TICKET-123}`, `[[NoteName]]`.
 
 ## Key Patterns
 
@@ -95,8 +114,8 @@ via `requestSave()`.
   cache-busting.
 - **Monkey-patch** via `monkey-around` package intercepts `WorkspaceLeaf.setViewState` to
   auto-detect kanban files by frontmatter.
-- **Parser tests** are the primary test surface — round-trip idempotency
-  (`serializeBoard(parseBoard(raw))`) is critical.
+- **Parser round-trip idempotency** (`serializeBoard(parseBoard(raw))`) is the critical invariant;
+  ticket-provider tests under `ui/ticket/` are the other main suite.
 - **Test data** — Always use randomized/fictional data in tests, never real data from actual notes.
 - **styles.css** — source lives at `src/styles.css`, copied to root by `build.ts`. Both root
   `styles.css` and `main.js` are build outputs in `.gitignore`, uploaded as release assets only.
