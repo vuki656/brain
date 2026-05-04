@@ -173,7 +173,10 @@ function collectCardsByDateGroup(board: BoardType): CollectedDateGroupsType {
         cleanedTodayOrder.overdue = extractCardIds(sorted)
     }
 
-    const sortedTodayCards = sortCardsByOrder(todayCards, savedOrder.today ?? [])
+    const sortedTodayCards = sortCardsByOrder(
+        todayCards,
+        savedOrder[todayString] ?? savedOrder.today ?? [],
+    )
 
     groups.push({ cards: sortedTodayCards, dateKey: "today", label: "Today" })
 
