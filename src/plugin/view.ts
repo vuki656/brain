@@ -115,6 +115,7 @@ export class KanbanView extends TextFileView {
             container: this.boardContainer,
             onBoardCleanup: (newBoard) => {
                 this.board = newBoard
+                this.requestSave()
                 this.render()
             },
             onMutation: (newBoard) => {

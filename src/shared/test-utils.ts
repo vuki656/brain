@@ -1,5 +1,10 @@
 import type { BoardType, CardType, KanbanSettingsType, ProjectType, SubtaskType } from "./types"
 
+type MakeBoardOverridesType = {
+    projects?: ProjectType[]
+    settings?: Partial<KanbanSettingsType>
+}
+
 type MakeTodayCardOptionsType = {
     card?: Partial<CardType>
     cardIndex?: number
@@ -47,7 +52,7 @@ export function makeProjects(): ProjectType[] {
     ]
 }
 
-export function makeBoard(overrides: Partial<BoardType> = {}): BoardType {
+export function makeBoard(overrides: MakeBoardOverridesType = {}): BoardType {
     const defaultSettings: KanbanSettingsType = {
         archivedProjects: [],
         collapsedProjects: [],
@@ -60,7 +65,7 @@ export function makeBoard(overrides: Partial<BoardType> = {}): BoardType {
 
     return {
         projects: overrides.projects ?? makeProjects(),
-        settings: overrides.settings ?? defaultSettings,
+        settings: { ...defaultSettings, ...overrides.settings },
     }
 }
 
