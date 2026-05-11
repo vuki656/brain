@@ -156,4 +156,32 @@ status: mine
 
         expect(reparsed.status).toBe("mine")
     })
+
+    it("should parse done status from frontmatter", () => {
+        const content = `---
+link: https://example.com/issues/QRS-9
+status: done
+---
+
+- 2026-05-02 — shipped to production
+`
+        const parsed = parseTicketFile(content)
+
+        expect(parsed.status).toBe("done")
+    })
+
+    it("should round-trip done status through parse and serialize", () => {
+        const original = `---
+link:
+status: done
+---
+
+- 2026-05-02 — closed out
+`
+        const parsed = parseTicketFile(original)
+        const serialized = serializeTicketFile(parsed.link, parsed.entries, parsed.status)
+        const reparsed = parseTicketFile(serialized)
+
+        expect(reparsed.status).toBe("done")
+    })
 })

@@ -1917,6 +1917,59 @@ body.vuki-kanban-fullscreen .status-bar {
     color: rgb(251 146 60);
 }
 
+.kanban-tickets__row-id--done,
+.kanban-ticket-modal__id--done {
+    background: rgb(148 163 184 / 18%);
+    color: rgb(148 163 184);
+    text-decoration: line-through;
+}
+
+.kanban-tickets__row--done .kanban-tickets__row-name,
+.kanban-tickets__row--done .kanban-tickets__row-subtitle {
+    color: var(--text-faint);
+    text-decoration: line-through;
+}
+
+.kanban-ticket-modal--done .kanban-ticket-modal__title {
+    color: var(--text-faint);
+    text-decoration: line-through;
+}
+
+.kanban-tickets__done {
+    border-top: 1px solid var(--background-modifier-border);
+    margin-top: 4px;
+}
+
+.kanban-tickets__done-toggle {
+    align-items: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    font-size: 12px;
+    gap: 4px;
+    padding: 6px 10px;
+    user-select: none;
+}
+
+.kanban-tickets__done-toggle:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.kanban-tickets__done-caret {
+    align-items: center;
+    display: inline-flex;
+}
+
+.kanban-tickets__done-caret svg {
+    height: 14px;
+    width: 14px;
+}
+
+.kanban-tickets__done-label {
+    font-weight: 500;
+}
+
 .kanban-tickets__row-name {
     color: var(--text-normal);
     flex: 1;

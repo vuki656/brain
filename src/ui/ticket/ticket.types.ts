@@ -1,4 +1,4 @@
-export type TicketStatusType = "mine" | "waiting" | null
+export type TicketStatusType = "done" | "mine" | "waiting" | null
 
 export type TicketEntryType = {
     text: string

@@ -80,21 +80,29 @@ function createTicketRow(options: TicketRowOptionsType): HTMLElement {
     nameRow.className = "kanban-tickets__row-name-row"
 
     const idMatch = extractTicketId(ticket.link)
-    let statusClass = ""
-
-    if (ticket.status === "mine") {
-        statusClass = "kanban-tickets__row-id--mine"
-    } else if (ticket.status === "waiting") {
-        statusClass = "kanban-tickets__row-id--waiting"
+    const statusClassByStatus: Record<Exclude<TicketType["status"], null>, string> = {
+        done: "kanban-tickets__row-id--done",
+        mine: "kanban-tickets__row-id--mine",
+        waiting: "kanban-tickets__row-id--waiting",
+    }
+    const statusLabelByStatus: Record<Exclude<TicketType["status"], null>, string> = {
+        done: "done",
+        mine: "my turn",
+        waiting: "waiting",
+    }
+    const fallbackBadgeText: Record<Exclude<TicketType["status"], null>, string> = {
+        done: "DONE",
+        mine: "MINE",
+        waiting: "WAIT",
+    }
+    const fallbackBadgeTitle: Record<Exclude<TicketType["status"], null>, string> = {
+        done: "Done",
+        mine: "My turn",
+        waiting: "Waiting",
     }
 
-    let statusLabel = ""
-
-    if (ticket.status === "mine") {
-        statusLabel = "my turn"
-    } else if (ticket.status === "waiting") {
-        statusLabel = "waiting"
-    }
+    const statusClass = ticket.status ? statusClassByStatus[ticket.status] : ""
+    const statusLabel = ticket.status ? statusLabelByStatus[ticket.status] : ""
 
     if (idMatch) {
         const idBadge = document.createElement("span")
@@ -109,9 +117,13 @@ function createTicketRow(options: TicketRowOptionsType): HTMLElement {
         const statusDot = document.createElement("span")
 
         statusDot.className = `kanban-tickets__row-id ${statusClass}`.trim()
-        statusDot.textContent = ticket.status === "mine" ? "MINE" : "WAIT"
-        statusDot.title = ticket.status === "mine" ? "My turn" : "Waiting"
+        statusDot.textContent = fallbackBadgeText[ticket.status]
+        statusDot.title = fallbackBadgeTitle[ticket.status]
         nameRow.append(statusDot)
+    }
+
+    if (ticket.status === "done") {
+        row.classList.add("kanban-tickets__row--done")
     }
 
     const name = document.createElement("div")
@@ -249,8 +261,32 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
 
             const savedOrder = board.settings.ticketOrder[projectTitle] ?? []
             const orderedTickets = sortTicketsByOrder(tickets, savedOrder)
+            const activeTickets = orderedTickets.filter((ticket) => {
+                return ticket.status !== "done"
+            })
+            const doneTickets = orderedTickets.filter((ticket) => {
+                return ticket.status === "done"
+            })
 
-            for (const ticket of orderedTickets) {
+            if (activeTickets.length === 0 && doneTickets.length === 0) {
+                const empty = document.createElement("div")
+
+                empty.className = "kanban-tickets__empty"
+                empty.textContent = "No tickets yet"
+                list.append(empty)
+
+                return
+            }
+
+            if (activeTickets.length === 0) {
+                const empty = document.createElement("div")
+
+                empty.className = "kanban-tickets__empty"
+                empty.textContent = "No active tickets"
+                list.append(empty)
+            }
+
+            for (const ticket of activeTickets) {
                 list.append(
                     createTicketRow({
                         board,
@@ -269,7 +305,9 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
                 handle: ".kanban-tickets__row-drag",
                 onEnd: () => {
                     const orderIds: string[] = []
-                    const rowElements = list.querySelectorAll<HTMLElement>(".kanban-tickets__row")
+                    const rowElements = list.querySelectorAll<HTMLElement>(
+                        ".kanban-tickets__row:not(.kanban-tickets__row--done)",
+                    )
 
                     for (const rowElement of Array.from(rowElements)) {
                         const ticketName = rowElement.dataset.ticketName
@@ -279,18 +317,74 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
                         }
                     }
 
+                    const doneNames = doneTickets.map((ticket) => {
+                        return ticket.name
+                    })
+
                     onMutation({
                         ...board,
                         settings: {
                             ...board.settings,
                             ticketOrder: {
                                 ...board.settings.ticketOrder,
-                                [projectTitle]: orderIds,
+                                [projectTitle]: [...orderIds, ...doneNames],
                             },
                         },
                     })
                 },
             })
+
+            if (doneTickets.length === 0) {
+                return
+            }
+
+            const doneSection = document.createElement("div")
+
+            doneSection.className = "kanban-tickets__done"
+
+            const doneToggle = document.createElement("div")
+
+            doneToggle.className = "kanban-tickets__done-toggle"
+
+            const doneCaret = document.createElement("span")
+
+            doneCaret.className = "kanban-tickets__done-caret"
+            setIcon(doneCaret, "chevron-right")
+            doneToggle.append(doneCaret)
+
+            const doneLabel = document.createElement("span")
+
+            doneLabel.className = "kanban-tickets__done-label"
+            doneLabel.textContent = `${doneTickets.length} done`
+            doneToggle.append(doneLabel)
+
+            const doneList = document.createElement("div")
+
+            doneList.className = "kanban-tickets__done-list"
+            doneList.style.display = "none"
+
+            for (const ticket of doneTickets) {
+                doneList.append(
+                    createTicketRow({
+                        board,
+                        onMutation,
+                        pluginSettings,
+                        ticket,
+                        vault,
+                    }),
+                )
+            }
+
+            doneToggle.addEventListener("click", () => {
+                const isHidden = doneList.style.display === "none"
+
+                doneList.style.display = isHidden ? "" : "none"
+                doneSection.classList.toggle("kanban-tickets__done--open", isHidden)
+                setIcon(doneCaret, isHidden ? "chevron-down" : "chevron-right")
+            })
+
+            doneSection.append(doneToggle, doneList)
+            section.append(doneSection)
         })()
     }
 }

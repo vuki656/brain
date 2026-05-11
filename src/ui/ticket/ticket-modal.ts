@@ -140,12 +140,39 @@ export function openTicketModal(options: TicketModalOptionsType): void {
         idBadge.classList.remove(
             "kanban-ticket-modal__id--mine",
             "kanban-ticket-modal__id--waiting",
+            "kanban-ticket-modal__id--done",
         )
 
-        if (currentTicket.status === "mine") {
-            idBadge.classList.add("kanban-ticket-modal__id--mine")
-        } else if (currentTicket.status === "waiting") {
-            idBadge.classList.add("kanban-ticket-modal__id--waiting")
+        switch (currentTicket.status) {
+            case "mine": {
+                idBadge.classList.add("kanban-ticket-modal__id--mine")
+
+                break
+            }
+
+            case "waiting": {
+                idBadge.classList.add("kanban-ticket-modal__id--waiting")
+
+                break
+            }
+
+            case "done": {
+                idBadge.classList.add("kanban-ticket-modal__id--done")
+
+                break
+            }
+            // No default
+        }
+
+        const fallbackBadgeText: Record<Exclude<TicketStatusType, null>, string> = {
+            done: "DONE",
+            mine: "MINE",
+            waiting: "WAIT",
+        }
+        const fallbackBadgeTitle: Record<Exclude<TicketStatusType, null>, string> = {
+            done: "Done",
+            mine: "My turn",
+            waiting: "Waiting",
         }
 
         if (match) {
@@ -153,13 +180,15 @@ export function openTicketModal(options: TicketModalOptionsType): void {
             idBadge.title = `${match.source}: ${match.id}`
             idBadge.style.display = ""
         } else if (currentTicket.status) {
-            idBadge.textContent = currentTicket.status === "mine" ? "MINE" : "WAIT"
-            idBadge.title = currentTicket.status === "mine" ? "My turn" : "Waiting"
+            idBadge.textContent = fallbackBadgeText[currentTicket.status]
+            idBadge.title = fallbackBadgeTitle[currentTicket.status]
             idBadge.style.display = ""
         } else {
             idBadge.textContent = ""
             idBadge.style.display = "none"
         }
+
+        dialog.classList.toggle("kanban-ticket-modal--done", currentTicket.status === "done")
     }
 
     renderIdBadge()
@@ -181,6 +210,7 @@ export function openTicketModal(options: TicketModalOptionsType): void {
     const statusOptions: { label: string; value: TicketStatusType }[] = [
         { label: "My turn", value: "mine" },
         { label: "Waiting", value: "waiting" },
+        { label: "Done", value: "done" },
         { label: "—", value: null },
     ]
 
