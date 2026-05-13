@@ -1,6 +1,6 @@
 import { Notice, setIcon } from "obsidian"
 
-import { getProjectColor, getProjectIcon } from "../project"
+import { createProjectChip, PROJECT_CHIP_ACTIVE_CLASS, PROJECT_CHIP_CLASS } from "../project"
 import type { FocusTimerDialogOptionsType, FocusTimerOptionsType } from "./focus-timer.types"
 
 const RING_RADIUS = 10
@@ -301,10 +301,10 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
     }
 
     const updateProjectChipStates = () => {
-        for (const chip of Array.from(projectChips.querySelectorAll(".kanban-focus__chip"))) {
+        for (const chip of Array.from(projectChips.querySelectorAll(`.${PROJECT_CHIP_CLASS}`))) {
             const chipValue = (chip as HTMLElement).dataset.projectTitle ?? null
 
-            chip.classList.toggle("kanban-focus__chip--active", chipValue === selectedProjectTitle)
+            chip.classList.toggle(PROJECT_CHIP_ACTIVE_CLASS, chipValue === selectedProjectTitle)
         }
     }
 
@@ -313,23 +313,13 @@ function openFocusTimerDialog(options: FocusTimerDialogOptionsType): void {
             continue
         }
 
-        const chip = document.createElement("span")
+        const chip = createProjectChip({
+            board,
+            projectIndex,
+            projectTitle: project.title,
+        })
 
-        chip.className = "kanban-focus__chip"
         chip.dataset.projectTitle = project.title
-
-        const chipIcon = getProjectIcon(project.title, board)
-
-        if (chipIcon) {
-            const chipIconSpan = document.createElement("span")
-
-            chipIconSpan.className = "kanban-focus__chip-icon"
-            chipIconSpan.style.color = getProjectColor(project.title, projectIndex, board)
-            setIcon(chipIconSpan, chipIcon)
-            chip.append(chipIconSpan)
-        }
-
-        chip.append(document.createTextNode(project.title))
 
         const capturedTitle = project.title
 

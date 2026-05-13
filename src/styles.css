@@ -1522,19 +1522,6 @@ body.vuki-kanban-fullscreen .status-bar {
     opacity: 90%;
 }
 
-/* Quick add chip icon */
-.kanban-quick-add__chip-icon {
-    align-items: center;
-    display: inline-flex;
-    margin-right: 3px;
-    vertical-align: middle;
-}
-
-.kanban-quick-add__chip-icon svg {
-    height: 12px;
-    width: 12px;
-}
-
 /* Focus Timer */
 .kanban-focus-timer-container {
     padding: 0;
@@ -1680,20 +1667,6 @@ body.vuki-kanban-fullscreen .status-bar {
 
 .kanban-focus__chip--active:hover {
     background: var(--interactive-accent-hover);
-    color: var(--text-on-accent);
-}
-
-.kanban-focus__chip-icon {
-    align-items: center;
-    display: inline-flex;
-}
-
-.kanban-focus__chip-icon svg {
-    height: 12px;
-    width: 12px;
-}
-
-.kanban-focus__chip--active .kanban-focus__chip-icon {
     color: var(--text-on-accent);
 }
 
@@ -2274,4 +2247,55 @@ body.vuki-kanban-fullscreen .status-bar {
     font-size: 15px;
     font-weight: 600;
     margin-bottom: 8px;
+}
+
+/* Quick-add ticket chips: scroll when many tickets so the dialog doesn't grow unbounded */
+.kanban-quick-add__ticket-chips {
+    flex: 1;
+    max-height: 168px;
+    overflow-y: auto;
+}
+
+/* Unified project chip — used in quick-add, add-ticket, and focus-timer dialogs */
+.kanban-project-chip {
+    align-items: center;
+    background: var(--background-secondary);
+    border-radius: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 12px;
+    gap: 4px;
+    padding: 4px 10px;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.kanban-project-chip:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.kanban-project-chip--active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.kanban-project-chip--active:hover {
+    background: var(--interactive-accent-hover);
+    color: var(--text-on-accent);
+}
+
+.kanban-project-chip__icon {
+    align-items: center;
+    display: inline-flex;
+}
+
+.kanban-project-chip__icon svg {
+    height: 12px;
+    width: 12px;
+}
+
+.kanban-project-chip--active .kanban-project-chip__icon {
+    color: var(--text-on-accent);
 }

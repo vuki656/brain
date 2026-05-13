@@ -1,7 +1,7 @@
-import { Notice, setIcon, type Vault } from "obsidian"
+import { Notice, type Vault } from "obsidian"
 
 import type { BoardType, PluginSettingsType } from "../../shared"
-import { getProjectColor, getProjectIcon } from "../project"
+import { createProjectChip, PROJECT_CHIP_ACTIVE_CLASS, PROJECT_CHIP_CLASS } from "../project"
 import { createTicket } from "./ticket"
 
 type AddTicketDialogOptionsType = {
@@ -75,27 +75,14 @@ export function openAddTicketDialog(options: AddTicketDialogOptionsType): void {
             continue
         }
 
-        const chip = document.createElement("span")
+        const chip = createProjectChip({
+            active: loopProjectIndex === selectedProjectIndex,
+            board,
+            projectIndex: loopProjectIndex,
+            projectTitle: project.title,
+        })
 
-        chip.className = "kanban-quick-add__date-button"
         chip.dataset.projectValue = String(loopProjectIndex)
-
-        const chipIcon = getProjectIcon(project.title, board)
-
-        if (chipIcon) {
-            const chipIconSpan = document.createElement("span")
-
-            chipIconSpan.className = "kanban-quick-add__chip-icon"
-            chipIconSpan.style.color = getProjectColor(project.title, loopProjectIndex, board)
-            setIcon(chipIconSpan, chipIcon)
-            chip.append(chipIconSpan)
-        }
-
-        chip.append(document.createTextNode(project.title))
-
-        if (loopProjectIndex === selectedProjectIndex) {
-            chip.classList.add("kanban-quick-add__date-button--active")
-        }
 
         const capturedProjectIndex = loopProjectIndex
 
@@ -105,12 +92,12 @@ export function openAddTicketDialog(options: AddTicketDialogOptionsType): void {
                 selectedProjectIndex === capturedProjectIndex ? null : capturedProjectIndex
 
             for (const otherChip of Array.from(
-                projectChips.querySelectorAll(".kanban-quick-add__date-button"),
+                projectChips.querySelectorAll(`.${PROJECT_CHIP_CLASS}`),
             )) {
                 const value = (otherChip as HTMLElement).dataset.projectValue
                 const isActive = value !== undefined && Number(value) === selectedProjectIndex
 
-                otherChip.classList.toggle("kanban-quick-add__date-button--active", isActive)
+                otherChip.classList.toggle(PROJECT_CHIP_ACTIVE_CLASS, isActive)
             }
         })
 

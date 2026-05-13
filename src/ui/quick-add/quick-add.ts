@@ -5,7 +5,7 @@ import type { CardType, PriorityType } from "../../shared"
 import { generateId, toDateString } from "../../shared"
 import { immutableSpliceCard, immutableUpdateCard } from "../card"
 import { showQuickAddDatePicker } from "../date-picker"
-import { getProjectColor, getProjectIcon } from "../project"
+import { createProjectChip, PROJECT_CHIP_ACTIVE_CLASS, PROJECT_CHIP_CLASS } from "../project"
 import { listProjectTickets } from "../ticket"
 import type { QuickAddDialogOptionsType } from "./quick-add.types"
 
@@ -90,13 +90,11 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
     projectChips.className = "kanban-quick-add__dates"
 
     const updateProjectChipStates = () => {
-        for (const chip of Array.from(
-            projectChips.querySelectorAll(".kanban-quick-add__date-button"),
-        )) {
+        for (const chip of Array.from(projectChips.querySelectorAll(`.${PROJECT_CHIP_CLASS}`))) {
             const chipValue = (chip as HTMLElement).dataset.projectValue
 
             chip.classList.toggle(
-                "kanban-quick-add__date-button--active",
+                PROJECT_CHIP_ACTIVE_CLASS,
                 chipValue !== undefined && Number(chipValue) === selectedProjectIndex,
             )
         }
@@ -115,7 +113,7 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
 
     const ticketChips = document.createElement("div")
 
-    ticketChips.className = "kanban-quick-add__dates"
+    ticketChips.className = "kanban-quick-add__dates kanban-quick-add__ticket-chips"
     ticketRow.append(ticketChips)
 
     const updateTicketChipStates = () => {
@@ -209,27 +207,14 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
             continue
         }
 
-        const chip = document.createElement("span")
+        const chip = createProjectChip({
+            active: loopProjectIndex === selectedProjectIndex,
+            board,
+            projectIndex: loopProjectIndex,
+            projectTitle: project.title,
+        })
 
-        chip.className = "kanban-quick-add__date-button"
         chip.dataset.projectValue = String(loopProjectIndex)
-
-        const chipIcon = getProjectIcon(project.title, board)
-
-        if (chipIcon) {
-            const chipIconSpan = document.createElement("span")
-
-            chipIconSpan.className = "kanban-quick-add__chip-icon"
-            chipIconSpan.style.color = getProjectColor(project.title, loopProjectIndex, board)
-            setIcon(chipIconSpan, chipIcon)
-            chip.append(chipIconSpan)
-        }
-
-        chip.append(document.createTextNode(project.title))
-
-        if (loopProjectIndex === selectedProjectIndex) {
-            chip.classList.add("kanban-quick-add__date-button--active")
-        }
 
         const capturedProjectIndex = loopProjectIndex
 
