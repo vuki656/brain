@@ -1,6 +1,6 @@
 {
     "name": "obsidian-vuki-kanban",
-    "version": "2.35.5",
+    "version": "2.35.6",
     "description": "Custom Kanban board plugin for Obsidian",
     "repository": {
         "type": "git",
