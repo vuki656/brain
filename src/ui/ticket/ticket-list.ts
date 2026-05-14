@@ -126,6 +126,10 @@ function createTicketRow(options: TicketRowOptionsType): HTMLElement {
         row.classList.add("kanban-tickets__row--done")
     }
 
+    if (ticket.hidden) {
+        row.classList.add("kanban-tickets__row--hidden")
+    }
+
     const name = document.createElement("div")
 
     name.className = "kanban-tickets__row-name"
@@ -159,6 +163,69 @@ function createTicketRow(options: TicketRowOptionsType): HTMLElement {
     })
 
     return row
+}
+
+type CollapsibleSectionOptionsType = {
+    board: BoardType
+    label: string
+    onMutation: (board: BoardType) => void
+    pluginSettings: PluginSettingsType
+    section: HTMLElement
+    tickets: TicketType[]
+    variant: "done" | "hidden"
+    vault: Vault
+}
+
+function renderCollapsibleSection(options: CollapsibleSectionOptionsType): void {
+    const { board, label, onMutation, pluginSettings, section, tickets, variant, vault } = options
+
+    const wrapper = document.createElement("div")
+
+    wrapper.className = `kanban-tickets__done kanban-tickets__done--${variant}`
+
+    const toggle = document.createElement("div")
+
+    toggle.className = "kanban-tickets__done-toggle"
+
+    const caret = document.createElement("span")
+
+    caret.className = "kanban-tickets__done-caret"
+    setIcon(caret, "chevron-right")
+    toggle.append(caret)
+
+    const labelElement = document.createElement("span")
+
+    labelElement.className = "kanban-tickets__done-label"
+    labelElement.textContent = label
+    toggle.append(labelElement)
+
+    const ticketList = document.createElement("div")
+
+    ticketList.className = "kanban-tickets__done-list"
+    ticketList.style.display = "none"
+
+    for (const ticket of tickets) {
+        ticketList.append(
+            createTicketRow({
+                board,
+                onMutation,
+                pluginSettings,
+                ticket,
+                vault,
+            }),
+        )
+    }
+
+    toggle.addEventListener("click", () => {
+        const isCollapsed = ticketList.style.display === "none"
+
+        ticketList.style.display = isCollapsed ? "" : "none"
+        wrapper.classList.toggle("kanban-tickets__done--open", isCollapsed)
+        setIcon(caret, isCollapsed ? "chevron-down" : "chevron-right")
+    })
+
+    wrapper.append(toggle, ticketList)
+    section.append(wrapper)
 }
 
 function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
@@ -262,13 +329,20 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
             const savedOrder = board.settings.ticketOrder[projectTitle] ?? []
             const orderedTickets = sortTicketsByOrder(tickets, savedOrder)
             const activeTickets = orderedTickets.filter((ticket) => {
-                return ticket.status !== "done"
+                return !ticket.hidden && ticket.status !== "done"
             })
             const doneTickets = orderedTickets.filter((ticket) => {
-                return ticket.status === "done"
+                return !ticket.hidden && ticket.status === "done"
+            })
+            const hiddenTickets = orderedTickets.filter((ticket) => {
+                return ticket.hidden
             })
 
-            if (activeTickets.length === 0 && doneTickets.length === 0) {
+            if (
+                activeTickets.length === 0 &&
+                doneTickets.length === 0 &&
+                hiddenTickets.length === 0
+            ) {
                 const empty = document.createElement("div")
 
                 empty.className = "kanban-tickets__empty"
@@ -320,6 +394,9 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
                     const doneNames = doneTickets.map((ticket) => {
                         return ticket.name
                     })
+                    const hiddenNames = hiddenTickets.map((ticket) => {
+                        return ticket.name
+                    })
 
                     onMutation({
                         ...board,
@@ -327,64 +404,38 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
                             ...board.settings,
                             ticketOrder: {
                                 ...board.settings.ticketOrder,
-                                [projectTitle]: [...orderIds, ...doneNames],
+                                [projectTitle]: [...orderIds, ...doneNames, ...hiddenNames],
                             },
                         },
                     })
                 },
             })
 
-            if (doneTickets.length === 0) {
-                return
+            if (doneTickets.length > 0) {
+                renderCollapsibleSection({
+                    board,
+                    label: `${doneTickets.length} done`,
+                    onMutation,
+                    pluginSettings,
+                    section,
+                    tickets: doneTickets,
+                    variant: "done",
+                    vault,
+                })
             }
 
-            const doneSection = document.createElement("div")
-
-            doneSection.className = "kanban-tickets__done"
-
-            const doneToggle = document.createElement("div")
-
-            doneToggle.className = "kanban-tickets__done-toggle"
-
-            const doneCaret = document.createElement("span")
-
-            doneCaret.className = "kanban-tickets__done-caret"
-            setIcon(doneCaret, "chevron-right")
-            doneToggle.append(doneCaret)
-
-            const doneLabel = document.createElement("span")
-
-            doneLabel.className = "kanban-tickets__done-label"
-            doneLabel.textContent = `${doneTickets.length} done`
-            doneToggle.append(doneLabel)
-
-            const doneList = document.createElement("div")
-
-            doneList.className = "kanban-tickets__done-list"
-            doneList.style.display = "none"
-
-            for (const ticket of doneTickets) {
-                doneList.append(
-                    createTicketRow({
-                        board,
-                        onMutation,
-                        pluginSettings,
-                        ticket,
-                        vault,
-                    }),
-                )
+            if (hiddenTickets.length > 0) {
+                renderCollapsibleSection({
+                    board,
+                    label: `${hiddenTickets.length} hidden`,
+                    onMutation,
+                    pluginSettings,
+                    section,
+                    tickets: hiddenTickets,
+                    variant: "hidden",
+                    vault,
+                })
             }
-
-            doneToggle.addEventListener("click", () => {
-                const isHidden = doneList.style.display === "none"
-
-                doneList.style.display = isHidden ? "" : "none"
-                doneSection.classList.toggle("kanban-tickets__done--open", isHidden)
-                setIcon(doneCaret, isHidden ? "chevron-down" : "chevron-right")
-            })
-
-            doneSection.append(doneToggle, doneList)
-            section.append(doneSection)
         })()
     }
 }

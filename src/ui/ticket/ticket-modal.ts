@@ -11,6 +11,7 @@ import {
     readTicket,
     renameTicket,
     updateTicketEntries,
+    updateTicketHidden,
     updateTicketLink,
     updateTicketStatus,
 } from "./ticket"
@@ -650,6 +651,37 @@ export function openTicketModal(options: TicketModalOptionsType): void {
         })
     })
     actionsRow.append(editLinkButton)
+
+    const hideButton = document.createElement("span")
+
+    hideButton.className = "kanban-ticket-modal__action"
+
+    const renderHideButton = () => {
+        hideButton.textContent = currentTicket.hidden ? "Unhide" : "Hide"
+    }
+
+    renderHideButton()
+    hideButton.addEventListener("click", () => {
+        const newHidden = !currentTicket.hidden
+
+        void (async () => {
+            try {
+                await updateTicketHidden({
+                    name: currentTicket.name,
+                    newHidden,
+                    notePathPrefix: pluginSettings.notePathPrefix,
+                    projectTitle: currentTicket.projectTitle,
+                    vault,
+                })
+                currentTicket = { ...currentTicket, hidden: newHidden }
+                renderHideButton()
+                onChange()
+            } catch (error) {
+                new Notice(`Failed to update hidden state: ${String(error)}`)
+            }
+        })()
+    })
+    actionsRow.append(hideButton)
 
     const renameButton = document.createElement("span")
 

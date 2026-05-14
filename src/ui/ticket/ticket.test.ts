@@ -59,10 +59,13 @@ link:
 
 describe("serializeTicketFile", () => {
     it("should serialize link and entries with newest first", () => {
-        const serialized = serializeTicketFile("https://example.com/X", [
-            { text: "newest", timestamp: "2026-04-29 14:32" },
-            { text: "older", timestamp: "2026-04-27 10:15" },
-        ])
+        const serialized = serializeTicketFile({
+            entries: [
+                { text: "newest", timestamp: "2026-04-29 14:32" },
+                { text: "older", timestamp: "2026-04-27 10:15" },
+            ],
+            link: "https://example.com/X",
+        })
 
         expect(serialized).toBe(
             "---\nlink: https://example.com/X\n---\n\n- 2026-04-29 14:32 — newest\n- 2026-04-27 10:15 — older",
@@ -70,7 +73,7 @@ describe("serializeTicketFile", () => {
     })
 
     it("should serialize empty link as empty string", () => {
-        const serialized = serializeTicketFile(null, [])
+        const serialized = serializeTicketFile({ entries: [], link: null })
 
         expect(serialized).toBe("---\nlink: \n---\n")
     })
@@ -84,7 +87,11 @@ link: https://example.com/issues/XYZ-2
 - 2026-04-27 10:15 — second entry
 `
         const parsed = parseTicketFile(original)
-        const serialized = serializeTicketFile(parsed.link, parsed.entries, parsed.status)
+        const serialized = serializeTicketFile({
+            entries: parsed.entries,
+            link: parsed.link,
+            status: parsed.status,
+        })
         const reparsed = parseTicketFile(serialized)
 
         expect(reparsed.link).toBe(parsed.link)
@@ -131,13 +138,21 @@ status: garbage
     })
 
     it("should serialize status into frontmatter when set", () => {
-        const serialized = serializeTicketFile("https://example.com", [], "waiting")
+        const serialized = serializeTicketFile({
+            entries: [],
+            link: "https://example.com",
+            status: "waiting",
+        })
 
         expect(serialized).toContain("status: waiting")
     })
 
     it("should omit status line when null", () => {
-        const serialized = serializeTicketFile("https://example.com", [], null)
+        const serialized = serializeTicketFile({
+            entries: [],
+            link: "https://example.com",
+            status: null,
+        })
 
         expect(serialized).not.toContain("status:")
     })
@@ -151,7 +166,11 @@ status: mine
 - 2026-04-29 — first entry
 `
         const parsed = parseTicketFile(original)
-        const serialized = serializeTicketFile(parsed.link, parsed.entries, parsed.status)
+        const serialized = serializeTicketFile({
+            entries: parsed.entries,
+            link: parsed.link,
+            status: parsed.status,
+        })
         const reparsed = parseTicketFile(serialized)
 
         expect(reparsed.status).toBe("mine")
@@ -179,9 +198,82 @@ status: done
 - 2026-05-02 — closed out
 `
         const parsed = parseTicketFile(original)
-        const serialized = serializeTicketFile(parsed.link, parsed.entries, parsed.status)
+        const serialized = serializeTicketFile({
+            entries: parsed.entries,
+            link: parsed.link,
+            status: parsed.status,
+        })
         const reparsed = parseTicketFile(serialized)
 
+        expect(reparsed.status).toBe("done")
+    })
+})
+
+describe("ticket hidden", () => {
+    it("should parse hidden flag from frontmatter", () => {
+        const content = `---
+link: https://example.com
+hidden: true
+---
+
+- 2026-04-29 — entry
+`
+        const parsed = parseTicketFile(content)
+
+        expect(parsed.hidden).toBe(true)
+    })
+
+    it("should default hidden to false when missing", () => {
+        const content = `---
+link: https://example.com
+---
+
+- 2026-04-29 — entry
+`
+        const parsed = parseTicketFile(content)
+
+        expect(parsed.hidden).toBe(false)
+    })
+
+    it("should serialize hidden flag when true", () => {
+        const serialized = serializeTicketFile({
+            entries: [],
+            hidden: true,
+            link: "https://example.com",
+        })
+
+        expect(serialized).toContain("hidden: true")
+    })
+
+    it("should omit hidden line when false", () => {
+        const serialized = serializeTicketFile({
+            entries: [],
+            hidden: false,
+            link: "https://example.com",
+        })
+
+        expect(serialized).not.toContain("hidden:")
+    })
+
+    it("should round-trip hidden flag with status through parse and serialize", () => {
+        const original = `---
+link: https://example.com/issues/HID-1
+status: done
+hidden: true
+---
+
+- 2026-05-02 — wrapped up
+`
+        const parsed = parseTicketFile(original)
+        const serialized = serializeTicketFile({
+            entries: parsed.entries,
+            hidden: parsed.hidden,
+            link: parsed.link,
+            status: parsed.status,
+        })
+        const reparsed = parseTicketFile(serialized)
+
+        expect(reparsed.hidden).toBe(true)
         expect(reparsed.status).toBe("done")
     })
 })

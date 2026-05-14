@@ -30,6 +30,10 @@ type UpdateStatusOptionsType = TicketByNameOptionsType & {
     newStatus: TicketStatusType
 }
 
+type UpdateHiddenOptionsType = TicketByNameOptionsType & {
+    newHidden: boolean
+}
+
 type UpdateEntriesOptionsType = TicketByNameOptionsType & {
     transform: (entries: TicketEntryType[]) => TicketEntryType[]
 }
@@ -74,12 +78,14 @@ function parseStatus(value: string): TicketStatusType {
 
 function parseTicketFile(content: string): {
     entries: TicketEntryType[]
+    hidden: boolean
     link: string | null
     status: TicketStatusType
 } {
     const lines = content.split("\n")
     let link: string | null = null
     let status: TicketStatusType = null
+    let hidden = false
     const entries: TicketEntryType[] = []
 
     let inFrontmatter = false
@@ -111,6 +117,12 @@ function parseTicketFile(content: string): {
                 status = parseStatus(value)
             }
 
+            if (inFrontmatter && trimmed.startsWith("hidden:")) {
+                const value = trimmed.slice("hidden:".length).trim()
+
+                hidden = value === "true"
+            }
+
             continue
         }
 
@@ -121,18 +133,26 @@ function parseTicketFile(content: string): {
         }
     }
 
-    return { entries, link, status }
+    return { entries, hidden, link, status }
 }
 
-function serializeTicketFile(
-    link: string | null,
-    entries: TicketEntryType[],
-    status: TicketStatusType = null,
-): string {
+type SerializeTicketFileOptionsType = {
+    entries: TicketEntryType[]
+    hidden?: boolean
+    link: string | null
+    status?: TicketStatusType
+}
+
+function serializeTicketFile(options: SerializeTicketFileOptionsType): string {
+    const { entries, hidden = false, link, status = null } = options
     const frontmatterLines: string[] = ["---", `link: ${link ?? ""}`]
 
     if (status) {
         frontmatterLines.push(`status: ${status}`)
+    }
+
+    if (hidden) {
+        frontmatterLines.push("hidden: true")
     }
 
     frontmatterLines.push("---", "")
@@ -149,12 +169,18 @@ function serializeTicketFile(
 function buildTicket(
     name: string,
     projectTitle: string,
-    parsed: { entries: TicketEntryType[]; link: string | null; status: TicketStatusType },
+    parsed: {
+        entries: TicketEntryType[]
+        hidden: boolean
+        link: string | null
+        status: TicketStatusType
+    },
 ): TicketType {
     const lastUpdated = parsed.entries[0]?.timestamp ?? null
 
     return {
         entries: parsed.entries,
+        hidden: parsed.hidden,
         lastUpdated,
         link: parsed.link,
         name,
@@ -237,7 +263,7 @@ async function createTicket(options: CreateTicketOptionsType): Promise<void> {
     await ensureFolder(vault, getTicketsFolderPath(notePathPrefix, projectTitle))
 
     const path = getTicketFilePath(notePathPrefix, projectTitle, safeName)
-    const content = serializeTicketFile(link, [])
+    const content = serializeTicketFile({ entries: [], link })
 
     await vault.create(path, content)
 }
@@ -257,11 +283,12 @@ async function addTicketEntry(options: AddEntryOptionsType): Promise<void> {
         text,
         timestamp: formatTicketTimestamp(new Date()),
     }
-    const newContent = serializeTicketFile(
-        parsed.link,
-        [newEntry, ...parsed.entries],
-        parsed.status,
-    )
+    const newContent = serializeTicketFile({
+        entries: [newEntry, ...parsed.entries],
+        hidden: parsed.hidden,
+        link: parsed.link,
+        status: parsed.status,
+    })
 
     await vault.modify(file, newContent)
 }
@@ -278,7 +305,12 @@ async function updateTicketEntries(options: UpdateEntriesOptionsType): Promise<v
     const content = await vault.read(file)
     const parsed = parseTicketFile(content)
     const newEntries = transform(parsed.entries)
-    const newContent = serializeTicketFile(parsed.link, newEntries, parsed.status)
+    const newContent = serializeTicketFile({
+        entries: newEntries,
+        hidden: parsed.hidden,
+        link: parsed.link,
+        status: parsed.status,
+    })
 
     await vault.modify(file, newContent)
 }
@@ -294,7 +326,33 @@ async function updateTicketStatus(options: UpdateStatusOptionsType): Promise<voi
 
     const content = await vault.read(file)
     const parsed = parseTicketFile(content)
-    const newContent = serializeTicketFile(parsed.link, parsed.entries, newStatus)
+    const newContent = serializeTicketFile({
+        entries: parsed.entries,
+        hidden: parsed.hidden,
+        link: parsed.link,
+        status: newStatus,
+    })
+
+    await vault.modify(file, newContent)
+}
+
+async function updateTicketHidden(options: UpdateHiddenOptionsType): Promise<void> {
+    const { name, newHidden, notePathPrefix, projectTitle, vault } = options
+    const path = getTicketFilePath(notePathPrefix, projectTitle, name)
+    const file = vault.getAbstractFileByPath(path)
+
+    if (!(file instanceof TFile)) {
+        return
+    }
+
+    const content = await vault.read(file)
+    const parsed = parseTicketFile(content)
+    const newContent = serializeTicketFile({
+        entries: parsed.entries,
+        hidden: newHidden,
+        link: parsed.link,
+        status: parsed.status,
+    })
 
     await vault.modify(file, newContent)
 }
@@ -310,7 +368,12 @@ async function updateTicketLink(options: UpdateLinkOptionsType): Promise<void> {
 
     const content = await vault.read(file)
     const parsed = parseTicketFile(content)
-    const newContent = serializeTicketFile(newLink, parsed.entries, parsed.status)
+    const newContent = serializeTicketFile({
+        entries: parsed.entries,
+        hidden: parsed.hidden,
+        link: newLink,
+        status: parsed.status,
+    })
 
     await vault.modify(file, newContent)
 }
@@ -401,6 +464,7 @@ export {
     renameTicket,
     serializeTicketFile,
     updateTicketEntries,
+    updateTicketHidden,
     updateTicketLink,
     updateTicketStatus,
 }

@@ -7,6 +7,7 @@ export type TicketEntryType = {
 
 export type TicketType = {
     entries: TicketEntryType[]
+    hidden: boolean
     lastUpdated: string | null
     link: string | null
     name: string
