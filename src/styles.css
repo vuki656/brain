@@ -851,7 +851,7 @@ body.vuki-kanban-fullscreen .status-bar {
     gap: 14px;
     max-width: 90vw;
     padding: 20px;
-    width: 380px;
+    width: 500px;
 }
 
 .kanban-quick-add__input {
