@@ -64,6 +64,7 @@ export function makeBoard(overrides: MakeBoardOverridesType = {}): BoardType {
     }
 
     return {
+        parseError: null,
         projects: overrides.projects ?? makeProjects(),
         settings: { ...defaultSettings, ...overrides.settings },
     }

@@ -306,7 +306,7 @@ kanban-plugin: vuki-kanban
         expect(card.id).toBe("xyz789")
     })
 
-    it("should handle malformed settings gracefully", () => {
+    it("should flag a parseError when settings JSON is corrupt", () => {
         const markdown = `---
 
 kanban-plugin: vuki-kanban
@@ -326,11 +326,77 @@ kanban-plugin: vuki-kanban
         const board = parseBoard(markdown)
 
         expect(board.projects).toHaveLength(1)
+        expect(board.parseError).not.toBeNull()
+        expect(board.parseError?.reason).toBe("corrupt-settings")
         expect(board.settings.archivedProjects).toEqual([])
-        expect(board.settings.collapsedProjects).toEqual([])
         expect(board.settings.projectColors).toEqual({})
         expect(board.settings.projectIcons).toEqual({})
-        expect(board.settings.todayOrder).toEqual({})
+    })
+
+    it("should not flag a parseError when the settings block is simply absent", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task @id:abc123
+`
+
+        const board = parseBoard(markdown)
+
+        expect(board.parseError).toBeNull()
+    })
+
+    it("should flag a parseError when sync conflict markers are present", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+<<<<<<< local
+- [ ] Local task @id:abc123
+=======
+- [ ] Remote task @id:def456
+>>>>>>> remote
+
+%% kanban:settings
+\`\`\`json
+{"project-colors":{"Col":"var(--color-red)"}}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+
+        expect(board.parseError).not.toBeNull()
+        expect(board.parseError?.reason).toBe("conflict-markers")
+    })
+
+    it("should not flag a conflict-marker parseError when only one side's marker appears", () => {
+        const markdown = `---
+
+kanban-plugin: vuki-kanban
+
+---
+
+## Col
+
+- [ ] Task with literal <<<<<<< angle phrase @id:abc123
+
+%% kanban:settings
+\`\`\`json
+{}
+\`\`\`
+%%`
+
+        const board = parseBoard(markdown)
+
+        expect(board.parseError).toBeNull()
     })
 
     it("should handle markdown with no projects", () => {

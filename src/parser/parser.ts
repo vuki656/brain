@@ -1,4 +1,5 @@
 import type {
+    BoardParseErrorType,
     BoardType,
     CardType,
     FocusTimerStateType,
@@ -129,21 +130,30 @@ function parseCard(line: string): CardType | null {
     }
 }
 
-function parseSettings(lines: string[]): KanbanSettingsType {
+function emptySettings(): KanbanSettingsType {
+    return {
+        archivedProjects: [],
+        collapsedProjects: [],
+        focusTimer: null,
+        projectColors: {},
+        projectIcons: {},
+        ticketOrder: {},
+        todayOrder: {},
+    }
+}
+
+type ParseSettingsResultType = {
+    error: BoardParseErrorType | null
+    settings: KanbanSettingsType
+}
+
+function parseSettings(lines: string[]): ParseSettingsResultType {
     const settingsStartIndex = lines.findIndex((line) => {
         return line.trim() === SETTINGS_START
     })
 
     if (settingsStartIndex === -1) {
-        return {
-            archivedProjects: [],
-            collapsedProjects: [],
-            focusTimer: null,
-            projectColors: {},
-            projectIcons: {},
-            ticketOrder: {},
-            todayOrder: {},
-        }
+        return { error: null, settings: emptySettings() }
     }
 
     const jsonLines: string[] = []
@@ -179,15 +189,7 @@ function parseSettings(lines: string[]): KanbanSettingsType {
     const jsonString = jsonLines.join("\n")
 
     if (!jsonString) {
-        return {
-            archivedProjects: [],
-            collapsedProjects: [],
-            focusTimer: null,
-            projectColors: {},
-            projectIcons: {},
-            ticketOrder: {},
-            todayOrder: {},
-        }
+        return { error: null, settings: emptySettings() }
     }
 
     try {
@@ -226,23 +228,25 @@ function parseSettings(lines: string[]): KanbanSettingsType {
         }
 
         return {
-            archivedProjects: parsed["archived-projects"] ?? [],
-            collapsedProjects: parsed["collapsed-projects"] ?? [],
-            focusTimer,
-            projectColors: parsed["project-colors"] ?? {},
-            projectIcons: parsed["project-icons"] ?? {},
-            ticketOrder,
-            todayOrder,
+            error: null,
+            settings: {
+                archivedProjects: parsed["archived-projects"] ?? [],
+                collapsedProjects: parsed["collapsed-projects"] ?? [],
+                focusTimer,
+                projectColors: parsed["project-colors"] ?? {},
+                projectIcons: parsed["project-icons"] ?? {},
+                ticketOrder,
+                todayOrder,
+            },
         }
     } catch {
         return {
-            archivedProjects: [],
-            collapsedProjects: [],
-            focusTimer: null,
-            projectColors: {},
-            projectIcons: {},
-            ticketOrder: {},
-            todayOrder: {},
+            error: {
+                message:
+                    "Kanban settings could not be parsed (likely a sync conflict). Open this file in source view to resolve. Saves are disabled until then.",
+                reason: "corrupt-settings",
+            },
+            settings: emptySettings(),
         }
     }
 }
@@ -394,12 +398,21 @@ function sortCardsByCompletionStatus(cards: CardType[]): CardType[] {
     })
 }
 
+const CONFLICT_OPEN_REGEX = /^<{7,}(?:\s|$)/m
+const CONFLICT_CLOSE_REGEX = /^>{7,}(?:\s|$)/m
+
+function detectConflictMarkers(markdown: string): boolean {
+    return CONFLICT_OPEN_REGEX.test(markdown) && CONFLICT_CLOSE_REGEX.test(markdown)
+}
+
 export function parseBoard(markdown: string): BoardType {
     const lines = markdown.split("\n")
     const projects: ProjectType[] = []
     let currentProject: ProjectType | null = null
     let pastFrontmatter = false
     let inFrontmatter = false
+
+    const hasConflictMarkers = detectConflictMarkers(markdown)
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
         const rawLine = lines[lineIndex]
@@ -454,9 +467,21 @@ export function parseBoard(markdown: string): BoardType {
         }
     }
 
-    const settings = parseSettings(lines)
+    const { error: settingsError, settings } = parseSettings(lines)
 
-    return { projects, settings }
+    let parseError: BoardParseErrorType | null = null
+
+    if (hasConflictMarkers) {
+        parseError = {
+            message:
+                "Sync conflict markers (<<<<<<< / >>>>>>>) detected in this kanban file. Open it in source view to resolve. Saves are disabled until then.",
+            reason: "conflict-markers",
+        }
+    } else if (settingsError) {
+        parseError = settingsError
+    }
+
+    return { parseError, projects, settings }
 }
 
 export function serializeBoard(board: BoardType): string {

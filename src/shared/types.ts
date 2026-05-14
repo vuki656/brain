@@ -43,7 +43,15 @@ export type KanbanSettingsType = {
     todayOrder: Partial<Record<string, string[]>>
 }
 
+export type BoardParseErrorReasonType = "conflict-markers" | "corrupt-settings"
+
+export type BoardParseErrorType = {
+    message: string
+    reason: BoardParseErrorReasonType
+}
+
 export type BoardType = {
+    parseError: BoardParseErrorType | null
     projects: ProjectType[]
     settings: KanbanSettingsType
 }

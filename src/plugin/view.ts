@@ -1,4 +1,4 @@
-import { TextFileView, type WorkspaceLeaf } from "obsidian"
+import { Notice, TextFileView, type WorkspaceLeaf } from "obsidian"
 // eslint-disable-next-line import-x/no-named-as-default -- sortablejs exports default class
 import type Sortable from "sortablejs"
 
@@ -11,6 +11,7 @@ import type VukiKanbanPlugin from "./plugin"
 
 export class KanbanView extends TextFileView {
     private board: BoardType = {
+        parseError: null,
         projects: [],
         settings: {
             archivedProjects: [],
@@ -25,9 +26,13 @@ export class KanbanView extends TextFileView {
 
     private readonly boardContainer: HTMLElement
 
+    private lastParseErrorReason: string | null = null
+
     private lastRenderedDate: string = toDateString(new Date())
 
     private readonly plugin: VukiKanbanPlugin
+
+    private rawMarkdown = ""
 
     private sortableInstances: Sortable[] = []
 
@@ -59,6 +64,7 @@ export class KanbanView extends TextFileView {
 
     public clear(): void {
         this.board = {
+            parseError: null,
             projects: [],
             settings: {
                 archivedProjects: [],
@@ -70,6 +76,8 @@ export class KanbanView extends TextFileView {
                 todayOrder: {},
             },
         }
+        this.rawMarkdown = ""
+        this.lastParseErrorReason = null
         this.boardContainer.empty()
     }
 
@@ -86,6 +94,10 @@ export class KanbanView extends TextFileView {
     }
 
     public getViewData(): string {
+        if (this.board.parseError) {
+            return this.rawMarkdown
+        }
+
         return serializeBoard(this.board)
     }
 
@@ -114,11 +126,19 @@ export class KanbanView extends TextFileView {
             board: this.board,
             container: this.boardContainer,
             onBoardCleanup: (newBoard) => {
+                if (this.warnIfParseError()) {
+                    return
+                }
+
                 this.board = newBoard
                 this.requestSave()
                 this.render()
             },
             onMutation: (newBoard) => {
+                if (this.warnIfParseError()) {
+                    return
+                }
+
                 this.board = newBoard
                 this.requestSave()
                 this.render()
@@ -134,7 +154,16 @@ export class KanbanView extends TextFileView {
     }
 
     public setViewData(data: string, clear: boolean): void {
+        this.rawMarkdown = data
         this.board = parseBoard(data)
+
+        const errorReason = this.board.parseError?.reason ?? null
+
+        if (this.board.parseError && errorReason !== this.lastParseErrorReason) {
+            new Notice(this.board.parseError.message, 15_000)
+        }
+
+        this.lastParseErrorReason = errorReason
 
         if (clear) {
             this.viewState = {
@@ -145,5 +174,15 @@ export class KanbanView extends TextFileView {
         }
 
         this.render()
+    }
+
+    private warnIfParseError(): boolean {
+        if (!this.board.parseError) {
+            return false
+        }
+
+        new Notice(this.board.parseError.message, 8000)
+
+        return true
     }
 }
