@@ -6,7 +6,8 @@ import { generateId, toDateString } from "../../shared"
 import { immutableSpliceCard, immutableUpdateCard } from "../card"
 import { showQuickAddDatePicker } from "../date-picker"
 import { createProjectChip, PROJECT_CHIP_ACTIVE_CLASS, PROJECT_CHIP_CLASS } from "../project"
-import { listProjectTickets } from "../ticket"
+import type { TicketType } from "../ticket"
+import { extractTicketId, listProjectTickets } from "../ticket"
 import type { QuickAddDialogOptionsType } from "./quick-add.types"
 
 function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
@@ -113,37 +114,52 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
 
     const ticketChips = document.createElement("div")
 
-    ticketChips.className = "kanban-quick-add__dates kanban-quick-add__ticket-chips"
+    ticketChips.className = "kanban-quick-add__ticket-rows"
     ticketRow.append(ticketChips)
 
     const updateTicketChipStates = () => {
-        for (const otherChip of Array.from(
-            ticketChips.querySelectorAll(".kanban-quick-add__date-button"),
+        for (const otherRow of Array.from(
+            ticketChips.querySelectorAll(".kanban-quick-add__ticket-row"),
         )) {
-            const value = (otherChip as HTMLElement).dataset.ticketName
+            const value = (otherRow as HTMLElement).dataset.ticketName
             const isActive = value !== undefined && value === selectedLinkedTicket
 
-            otherChip.classList.toggle("kanban-quick-add__date-button--active", isActive)
+            otherRow.classList.toggle("kanban-quick-add__ticket-row--active", isActive)
         }
     }
 
-    const renderTicketChip = (ticketName: string): HTMLElement => {
-        const chip = document.createElement("span")
+    const renderTicketChip = (ticket: TicketType): HTMLElement => {
+        const row = document.createElement("div")
 
-        chip.className = "kanban-quick-add__date-button"
-        chip.textContent = ticketName
-        chip.dataset.ticketName = ticketName
+        row.className = "kanban-quick-add__ticket-row"
+        row.dataset.ticketName = ticket.name
 
-        if (selectedLinkedTicket === ticketName) {
-            chip.classList.add("kanban-quick-add__date-button--active")
+        const idMatch = extractTicketId(ticket.link)
+
+        if (idMatch) {
+            const idElement = document.createElement("span")
+
+            idElement.className = "kanban-quick-add__ticket-row-id"
+            idElement.textContent = idMatch.id
+            row.append(idElement)
         }
 
-        chip.addEventListener("click", () => {
-            selectedLinkedTicket = selectedLinkedTicket === ticketName ? null : ticketName
+        const nameElement = document.createElement("span")
+
+        nameElement.className = "kanban-quick-add__ticket-row-name"
+        nameElement.textContent = ticket.name
+        row.append(nameElement)
+
+        if (selectedLinkedTicket === ticket.name) {
+            row.classList.add("kanban-quick-add__ticket-row--active")
+        }
+
+        row.addEventListener("click", () => {
+            selectedLinkedTicket = selectedLinkedTicket === ticket.name ? null : ticket.name
             updateTicketChipStates()
         })
 
-        return chip
+        return row
     }
 
     const refreshTicketChips = () => {
@@ -186,18 +202,29 @@ function openQuickAddDialog(options: QuickAddDialogOptionsType): void {
 
             ticketChips.empty()
 
-            if (tickets.length === 0) {
+            const visibleTickets = tickets.filter((ticket) => {
+                if (ticket.name === selectedLinkedTicket) {
+                    return true
+                }
+
+                return !ticket.hidden && ticket.status !== "done"
+            })
+
+            if (visibleTickets.length === 0) {
                 const placeholder = document.createElement("span")
 
                 placeholder.className = "kanban-quick-add__ticket-placeholder"
-                placeholder.textContent = "No tickets in this project"
+                placeholder.textContent =
+                    tickets.length === 0
+                        ? "No tickets in this project"
+                        : "No active tickets in this project"
                 ticketChips.append(placeholder)
 
                 return
             }
 
-            for (const ticket of tickets) {
-                ticketChips.append(renderTicketChip(ticket.name))
+            for (const ticket of visibleTickets) {
+                ticketChips.append(renderTicketChip(ticket))
             }
         })()
     }

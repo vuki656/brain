@@ -2239,8 +2239,55 @@ body.vuki-kanban-fullscreen .status-bar {
     padding: 6px 0;
 }
 
-.kanban-quick-add__date-button[data-ticket-name] {
-    max-width: 240px;
+.kanban-quick-add__ticket-rows {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.kanban-quick-add__ticket-row {
+    align-items: baseline;
+    border-radius: 4px;
+    color: var(--text-normal);
+    cursor: pointer;
+    display: flex;
+    font-size: 13px;
+    gap: 8px;
+    padding: 5px 8px;
+    transition: background 0.12s ease;
+    user-select: none;
+}
+
+.kanban-quick-add__ticket-row:hover {
+    background: var(--background-modifier-hover);
+}
+
+.kanban-quick-add__ticket-row--active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.kanban-quick-add__ticket-row--active:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.kanban-quick-add__ticket-row-id {
+    color: var(--text-faint);
+    flex-shrink: 0;
+    font-family: var(--font-monospace);
+    font-size: 11px;
+}
+
+.kanban-quick-add__ticket-row--active .kanban-quick-add__ticket-row-id {
+    color: var(--text-on-accent);
+    opacity: 75%;
+}
+
+.kanban-quick-add__ticket-row-name {
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2252,13 +2299,6 @@ body.vuki-kanban-fullscreen .status-bar {
     font-size: 15px;
     font-weight: 600;
     margin-bottom: 8px;
-}
-
-/* Quick-add ticket chips: scroll when many tickets so the dialog doesn't grow unbounded */
-.kanban-quick-add__ticket-chips {
-    flex: 1;
-    max-height: 168px;
-    overflow-y: auto;
 }
 
 /* Unified project chip — used in quick-add, add-ticket, and focus-timer dialogs */
