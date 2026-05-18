@@ -449,6 +449,30 @@ body.vuki-kanban-fullscreen .status-bar {
     color: var(--text-muted);
 }
 
+.kanban-text-prompt__input {
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: 14px;
+    margin-top: 12px;
+    outline: none;
+    padding: 6px 10px;
+    width: 100%;
+}
+
+.kanban-text-prompt__input:focus {
+    border-color: var(--interactive-accent);
+}
+
+.kanban-text-prompt__buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
 .kanban-card__add-subtask-input {
     background: var(--background-primary);
     border: 1px solid var(--interactive-accent);

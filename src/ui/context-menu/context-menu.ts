@@ -1,6 +1,6 @@
 import { addDays, nextMonday, startOfTomorrow } from "date-fns"
 import type { App } from "obsidian"
-import { Menu, Modal, Notice, Setting, TFile } from "obsidian"
+import { ButtonComponent, Menu, Modal, Notice, TFile } from "obsidian"
 
 import type { SubtaskType } from "../../shared"
 import { generateId, toDateString } from "../../shared"
@@ -43,14 +43,18 @@ class TextPromptModal extends Modal {
 
         titleEl.setText(label)
 
-        let currentValue = ""
-        let inputElement: HTMLInputElement | null = null
+        const inputElement = contentEl.createEl("input", {
+            cls: "kanban-text-prompt__input",
+            type: "text",
+        })
+
+        inputElement.placeholder = placeholder
 
         const submit = () => {
-            const trimmed = currentValue.trim()
+            const trimmed = inputElement.value.trim()
 
             if (!trimmed) {
-                inputElement?.focus()
+                inputElement.focus()
 
                 return
             }
@@ -59,22 +63,20 @@ class TextPromptModal extends Modal {
             onSubmit(trimmed)
         }
 
-        new Setting(contentEl).addText((text) => {
-            text.setPlaceholder(placeholder).onChange((value) => {
-                currentValue = value
-            })
-            inputElement = text.inputEl
-            text.inputEl.addEventListener("keydown", (keyboardEvent) => {
-                if (keyboardEvent.key === "Enter") {
-                    keyboardEvent.preventDefault()
-                    submit()
-                }
-            })
+        inputElement.addEventListener("keydown", (keyboardEvent) => {
+            if (keyboardEvent.key === "Enter") {
+                keyboardEvent.preventDefault()
+                submit()
+            }
         })
 
-        new Setting(contentEl).addButton((button) => {
-            button.setButtonText(submitLabel).setCta().onClick(submit)
-        })
+        const buttonRow = contentEl.createDiv({ cls: "kanban-text-prompt__buttons" })
+
+        new ButtonComponent(buttonRow).setButtonText(submitLabel).setCta().onClick(submit)
+
+        window.setTimeout(() => {
+            inputElement.focus()
+        }, 0)
     }
 }
 
