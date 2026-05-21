@@ -111,6 +111,16 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
     const previousBoard = container.querySelector(".kanban-board")
     const savedScrollLeft = previousBoard ? previousBoard.scrollLeft : 0
 
+    const savedCardListScrollTops = new Map<string, number>()
+
+    for (const cardList of container.querySelectorAll<HTMLElement>(".kanban-project__cards")) {
+        const projectIndex = cardList.dataset.projectIndex
+
+        if (projectIndex !== undefined) {
+            savedCardListScrollTops.set(projectIndex, cardList.scrollTop)
+        }
+    }
+
     const previousTodayList = container.querySelector(".kanban-today")
     const savedTodayScroll = previousTodayList ? previousTodayList.scrollTop : 0
 
@@ -200,6 +210,20 @@ function renderBoard(options: RenderBoardOptionsType): Sortable[] {
 
         if (newBoard) {
             newBoard.scrollLeft = savedScrollLeft
+        }
+
+        for (const cardList of container.querySelectorAll<HTMLElement>(".kanban-project__cards")) {
+            const projectIndex = cardList.dataset.projectIndex
+
+            if (projectIndex === undefined) {
+                continue
+            }
+
+            const savedScrollTop = savedCardListScrollTops.get(projectIndex)
+
+            if (savedScrollTop !== undefined) {
+                cardList.scrollTop = savedScrollTop
+            }
         }
 
         container.style.visibility = ""
