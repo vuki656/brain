@@ -82,25 +82,21 @@ function createTicketRow(options: TicketRowOptionsType): HTMLElement {
     const idMatch = extractTicketId(ticket.link)
     const statusClassByStatus: Record<Exclude<TicketType["status"], null>, string> = {
         done: "kanban-tickets__row-id--done",
-        "in-progress": "kanban-tickets__row-id--in-progress",
         mine: "kanban-tickets__row-id--mine",
         waiting: "kanban-tickets__row-id--waiting",
     }
     const statusLabelByStatus: Record<Exclude<TicketType["status"], null>, string> = {
         done: "done",
-        "in-progress": "in progress",
         mine: "my turn",
         waiting: "waiting",
     }
     const fallbackBadgeText: Record<Exclude<TicketType["status"], null>, string> = {
         done: "DONE",
-        "in-progress": "WIP",
         mine: "MINE",
         waiting: "WAIT",
     }
     const fallbackBadgeTitle: Record<Exclude<TicketType["status"], null>, string> = {
         done: "Done",
-        "in-progress": "In progress",
         mine: "My turn",
         waiting: "Waiting",
     }
@@ -332,8 +328,11 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
 
             const savedOrder = board.settings.ticketOrder[projectTitle] ?? []
             const orderedTickets = sortTicketsByOrder(tickets, savedOrder)
+            const inProgressTickets = orderedTickets.filter((ticket) => {
+                return ticket.inProgress && !ticket.hidden && ticket.status !== "done"
+            })
             const activeTickets = orderedTickets.filter((ticket) => {
-                return !ticket.hidden && ticket.status !== "done"
+                return !ticket.inProgress && !ticket.hidden && ticket.status !== "done"
             })
             const doneTickets = orderedTickets.filter((ticket) => {
                 return !ticket.hidden && ticket.status === "done"
@@ -343,6 +342,7 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
             })
 
             if (
+                inProgressTickets.length === 0 &&
                 activeTickets.length === 0 &&
                 doneTickets.length === 0 &&
                 hiddenTickets.length === 0
@@ -356,11 +356,39 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
                 return
             }
 
+            if (inProgressTickets.length > 0) {
+                const inProgressWrapper = document.createElement("div")
+
+                inProgressWrapper.className = "kanban-tickets__in-progress"
+
+                const inProgressHeading = document.createElement("div")
+
+                inProgressHeading.className = "kanban-tickets__in-progress-heading"
+                inProgressHeading.textContent = `In progress (${inProgressTickets.length})`
+                inProgressWrapper.append(inProgressHeading)
+
+                for (const ticket of inProgressTickets) {
+                    const row = createTicketRow({
+                        board,
+                        onMutation,
+                        pluginSettings,
+                        ticket,
+                        vault,
+                    })
+
+                    row.classList.add("kanban-tickets__row--in-progress")
+                    inProgressWrapper.append(row)
+                }
+
+                list.before(inProgressWrapper)
+            }
+
             if (activeTickets.length === 0) {
                 const empty = document.createElement("div")
 
                 empty.className = "kanban-tickets__empty"
-                empty.textContent = "No active tickets"
+                empty.textContent =
+                    inProgressTickets.length > 0 ? "No other active tickets" : "No active tickets"
                 list.append(empty)
             }
 
@@ -395,6 +423,9 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
                         }
                     }
 
+                    const inProgressNames = inProgressTickets.map((ticket) => {
+                        return ticket.name
+                    })
                     const doneNames = doneTickets.map((ticket) => {
                         return ticket.name
                     })
@@ -408,7 +439,12 @@ function renderTicketsTab(options: RenderTicketsTabOptionsType): void {
                             ...board.settings,
                             ticketOrder: {
                                 ...board.settings.ticketOrder,
-                                [projectTitle]: [...orderIds, ...doneNames, ...hiddenNames],
+                                [projectTitle]: [
+                                    ...inProgressNames,
+                                    ...orderIds,
+                                    ...doneNames,
+                                    ...hiddenNames,
+                                ],
                             },
                         },
                     })

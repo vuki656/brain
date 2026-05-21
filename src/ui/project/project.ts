@@ -321,7 +321,7 @@ export function createProjectElement(options: ProjectElementOptionsType): HTMLEl
                 vault,
             })
             const inProgressTickets = tickets.filter((ticket) => {
-                return !ticket.hidden && ticket.status === "in-progress"
+                return ticket.inProgress && !ticket.hidden && ticket.status !== "done"
             })
 
             if (inProgressTickets.length === 0) {

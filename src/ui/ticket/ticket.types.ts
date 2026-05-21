@@ -1,4 +1,4 @@
-export type TicketStatusType = "done" | "in-progress" | "mine" | "waiting" | null
+export type TicketStatusType = "done" | "mine" | "waiting" | null
 
 export type TicketEntryType = {
     text: string
@@ -8,6 +8,7 @@ export type TicketEntryType = {
 export type TicketType = {
     entries: TicketEntryType[]
     hidden: boolean
+    inProgress: boolean
     lastUpdated: string | null
     link: string | null
     name: string

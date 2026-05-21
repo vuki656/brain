@@ -189,38 +189,6 @@ status: done
         expect(parsed.status).toBe("done")
     })
 
-    it("should parse in-progress status from frontmatter", () => {
-        const content = `---
-link: https://example.com/issues/JKL-7
-status: in-progress
----
-
-- 2026-05-10 — picked up
-`
-        const parsed = parseTicketFile(content)
-
-        expect(parsed.status).toBe("in-progress")
-    })
-
-    it("should round-trip in-progress status through parse and serialize", () => {
-        const original = `---
-link:
-status: in-progress
----
-
-- 2026-05-10 — picked up
-`
-        const parsed = parseTicketFile(original)
-        const serialized = serializeTicketFile({
-            entries: parsed.entries,
-            link: parsed.link,
-            status: parsed.status,
-        })
-        const reparsed = parseTicketFile(serialized)
-
-        expect(reparsed.status).toBe("in-progress")
-    })
-
     it("should round-trip done status through parse and serialize", () => {
         const original = `---
 link:
@@ -285,6 +253,51 @@ link: https://example.com
         })
 
         expect(serialized).not.toContain("hidden:")
+    })
+
+    it("should round-trip in-progress flag independent of status through parse and serialize", () => {
+        const original = `---
+link: https://example.com/issues/IPG-3
+status: waiting
+inProgress: true
+---
+
+- 2026-05-12 — picked up while still waiting on review
+`
+        const parsed = parseTicketFile(original)
+        const serialized = serializeTicketFile({
+            entries: parsed.entries,
+            hidden: parsed.hidden,
+            inProgress: parsed.inProgress,
+            link: parsed.link,
+            status: parsed.status,
+        })
+        const reparsed = parseTicketFile(serialized)
+
+        expect(reparsed.inProgress).toBe(true)
+        expect(reparsed.status).toBe("waiting")
+    })
+
+    it("should default in-progress to false when missing", () => {
+        const content = `---
+link: https://example.com
+---
+
+- 2026-04-29 — entry
+`
+        const parsed = parseTicketFile(content)
+
+        expect(parsed.inProgress).toBe(false)
+    })
+
+    it("should omit inProgress line when false", () => {
+        const serialized = serializeTicketFile({
+            entries: [],
+            inProgress: false,
+            link: "https://example.com",
+        })
+
+        expect(serialized).not.toContain("inProgress:")
     })
 
     it("should round-trip hidden flag with status through parse and serialize", () => {

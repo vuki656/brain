@@ -1963,9 +1963,33 @@ body.vuki-kanban-fullscreen .status-bar {
     text-decoration: line-through;
 }
 
-.kanban-tickets__row-id--in-progress,
-.kanban-ticket-modal__id--in-progress,
 .kanban-project__in-progress-badge--in-progress {
+    background: rgb(59 130 246 / 18%);
+    color: rgb(96 165 250);
+}
+
+.kanban-tickets__in-progress {
+    border-bottom: 1px solid var(--background-modifier-border);
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+}
+
+.kanban-tickets__in-progress-heading {
+    color: rgb(96 165 250);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    padding: 4px 10px;
+    text-transform: uppercase;
+}
+
+.kanban-tickets__row--in-progress {
+    background: rgb(59 130 246 / 6%);
+}
+
+.kanban-ticket-modal__action--active {
     background: rgb(59 130 246 / 18%);
     color: rgb(96 165 250);
 }

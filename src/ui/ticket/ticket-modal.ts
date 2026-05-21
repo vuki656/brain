@@ -12,6 +12,7 @@ import {
     renameTicket,
     updateTicketEntries,
     updateTicketHidden,
+    updateTicketInProgress,
     updateTicketLink,
     updateTicketStatus,
 } from "./ticket"
@@ -142,7 +143,6 @@ export function openTicketModal(options: TicketModalOptionsType): void {
             "kanban-ticket-modal__id--mine",
             "kanban-ticket-modal__id--waiting",
             "kanban-ticket-modal__id--done",
-            "kanban-ticket-modal__id--in-progress",
         )
 
         switch (currentTicket.status) {
@@ -163,24 +163,16 @@ export function openTicketModal(options: TicketModalOptionsType): void {
 
                 break
             }
-
-            case "in-progress": {
-                idBadge.classList.add("kanban-ticket-modal__id--in-progress")
-
-                break
-            }
             // No default
         }
 
         const fallbackBadgeText: Record<Exclude<TicketStatusType, null>, string> = {
             done: "DONE",
-            "in-progress": "WIP",
             mine: "MINE",
             waiting: "WAIT",
         }
         const fallbackBadgeTitle: Record<Exclude<TicketStatusType, null>, string> = {
             done: "Done",
-            "in-progress": "In progress",
             mine: "My turn",
             waiting: "Waiting",
         }
@@ -218,7 +210,6 @@ export function openTicketModal(options: TicketModalOptionsType): void {
     statusButtons.className = "kanban-quick-add__dates"
 
     const statusOptions: { label: string; value: TicketStatusType }[] = [
-        { label: "In progress", value: "in-progress" },
         { label: "My turn", value: "mine" },
         { label: "Waiting", value: "waiting" },
         { label: "Done", value: "done" },
@@ -669,6 +660,43 @@ export function openTicketModal(options: TicketModalOptionsType): void {
     const renderHideButton = () => {
         hideButton.textContent = currentTicket.hidden ? "Unhide" : "Hide"
     }
+
+    const inProgressButton = document.createElement("span")
+
+    inProgressButton.className = "kanban-ticket-modal__action"
+
+    const renderInProgressButton = () => {
+        inProgressButton.textContent = currentTicket.inProgress
+            ? "Stop progress"
+            : "Mark in progress"
+        inProgressButton.classList.toggle(
+            "kanban-ticket-modal__action--active",
+            currentTicket.inProgress,
+        )
+    }
+
+    renderInProgressButton()
+    inProgressButton.addEventListener("click", () => {
+        const newInProgress = !currentTicket.inProgress
+
+        void (async () => {
+            try {
+                await updateTicketInProgress({
+                    name: currentTicket.name,
+                    newInProgress,
+                    notePathPrefix: pluginSettings.notePathPrefix,
+                    projectTitle: currentTicket.projectTitle,
+                    vault,
+                })
+                currentTicket = { ...currentTicket, inProgress: newInProgress }
+                renderInProgressButton()
+                onChange()
+            } catch (error) {
+                new Notice(`Failed to update in-progress: ${String(error)}`)
+            }
+        })()
+    })
+    actionsRow.append(inProgressButton)
 
     renderHideButton()
     hideButton.addEventListener("click", () => {
