@@ -142,6 +142,7 @@ export function openTicketModal(options: TicketModalOptionsType): void {
             "kanban-ticket-modal__id--mine",
             "kanban-ticket-modal__id--waiting",
             "kanban-ticket-modal__id--done",
+            "kanban-ticket-modal__id--in-progress",
         )
 
         switch (currentTicket.status) {
@@ -162,16 +163,24 @@ export function openTicketModal(options: TicketModalOptionsType): void {
 
                 break
             }
+
+            case "in-progress": {
+                idBadge.classList.add("kanban-ticket-modal__id--in-progress")
+
+                break
+            }
             // No default
         }
 
         const fallbackBadgeText: Record<Exclude<TicketStatusType, null>, string> = {
             done: "DONE",
+            "in-progress": "WIP",
             mine: "MINE",
             waiting: "WAIT",
         }
         const fallbackBadgeTitle: Record<Exclude<TicketStatusType, null>, string> = {
             done: "Done",
+            "in-progress": "In progress",
             mine: "My turn",
             waiting: "Waiting",
         }
@@ -209,6 +218,7 @@ export function openTicketModal(options: TicketModalOptionsType): void {
     statusButtons.className = "kanban-quick-add__dates"
 
     const statusOptions: { label: string; value: TicketStatusType }[] = [
+        { label: "In progress", value: "in-progress" },
         { label: "My turn", value: "mine" },
         { label: "Waiting", value: "waiting" },
         { label: "Done", value: "done" },

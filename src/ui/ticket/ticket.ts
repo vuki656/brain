@@ -69,7 +69,7 @@ function formatTicketTimestamp(date: Date): string {
 }
 
 function parseStatus(value: string): TicketStatusType {
-    if (value === "mine" || value === "waiting" || value === "done") {
+    if (value === "mine" || value === "waiting" || value === "done" || value === "in-progress") {
         return value
     }
 

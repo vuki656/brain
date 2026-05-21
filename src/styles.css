@@ -243,6 +243,48 @@ body.vuki-kanban-fullscreen .status-bar {
     padding: 6px;
 }
 
+.kanban-project__in-progress {
+    border-bottom: 1px solid var(--background-modifier-border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 2px;
+    padding: 6px;
+}
+
+.kanban-project__in-progress-row {
+    align-items: center;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+    padding: 4px 6px;
+}
+
+.kanban-project__in-progress-row:hover {
+    background: var(--background-modifier-hover);
+}
+
+.kanban-project__in-progress-badge {
+    border-radius: 4px;
+    flex-shrink: 0;
+    font-family: var(--font-monospace, ui-monospace, monospace);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    padding: 2px 5px;
+}
+
+.kanban-project__in-progress-name {
+    color: var(--text-normal);
+    flex: 1;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Card */
 .kanban-card {
     background: var(--background-primary);
@@ -1919,6 +1961,13 @@ body.vuki-kanban-fullscreen .status-bar {
     background: rgb(148 163 184 / 18%);
     color: rgb(148 163 184);
     text-decoration: line-through;
+}
+
+.kanban-tickets__row-id--in-progress,
+.kanban-ticket-modal__id--in-progress,
+.kanban-project__in-progress-badge--in-progress {
+    background: rgb(59 130 246 / 18%);
+    color: rgb(96 165 250);
 }
 
 .kanban-tickets__row--done .kanban-tickets__row-name,

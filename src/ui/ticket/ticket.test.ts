@@ -189,6 +189,38 @@ status: done
         expect(parsed.status).toBe("done")
     })
 
+    it("should parse in-progress status from frontmatter", () => {
+        const content = `---
+link: https://example.com/issues/JKL-7
+status: in-progress
+---
+
+- 2026-05-10 — picked up
+`
+        const parsed = parseTicketFile(content)
+
+        expect(parsed.status).toBe("in-progress")
+    })
+
+    it("should round-trip in-progress status through parse and serialize", () => {
+        const original = `---
+link:
+status: in-progress
+---
+
+- 2026-05-10 — picked up
+`
+        const parsed = parseTicketFile(original)
+        const serialized = serializeTicketFile({
+            entries: parsed.entries,
+            link: parsed.link,
+            status: parsed.status,
+        })
+        const reparsed = parseTicketFile(serialized)
+
+        expect(reparsed.status).toBe("in-progress")
+    })
+
     it("should round-trip done status through parse and serialize", () => {
         const original = `---
 link:

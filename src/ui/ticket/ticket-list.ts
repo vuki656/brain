@@ -82,21 +82,25 @@ function createTicketRow(options: TicketRowOptionsType): HTMLElement {
     const idMatch = extractTicketId(ticket.link)
     const statusClassByStatus: Record<Exclude<TicketType["status"], null>, string> = {
         done: "kanban-tickets__row-id--done",
+        "in-progress": "kanban-tickets__row-id--in-progress",
         mine: "kanban-tickets__row-id--mine",
         waiting: "kanban-tickets__row-id--waiting",
     }
     const statusLabelByStatus: Record<Exclude<TicketType["status"], null>, string> = {
         done: "done",
+        "in-progress": "in progress",
         mine: "my turn",
         waiting: "waiting",
     }
     const fallbackBadgeText: Record<Exclude<TicketType["status"], null>, string> = {
         done: "DONE",
+        "in-progress": "WIP",
         mine: "MINE",
         waiting: "WAIT",
     }
     const fallbackBadgeTitle: Record<Exclude<TicketType["status"], null>, string> = {
         done: "Done",
+        "in-progress": "In progress",
         mine: "My turn",
         waiting: "Waiting",
     }

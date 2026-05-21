@@ -5,7 +5,12 @@ import { PROJECT_COLOR_LABELS, PROJECT_COLORS } from "../../shared"
 import { createAddCardForm, createCardElement } from "../card"
 import { showIconPicker } from "../icon-picker"
 import { startInlineEdit } from "../inline-edit"
-import { openAddTicketDialog } from "../ticket"
+import {
+    extractTicketId,
+    listProjectTickets,
+    openAddTicketDialog,
+    openTicketModal,
+} from "../ticket"
 import type { ProjectElementOptionsType } from "./project.types"
 import { getProjectColor, getProjectIcon } from "./project.utils"
 
@@ -301,6 +306,67 @@ export function createProjectElement(options: ProjectElementOptionsType): HTMLEl
     projectElement.append(header)
 
     if (!isCollapsed) {
+        const inProgressSection = document.createElement("div")
+
+        inProgressSection.className = "kanban-project__in-progress"
+        inProgressSection.style.display = "none"
+        projectElement.append(inProgressSection)
+
+        const projectTitle = project.title
+
+        void (async () => {
+            const tickets = await listProjectTickets({
+                notePathPrefix: pluginSettings.notePathPrefix,
+                projectTitle,
+                vault,
+            })
+            const inProgressTickets = tickets.filter((ticket) => {
+                return !ticket.hidden && ticket.status === "in-progress"
+            })
+
+            if (inProgressTickets.length === 0) {
+                return
+            }
+
+            inProgressSection.style.display = ""
+
+            for (const ticket of inProgressTickets) {
+                const row = document.createElement("div")
+
+                row.className = "kanban-project__in-progress-row"
+
+                const idMatch = extractTicketId(ticket.link)
+                const badge = document.createElement("span")
+
+                badge.className =
+                    "kanban-project__in-progress-badge kanban-project__in-progress-badge--in-progress"
+                badge.textContent = idMatch ? idMatch.id : "WIP"
+                badge.title = idMatch ? `${idMatch.source}: ${idMatch.id}` : "In progress"
+                row.append(badge)
+
+                const name = document.createElement("span")
+
+                name.className = "kanban-project__in-progress-name"
+                name.textContent = ticket.name
+                row.append(name)
+
+                row.addEventListener("click", (clickEvent) => {
+                    clickEvent.stopPropagation()
+                    openTicketModal({
+                        board,
+                        onChange: () => {
+                            onMutation({ ...board })
+                        },
+                        pluginSettings,
+                        ticket,
+                        vault,
+                    })
+                })
+
+                inProgressSection.append(row)
+            }
+        })()
+
         const cardList = document.createElement("div")
 
         cardList.className = "kanban-project__cards"
