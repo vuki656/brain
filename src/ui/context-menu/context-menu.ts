@@ -493,6 +493,22 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
     } else {
         menu.addItem((item) => {
             return item
+                .setIcon("file-text")
+                .setTitle("View linked note")
+                .onClick(() => {
+                    const notePath = `${card.linkedNote}.md`
+                    const file = vault.getAbstractFileByPath(notePath)
+
+                    if (file && file instanceof TFile) {
+                        void window.app.workspace.getLeaf(false).openFile(file)
+                    } else {
+                        new Notice(`Note not found: ${notePath}`)
+                    }
+                })
+        })
+
+        menu.addItem((item) => {
+            return item
                 .setIcon("file-x")
                 .setTitle("Delete linked note")
                 .setWarning(true)
