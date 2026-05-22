@@ -513,34 +513,38 @@ export function showCardContextMenu(options: CardContextMenuOptionsType): void {
                 .setTitle("Delete linked note")
                 .setWarning(true)
                 .onClick(async () => {
-                    const notePath = `${card.linkedNote}.md`
+                    const linkedNote = card.linkedNote
+
+                    if (!linkedNote) {
+                        return
+                    }
+
+                    const notePath = `${linkedNote}.md`
                     const file = vault.getAbstractFileByPath(notePath)
 
-                    if (file && file instanceof TFile) {
-                        try {
-                            await vault.trash(file, true)
-
-                            const linkedNote = card.linkedNote
-                            const noteName = linkedNote
-                                ? (linkedNote.split("/").pop() ?? linkedNote)
-                                : ""
-                            const newProjects = immutableUpdateCard({
-                                cardIndex,
-                                projectIndex,
-                                projects: board.projects,
-                                update: {
-                                    linkedNote: null,
-                                    title: noteName,
-                                },
-                            })
-                            onMutation({ ...board, projects: newProjects })
-
-                            new Notice(`Deleted note: ${notePath}`)
-                        } catch (error) {
-                            new Notice(`Failed to delete note: ${error}`)
-                        }
-                    } else {
+                    if (!(file instanceof TFile)) {
                         new Notice(`Note not found: ${notePath}`)
+
+                        return
+                    }
+
+                    const noteName = linkedNote.split("/").pop() ?? linkedNote
+                    const newProjects = immutableUpdateCard({
+                        cardIndex,
+                        projectIndex,
+                        projects: board.projects,
+                        update: {
+                            linkedNote: null,
+                            title: noteName,
+                        },
+                    })
+                    onMutation({ ...board, projects: newProjects })
+
+                    try {
+                        await vault.trash(file, true)
+                        new Notice(`Deleted note: ${notePath}`)
+                    } catch (error) {
+                        new Notice(`Failed to delete note: ${error}`)
                     }
                 })
         })
