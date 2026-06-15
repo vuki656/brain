@@ -557,6 +557,11 @@ export function openTicketModal(options: TicketModalOptionsType): void {
             return
         }
 
+        const linkedCardsList = document.createElement("div")
+
+        linkedCardsList.className = "kanban-ticket-modal__linked-card-list"
+        linkedCardsSection.append(linkedCardsList)
+
         for (const linkedCard of linked) {
             const item = document.createElement("div")
 
@@ -582,7 +587,7 @@ export function openTicketModal(options: TicketModalOptionsType): void {
                 item.append(dateBadge)
             }
 
-            linkedCardsSection.append(item)
+            linkedCardsList.append(item)
         }
     }
 

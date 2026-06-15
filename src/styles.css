@@ -2249,6 +2249,11 @@ body.vuki-kanban-fullscreen .status-bar {
     margin-bottom: 14px;
 }
 
+.kanban-ticket-modal__linked-card-list {
+    max-height: 240px;
+    overflow-y: auto;
+}
+
 .kanban-ticket-modal__linked-card {
     align-items: center;
     border-radius: 4px;
